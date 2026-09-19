@@ -121,8 +121,8 @@ int main(int argc, char ** argv) {
                     branchscore::VisionEncoder(model, backend).encode(image);
                 const auto elapsed = std::chrono::duration<double, std::milli>(
                     std::chrono::steady_clock::now() - started);
-                std::cout << "Encoded image: " << embeddings.token_count << "x"
-                          << embeddings.embedding_length << " embeddings in "
+                std::cout << "Encoded image: " << embeddings.token_count() << "x"
+                          << embeddings.embedding_length() << " embeddings in "
                           << std::setprecision(2) << elapsed.count() << " ms\n";
                 if (!vision_dump_path.empty()) {
                     std::ofstream dump(vision_dump_path, std::ios::binary);
@@ -131,14 +131,15 @@ int main(int argc, char ** argv) {
                             "failed to open vision dump '" + vision_dump_path + "'");
                     }
                     const std::int32_t header[] = {
-                        static_cast<std::int32_t>(embeddings.token_count),
-                        static_cast<std::int32_t>(embeddings.embedding_length),
+                        static_cast<std::int32_t>(embeddings.token_count()),
+                        static_cast<std::int32_t>(embeddings.embedding_length()),
                     };
                     dump.write(reinterpret_cast<const char *>(header), sizeof(header));
+                    const auto values = embeddings.download();
                     dump.write(
-                        reinterpret_cast<const char *>(embeddings.values.data()),
+                        reinterpret_cast<const char *>(values.data()),
                         static_cast<std::streamsize>(
-                            embeddings.values.size() * sizeof(float)));
+                            values.size() * sizeof(float)));
                     if (!dump) throw std::runtime_error("failed to write vision dump");
                 }
             }

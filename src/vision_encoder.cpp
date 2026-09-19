@@ -154,10 +154,47 @@ ggml_tensor * transformer_layer(
 
 } // namespace
 
+struct VisualTokens::Impl {
+    ~Impl() {
+        if (buffer != nullptr) ggml_backend_buffer_free(buffer);
+        if (ctx != nullptr) ggml_free(ctx);
+    }
+
+    std::size_t token_count = 0;
+    std::size_t embedding_length = 0;
+    ggml_context * ctx = nullptr;
+    ggml_backend_buffer_t buffer = nullptr;
+    ggml_tensor * tensor = nullptr;
+};
+
+VisualTokens::~VisualTokens() = default;
+VisualTokens::VisualTokens(VisualTokens &&) noexcept = default;
+VisualTokens & VisualTokens::operator=(VisualTokens &&) noexcept = default;
+VisualTokens::VisualTokens(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
+std::size_t VisualTokens::token_count() const noexcept {
+    return impl_->token_count;
+}
+
+std::size_t VisualTokens::embedding_length() const noexcept {
+    return impl_->embedding_length;
+}
+
+ggml_tensor * VisualTokens::tensor() const noexcept {
+    return impl_->tensor;
+}
+
+std::vector<float> VisualTokens::download() const {
+    std::vector<float> values(token_count() * embedding_length());
+    ggml_backend_tensor_get(
+        tensor(), values.data(), 0, values.size() * sizeof(float));
+    return values;
+}
+
 VisionEncoder::VisionEncoder(ModelBundle & model, BackendContext & backend)
     : model_(model), backend_(backend) {}
 
-VisionEmbeddings VisionEncoder::encode(const PreparedImage & image) const {
+VisualTokens VisionEncoder::encode(const PreparedImage & image) const {
     const auto & config = model_.vision_config();
     if (image.pixels.size() !=
         static_cast<std::size_t>(image.width) * image.height * 3) {
@@ -261,21 +298,32 @@ VisionEmbeddings VisionEncoder::encode(const PreparedImage & image) const {
     }
     backend_.synchronize();
 
-    VisionEmbeddings result;
-    result.token_count = output_tokens;
-    result.embedding_length = config.projection_length;
-    result.values.resize(result.token_count * result.embedding_length);
-    if (current->type != GGML_TYPE_F32 || ggml_nelements(current) != result.values.size()) {
+    const auto result_size = output_tokens * config.projection_length;
+    if (current->type != GGML_TYPE_F32 || ggml_nelements(current) != result_size) {
         throw std::runtime_error("vision graph output has an unexpected shape or type");
     }
-    ggml_backend_tensor_get(
-        current, result.values.data(), 0, result.values.size() * sizeof(float));
-    for (float value : result.values) {
-        if (!std::isfinite(value)) {
-            throw std::runtime_error("vision graph produced a non-finite embedding");
-        }
+
+    auto result = std::make_unique<VisualTokens::Impl>();
+    result->token_count = output_tokens;
+    result->embedding_length = config.projection_length;
+    ggml_init_params output_params{
+        2 * ggml_tensor_overhead(), nullptr, true,
+    };
+    result->ctx = ggml_init(output_params);
+    if (result->ctx == nullptr) {
+        throw std::runtime_error("failed to create persistent visual-token context");
     }
-    return result;
+    result->tensor = ggml_new_tensor_2d(
+        result->ctx, GGML_TYPE_F32, config.projection_length, output_tokens);
+    ggml_set_name(result->tensor, "visual_tokens");
+    result->buffer = ggml_backend_alloc_ctx_tensors_from_buft(
+        result->ctx, backend_.buffer_type());
+    if (result->buffer == nullptr) {
+        throw std::runtime_error("failed to allocate persistent visual-token buffer");
+    }
+    ggml_backend_tensor_copy(current, result->tensor);
+    backend_.synchronize();
+    return VisualTokens(std::move(result));
 }
 
 } // namespace branchscore
