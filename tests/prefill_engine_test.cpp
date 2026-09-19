@@ -1,6 +1,7 @@
 #include "branchscore/backend_context.hpp"
 #include "branchscore/image_preprocessor.hpp"
 #include "branchscore/model_loader.hpp"
+#include "branchscore/option_scorer.hpp"
 #include "branchscore/prefill_engine.hpp"
 #include "branchscore/tokenizer.hpp"
 #include "branchscore/vision_encoder.hpp"
@@ -67,6 +68,38 @@ int main(int argc, char ** argv) {
             throw std::runtime_error("Multimodal Prefill produced an invalid state");
         }
         std::cout << "multimodal prefill tokens=" << expected_prefix << '\n';
+
+        branchscore::OptionTokens option;
+        option.option_id = "first";
+        option.input_index = 0;
+        option.ids = {9259, 1902};
+        option.boundary_valid = true;
+        branchscore::OptionScorer scorer(model, backend);
+        const auto expected_logits = state.download_logits();
+        const auto expected_max = *std::max_element(
+            expected_logits.begin(), expected_logits.end());
+        double expected_normalizer = 0.0;
+        for (const auto value : expected_logits) {
+            expected_normalizer += std::exp(value - expected_max);
+        }
+        const auto expected_first =
+            static_cast<double>(expected_logits[option.ids.front()] - expected_max) -
+            std::log(expected_normalizer);
+        const auto first_score = scorer.score(state, option);
+        if (first_score.token_count != option.ids.size() ||
+            first_score.token_logprobs.size() != option.ids.size() ||
+            !std::isfinite(first_score.sum_logprob) ||
+            !std::isfinite(first_score.mean_logprob) ||
+            std::abs(first_score.token_logprobs.front() - expected_first) > 1e-4 ||
+            state.cache().cursor() != state.prefix_length() + option.ids.size() - 1) {
+            throw std::runtime_error("multi-token option scoring produced invalid state");
+        }
+        const auto second_score = scorer.score(state, option);
+        if (std::abs(second_score.sum_logprob - first_score.sum_logprob) > 1e-4) {
+            throw std::runtime_error("option branch reset is not deterministic");
+        }
+        std::cout << "option score tokens=" << first_score.token_count
+                  << " sum=" << first_score.sum_logprob << '\n';
         return 0;
     } catch (const std::exception & error) {
         std::cerr << error.what() << '\n';

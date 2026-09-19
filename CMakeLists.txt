@@ -30,6 +30,7 @@ add_library(branchscore_core
     src/backend_context.cpp
     src/image_preprocessor.cpp
     src/model_loader.cpp
+    src/option_scorer.cpp
     src/prefill_engine.cpp
     src/state_cache.cpp
     src/tokenizer.cpp

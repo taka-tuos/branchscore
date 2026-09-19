@@ -71,16 +71,19 @@ ggml_tensor * append_tokens(
 }
 
 std::vector<float> causal_mask(
-    std::size_t token_count,
+    std::size_t query_start,
+    std::size_t query_count,
+    std::size_t key_count,
     std::size_t window) {
-    std::vector<float> result(token_count * token_count);
+    std::vector<float> result(query_count * key_count);
     const float blocked = -std::numeric_limits<float>::infinity();
-    for (std::size_t query = 0; query < token_count; ++query) {
-        for (std::size_t key = 0; key < token_count; ++key) {
-            const bool after_query = key > query;
+    for (std::size_t query = 0; query < query_count; ++query) {
+        const std::size_t absolute_query = query_start + query;
+        for (std::size_t key = 0; key < key_count; ++key) {
+            const bool after_query = key > absolute_query;
             const bool before_window =
-                window != 0 && key + window <= query;
-            result[query * token_count + key] =
+                window != 0 && key + window <= absolute_query;
+            result.at(query * key_count + key) =
                 after_query || before_window ? blocked : 0.0F;
         }
     }
@@ -92,9 +95,10 @@ ggml_tensor * cache_current_kv(
     ggml_tensor * current,
     ggml_tensor * cache,
     std::size_t width,
-    std::size_t token_count) {
+    std::size_t token_count,
+    std::size_t cache_start) {
     auto * destination = ggml_view_2d(
-        ctx, cache, width, token_count, cache->nb[1], 0);
+        ctx, cache, width, token_count, cache->nb[1], cache_start * cache->nb[1]);
     current = ggml_reshape_2d(ctx, current, width, token_count);
     return ggml_cpy(ctx, current, destination);
 }
@@ -106,7 +110,9 @@ ggml_tensor * build_layer(
     StateCache & cache,
     const TextModelConfig & config,
     std::uint32_t layer,
-    std::size_t token_count,
+    std::size_t query_count,
+    std::size_t cache_start,
+    std::size_t cache_count,
     ggml_tensor * positions,
     ggml_tensor * full_mask,
     ggml_tensor * sliding_mask,
@@ -128,7 +134,7 @@ ggml_tensor * build_layer(
     auto * query = ggml_mul_mat(
         ctx, layer_tensor(model, layer, "attn_q.weight"), current);
     query = ggml_reshape_3d(
-        ctx, query, head_size, config.head_count, token_count);
+        ctx, query, head_size, config.head_count, query_count);
     query = rms_norm(
         ctx, query, layer_tensor(model, layer, "attn_q_norm.weight"),
         config.layer_norm_epsilon);
@@ -148,9 +154,9 @@ ggml_tensor * build_layer(
         value = ggml_mul_mat(
             ctx, layer_tensor(model, layer, "attn_v.weight"), current);
         key = ggml_reshape_3d(
-            ctx, key, head_size, config.head_count_kv, token_count);
+            ctx, key, head_size, config.head_count_kv, query_count);
         value = ggml_reshape_3d(
-            ctx, value, value_size, config.head_count_kv, token_count);
+            ctx, value, value_size, config.head_count_kv, query_count);
         key = rms_norm(
             ctx, key, layer_tensor(model, layer, "attn_k_norm.weight"),
             config.layer_norm_epsilon);
@@ -162,23 +168,23 @@ ggml_tensor * build_layer(
             sliding ? config.rope_freq_base_swa : config.rope_freq_base,
             1.0F, 0.0F, 1.0F, 0.0F, 0.0F);
         auto * key_copy = cache_current_kv(
-            ctx, key, cache.key(layer), config.key_width(layer), token_count);
+            ctx, key, cache.key(layer), config.key_width(layer), query_count, cache_start);
         auto * value_copy = cache_current_kv(
-            ctx, value, cache.value(layer), config.value_width(layer), token_count);
+            ctx, value, cache.value(layer), config.value_width(layer), query_count, cache_start);
         ggml_build_forward_expand(graph, query);
         ggml_build_forward_expand(graph, value_copy);
         ggml_build_forward_expand(graph, key_copy);
     }
     key = ggml_view_2d(
-        ctx, cache.key(layer), config.key_width(layer), token_count,
+        ctx, cache.key(layer), config.key_width(layer), cache_count,
         cache.key(layer)->nb[1], 0);
     value = ggml_view_2d(
-        ctx, cache.value(layer), config.value_width(layer), token_count,
+        ctx, cache.value(layer), config.value_width(layer), cache_count,
         cache.value(layer)->nb[1], 0);
     key = ggml_reshape_3d(
-        ctx, key, head_size, config.head_count_kv, token_count);
+        ctx, key, head_size, config.head_count_kv, cache_count);
     value = ggml_reshape_3d(
-        ctx, value, value_size, config.head_count_kv, token_count);
+        ctx, value, value_size, config.head_count_kv, cache_count);
     current = build_attention(
         ctx, query, key, value, sliding ? sliding_mask : full_mask);
     current = ggml_mul_mat(
@@ -209,9 +215,9 @@ ggml_tensor * build_layer(
     current = ggml_gelu(ctx, current);
     const std::size_t slice_bytes =
         static_cast<std::size_t>(config.per_layer_embedding_length) *
-        token_count * sizeof(float);
+        query_count * sizeof(float);
     auto * layer_input = ggml_view_2d(
-        ctx, per_layer_inputs, config.per_layer_embedding_length, token_count,
+        ctx, per_layer_inputs, config.per_layer_embedding_length, query_count,
         config.per_layer_embedding_length * sizeof(float), layer * slice_bytes);
     current = ggml_mul(ctx, current, layer_input);
     current = ggml_mul_mat(
@@ -231,6 +237,9 @@ ggml_tensor * build_layer(
 
 struct PrefillState::Impl {
     ~Impl() {
+        if (working_logits_buffer != nullptr) {
+            ggml_backend_buffer_free(working_logits_buffer);
+        }
         if (logits_buffer != nullptr) ggml_backend_buffer_free(logits_buffer);
         if (logits_ctx != nullptr) ggml_free(logits_ctx);
     }
@@ -239,6 +248,8 @@ struct PrefillState::Impl {
     ggml_context * logits_ctx = nullptr;
     ggml_backend_buffer_t logits_buffer = nullptr;
     ggml_tensor * logits = nullptr;
+    ggml_backend_buffer_t working_logits_buffer = nullptr;
+    ggml_tensor * working_logits = nullptr;
 };
 
 PrefillState::~PrefillState() = default;
@@ -259,6 +270,11 @@ std::vector<float> PrefillState::download_logits() const {
     ggml_backend_tensor_get(
         impl_->logits, values.data(), 0, values.size() * sizeof(float));
     return values;
+}
+
+void PrefillState::reset_branch() {
+    impl_->cache->reset_branch();
+    ggml_backend_tensor_copy(impl_->logits, impl_->working_logits);
 }
 
 PrefillEngine::PrefillEngine(ModelBundle & model, BackendContext & backend)
@@ -373,6 +389,7 @@ PrefillState PrefillEngine::prefill(
     for (std::uint32_t layer = 0; layer < config.block_count; ++layer) {
         input = build_layer(
             ctx.get(), graph, model_, *result->cache, config, layer, token_count,
+            0, token_count,
             positions, full_mask, sliding_mask, per_layer, input);
     }
     input = rms_norm(
@@ -415,8 +432,9 @@ PrefillState PrefillEngine::prefill(
     }
     ggml_backend_tensor_set(
         positions, position_values.data(), 0, ggml_nbytes(positions));
-    const auto full_mask_values = causal_mask(token_count, 0);
-    const auto sliding_mask_values = causal_mask(token_count, config.sliding_window);
+    const auto full_mask_values = causal_mask(0, token_count, token_count, 0);
+    const auto sliding_mask_values = causal_mask(
+        0, token_count, token_count, config.sliding_window);
     ggml_backend_tensor_set(
         full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask));
     ggml_backend_tensor_set(
@@ -429,7 +447,7 @@ PrefillState PrefillEngine::prefill(
     }
     backend_.synchronize();
 
-    ggml_init_params logits_params{2 * ggml_tensor_overhead(), nullptr, true};
+    ggml_init_params logits_params{3 * ggml_tensor_overhead(), nullptr, true};
     result->logits_ctx = ggml_init(logits_params);
     if (result->logits_ctx == nullptr) {
         throw std::runtime_error("failed to create persistent logits context");
@@ -442,9 +460,158 @@ PrefillState PrefillEngine::prefill(
         throw std::runtime_error("failed to allocate persistent Prefill logits");
     }
     ggml_backend_tensor_copy(logits, result->logits);
+    result->working_logits = ggml_new_tensor_1d(
+        result->logits_ctx, GGML_TYPE_F32, config.vocabulary_size);
+    result->working_logits_buffer = ggml_backend_alloc_ctx_tensors_from_buft(
+        result->logits_ctx, backend_.buffer_type());
+    if (result->working_logits_buffer == nullptr) {
+        throw std::runtime_error("failed to allocate working Prefill logits");
+    }
+    ggml_backend_tensor_copy(result->logits, result->working_logits);
     backend_.synchronize();
     result->cache->freeze_prefix(token_count);
     return PrefillState(std::move(result));
+}
+
+void PrefillEngine::continue_one(PrefillState & state, TokenId token) const {
+    const auto & config = model_.text_config();
+    const std::size_t cache_start = state.cache().cursor();
+    if (cache_start >= state.cache().capacity()) {
+        throw std::runtime_error("option continuation exceeds state-cache capacity");
+    }
+    const std::size_t cache_count = cache_start + 1;
+    const std::size_t context_size =
+        max_graph_nodes * ggml_tensor_overhead() +
+        ggml_graph_overhead_custom(max_graph_nodes, false);
+    std::vector<std::uint8_t> context_memory(context_size);
+    ggml_init_params params{context_memory.size(), context_memory.data(), true};
+    using ContextPointer = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
+    ContextPointer ctx(ggml_init(params), ggml_free);
+    if (!ctx) throw std::runtime_error("failed to create continuation graph context");
+    auto * graph = ggml_new_graph_custom(ctx.get(), max_graph_nodes, false);
+
+    auto * token_ids = ggml_new_tensor_1d(ctx.get(), GGML_TYPE_I32, 1);
+    auto * positions = ggml_new_tensor_1d(ctx.get(), GGML_TYPE_I32, 1);
+    auto * full_mask = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_F32, cache_count, 1);
+    auto * sliding_mask = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_F32, cache_count, 1);
+    ggml_set_input(token_ids);
+    ggml_set_input(positions);
+    ggml_set_input(full_mask);
+    ggml_set_input(sliding_mask);
+
+    auto * token_embedding = require_text_tensor(model_, "token_embd.weight");
+    auto * input = ggml_scale(
+        ctx.get(), ggml_get_rows(ctx.get(), token_embedding, token_ids),
+        std::sqrt(config.embedding_length));
+    auto * per_layer = ggml_get_rows(
+        ctx.get(), require_text_tensor(model_, "per_layer_token_embd.weight"), token_ids);
+    per_layer = ggml_reshape_3d(
+        ctx.get(), per_layer, config.per_layer_embedding_length,
+        config.block_count, 1);
+    per_layer = ggml_scale(
+        ctx.get(), per_layer, std::sqrt(config.per_layer_embedding_length));
+    auto * projected = ggml_mul_mat(
+        ctx.get(), require_text_tensor(model_, "per_layer_model_proj.weight"), input);
+    projected = ggml_scale(
+        ctx.get(), projected, 1.0F / std::sqrt(config.embedding_length));
+    projected = ggml_reshape_3d(
+        ctx.get(), projected, config.per_layer_embedding_length,
+        config.block_count, 1);
+    projected = rms_norm(
+        ctx.get(), projected,
+        require_text_tensor(model_, "per_layer_proj_norm.weight"),
+        config.layer_norm_epsilon);
+    per_layer = ggml_scale(
+        ctx.get(), ggml_add(ctx.get(), projected, per_layer), 1.0F / std::sqrt(2.0F));
+    per_layer = ggml_cont(ctx.get(), ggml_permute(ctx.get(), per_layer, 0, 2, 1, 3));
+
+    for (std::uint32_t layer = 0; layer < config.block_count; ++layer) {
+        input = build_layer(
+            ctx.get(), graph, model_, *state.impl_->cache, config, layer, 1,
+            cache_start, cache_count, positions, full_mask, sliding_mask,
+            per_layer, input);
+    }
+    input = rms_norm(
+        ctx.get(), input, require_text_tensor(model_, "output_norm.weight"),
+        config.layer_norm_epsilon);
+    auto * logits = ggml_mul_mat(ctx.get(), token_embedding, input);
+    if (config.final_logit_softcap != 0.0F) {
+        logits = ggml_scale(ctx.get(), logits, 1.0F / config.final_logit_softcap);
+        logits = ggml_tanh(ctx.get(), logits);
+        logits = ggml_scale(ctx.get(), logits, config.final_logit_softcap);
+    }
+    ggml_set_output(logits);
+    ggml_build_forward_expand(graph, logits);
+
+    using AllocatorPointer = std::unique_ptr<
+        std::remove_pointer_t<ggml_gallocr_t>, decltype(&ggml_gallocr_free)>;
+    AllocatorPointer allocator(
+        ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
+    if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
+        throw std::runtime_error("failed to allocate continuation graph on selected backend");
+    }
+
+    const std::int32_t token_value = token;
+    const std::int32_t position_value = static_cast<std::int32_t>(cache_start);
+    ggml_backend_tensor_set(token_ids, &token_value, 0, sizeof(token_value));
+    ggml_backend_tensor_set(positions, &position_value, 0, sizeof(position_value));
+    const auto full_mask_values = causal_mask(cache_start, 1, cache_count, 0);
+    const auto sliding_mask_values = causal_mask(
+        cache_start, 1, cache_count, config.sliding_window);
+    ggml_backend_tensor_set(
+        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask));
+    ggml_backend_tensor_set(
+        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask));
+
+    const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
+    if (status != GGML_STATUS_SUCCESS) {
+        throw std::runtime_error(
+            "continuation graph compute failed: " +
+            std::string(ggml_status_to_string(status)));
+    }
+    backend_.synchronize();
+    ggml_backend_tensor_copy(logits, state.impl_->working_logits);
+    backend_.synchronize();
+    state.cache().advance(1);
+}
+
+float PrefillEngine::score_current(
+    const PrefillState & state, TokenId token) const {
+    if (token < 0 || static_cast<std::size_t>(token) >= model_.text_config().vocabulary_size) {
+        throw std::runtime_error("option token is outside the model vocabulary");
+    }
+    const std::size_t context_size =
+        128 * ggml_tensor_overhead() + ggml_graph_overhead_custom(128, false);
+    std::vector<std::uint8_t> context_memory(context_size);
+    ggml_init_params params{context_memory.size(), context_memory.data(), true};
+    using ContextPointer = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
+    ContextPointer ctx(ggml_init(params), ggml_free);
+    if (!ctx) throw std::runtime_error("failed to create score graph context");
+    auto * graph = ggml_new_graph_custom(ctx.get(), 128, false);
+    auto * logits = state.impl_->working_logits;
+    ggml_set_input(logits);
+    auto * probabilities = ggml_soft_max_ext(ctx.get(), logits, nullptr, 1.0F, 0.0F);
+    auto * selected = ggml_view_1d(
+        ctx.get(), probabilities, 1, static_cast<std::size_t>(token) * sizeof(float));
+    auto * score = ggml_log(ctx.get(), selected);
+    ggml_set_output(score);
+    ggml_build_forward_expand(graph, score);
+    using AllocatorPointer = std::unique_ptr<
+        std::remove_pointer_t<ggml_gallocr_t>, decltype(&ggml_gallocr_free)>;
+    AllocatorPointer allocator(
+        ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
+    if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
+        throw std::runtime_error("failed to allocate score graph on selected backend");
+    }
+    const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
+    if (status != GGML_STATUS_SUCCESS) {
+        throw std::runtime_error(
+            "score graph compute failed: " + std::string(ggml_status_to_string(status)));
+    }
+    backend_.synchronize();
+    float value = 0.0F;
+    ggml_backend_tensor_get(score, &value, 0, sizeof(value));
+    return value;
 }
 
 } // namespace branchscore
