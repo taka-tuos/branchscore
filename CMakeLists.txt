@@ -29,6 +29,7 @@ add_library(branchscore_core
     src/image_preprocessor.cpp
     src/model_loader.cpp
     src/tokenizer.cpp
+    src/vision_encoder.cpp
 )
 add_library(branchscore::core ALIAS branchscore_core)
 

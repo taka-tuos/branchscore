@@ -65,6 +65,7 @@ public:
 
     ggml_tensor * text_tensor(const std::string & name) const noexcept;
     ggml_tensor * vision_tensor(const std::string & name) const noexcept;
+    float vision_scalar(const std::string & name, float fallback) const;
 
     std::size_t text_tensor_count() const noexcept;
     std::size_t vision_tensor_count() const noexcept;

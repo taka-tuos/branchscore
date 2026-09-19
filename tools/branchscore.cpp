@@ -1,7 +1,11 @@
 #include "branchscore/backend_context.hpp"
 #include "branchscore/image_preprocessor.hpp"
 #include "branchscore/model_loader.hpp"
+#include "branchscore/vision_encoder.hpp"
 
+#include <chrono>
+#include <cstdint>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
@@ -40,6 +44,7 @@ int main(int argc, char ** argv) {
         std::string model_path;
         std::string mmproj_path;
         std::string image_path;
+        std::string vision_dump_path;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
             if (arg == "--list-backends") {
@@ -62,10 +67,15 @@ int main(int argc, char ** argv) {
                 image_path = argv[++i];
                 continue;
             }
+            if (arg == "--vision-dump" && i + 1 < argc) {
+                vision_dump_path = argv[++i];
+                continue;
+            }
             if (arg == "--help") {
                 std::cout
                     << "Usage: branchscore [--list-backends] [--backend NAME]\n"
-                    << "                   [--model FILE --mmproj FILE [--image FILE]]\n";
+                    << "                   [--model FILE --mmproj FILE [--image FILE]]\n"
+                    << "                   [--vision-dump FILE]\n";
                 return 0;
             }
             throw std::runtime_error("unknown or incomplete argument: " + arg);
@@ -81,6 +91,9 @@ int main(int argc, char ** argv) {
         }
         if (!image_path.empty() && model_path.empty()) {
             throw std::runtime_error("--image requires --model and --mmproj");
+        }
+        if (!vision_dump_path.empty() && image_path.empty()) {
+            throw std::runtime_error("--vision-dump requires --image");
         }
         if (!model_path.empty()) {
             auto model = branchscore::ModelLoader::load(model_path, mmproj_path, backend);
@@ -103,6 +116,31 @@ int main(int argc, char ** argv) {
                 std::cout << "Prepared image: " << image.width << "x" << image.height
                           << ", " << image.patch_count(vision) << " patches, "
                           << image.visual_token_count(vision) << " visual tokens\n";
+                const auto started = std::chrono::steady_clock::now();
+                const auto embeddings =
+                    branchscore::VisionEncoder(model, backend).encode(image);
+                const auto elapsed = std::chrono::duration<double, std::milli>(
+                    std::chrono::steady_clock::now() - started);
+                std::cout << "Encoded image: " << embeddings.token_count << "x"
+                          << embeddings.embedding_length << " embeddings in "
+                          << std::setprecision(2) << elapsed.count() << " ms\n";
+                if (!vision_dump_path.empty()) {
+                    std::ofstream dump(vision_dump_path, std::ios::binary);
+                    if (!dump) {
+                        throw std::runtime_error(
+                            "failed to open vision dump '" + vision_dump_path + "'");
+                    }
+                    const std::int32_t header[] = {
+                        static_cast<std::int32_t>(embeddings.token_count),
+                        static_cast<std::int32_t>(embeddings.embedding_length),
+                    };
+                    dump.write(reinterpret_cast<const char *>(header), sizeof(header));
+                    dump.write(
+                        reinterpret_cast<const char *>(embeddings.values.data()),
+                        static_cast<std::streamsize>(
+                            embeddings.values.size() * sizeof(float)));
+                    if (!dump) throw std::runtime_error("failed to write vision dump");
+                }
             }
         }
         backend.synchronize();

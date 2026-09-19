@@ -501,6 +501,17 @@ ggml_tensor * ModelBundle::vision_tensor(const std::string & name) const noexcep
     return impl_->vision_weights.tensor(name);
 }
 
+float ModelBundle::vision_scalar(const std::string & name, float fallback) const {
+    auto * tensor = vision_tensor(name);
+    if (tensor == nullptr) return fallback;
+    if (tensor->type != GGML_TYPE_F32 || ggml_nelements(tensor) != 1) {
+        throw std::runtime_error("vision scalar tensor has unexpected shape or type: " + name);
+    }
+    float value = 0.0F;
+    ggml_backend_tensor_get(tensor, &value, 0, sizeof(value));
+    return value;
+}
+
 std::size_t ModelBundle::text_tensor_count() const noexcept {
     return impl_->text_weights.tensor_count();
 }

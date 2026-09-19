@@ -45,6 +45,8 @@ Pass `--image FILE` with the model arguments to decode and preprocess a PNG,
 JPEG, BMP, TGA, GIF, PSD, HDR, PIC, or PNM image. The image keeps its aspect
 ratio, is aligned to the Gemma 4 patch/pooling grid, and is bicubic-resized to
 the model's supported visual-token range.
+Use `--vision-dump FILE` with `--image` to write the projected embeddings as
+two int32 dimensions (`tokens`, `width`) followed by row-major float32 data.
 
 Tokenizer IDs and option-boundary behavior can be inspected without loading
 model weights:
