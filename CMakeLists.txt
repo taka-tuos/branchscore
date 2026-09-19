@@ -1,0 +1,46 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(branchscore VERSION 0.1.0 LANGUAGES C CXX)
+
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(BRANCHSCORE_BUILD_TESTS "Build branchscore tests" ON)
+option(BRANCHSCORE_CUDA "Build the ggml CUDA backend" OFF)
+option(BRANCHSCORE_VULKAN "Build the ggml Vulkan backend" OFF)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/ggml/CMakeLists.txt")
+    message(FATAL_ERROR
+        "ggml submodule is missing. Run: git submodule update --init --recursive")
+endif()
+
+set(GGML_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GGML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GGML_CUDA ${BRANCHSCORE_CUDA} CACHE BOOL "" FORCE)
+set(GGML_CUDA_NCCL OFF CACHE BOOL "" FORCE)
+set(GGML_VULKAN ${BRANCHSCORE_VULKAN} CACHE BOOL "" FORCE)
+add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
+
+add_library(branchscore_core
+    src/backend_context.cpp
+)
+add_library(branchscore::core ALIAS branchscore_core)
+
+target_include_directories(branchscore_core
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+target_link_libraries(branchscore_core PUBLIC ggml::ggml)
+target_compile_features(branchscore_core PUBLIC cxx_std_17)
+
+add_executable(branchscore tools/branchscore.cpp)
+target_link_libraries(branchscore PRIVATE branchscore::core)
+
+if(BRANCHSCORE_BUILD_TESTS)
+    enable_testing()
+    add_executable(branchscore_backend_test tests/backend_context_test.cpp)
+    target_link_libraries(branchscore_backend_test PRIVATE branchscore::core)
+    add_test(NAME backend_context COMMAND branchscore_backend_test)
+endif()
