@@ -25,6 +25,7 @@ add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
 
 add_library(branchscore_core
     src/backend_context.cpp
+    src/model_loader.cpp
 )
 add_library(branchscore::core ALIAS branchscore_core)
 

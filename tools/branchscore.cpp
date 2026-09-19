@@ -1,4 +1,5 @@
 #include "branchscore/backend_context.hpp"
+#include "branchscore/model_loader.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -35,6 +36,8 @@ void print_devices() {
 int main(int argc, char ** argv) {
     try {
         std::string selector = "auto";
+        std::string model_path;
+        std::string mmproj_path;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
             if (arg == "--list-backends") {
@@ -45,8 +48,18 @@ int main(int argc, char ** argv) {
                 selector = argv[++i];
                 continue;
             }
+            if (arg == "--model" && i + 1 < argc) {
+                model_path = argv[++i];
+                continue;
+            }
+            if (arg == "--mmproj" && i + 1 < argc) {
+                mmproj_path = argv[++i];
+                continue;
+            }
             if (arg == "--help") {
-                std::cout << "Usage: branchscore [--list-backends] [--backend NAME]\n";
+                std::cout
+                    << "Usage: branchscore [--list-backends] [--backend NAME]\n"
+                    << "                   [--model FILE --mmproj FILE]\n";
                 return 0;
             }
             throw std::runtime_error("unknown or incomplete argument: " + arg);
@@ -56,6 +69,27 @@ int main(int argc, char ** argv) {
         std::cout << "Initialized " << backend.device().name
                   << " (" << backend.device().family << ", "
                   << backend.device().type << ")\n";
+
+        if (model_path.empty() != mmproj_path.empty()) {
+            throw std::runtime_error("--model and --mmproj must be supplied together");
+        }
+        if (!model_path.empty()) {
+            auto model = branchscore::ModelLoader::load(model_path, mmproj_path, backend);
+            const auto & text = model.text_config();
+            const auto & vision = model.vision_config();
+            std::cout << "Loaded " << text.name << ": " << text.block_count
+                      << " text blocks, width " << text.embedding_length
+                      << ", vocab " << text.vocabulary_size << ", "
+                      << model.text_tensor_count() << " tensors ("
+                      << std::fixed << std::setprecision(2)
+                      << gib(model.text_weight_bytes()) << " GiB)\n";
+            std::cout << "Loaded " << vision.projector_type << ": "
+                      << vision.block_count << " vision blocks, width "
+                      << vision.embedding_length << " -> "
+                      << vision.projection_length << ", "
+                      << model.vision_tensor_count() << " tensors ("
+                      << gib(model.vision_weight_bytes()) << " GiB)\n";
+        }
         backend.synchronize();
         return 0;
     } catch (const std::exception & error) {
@@ -63,4 +97,3 @@ int main(int argc, char ** argv) {
         return 1;
     }
 }
-
