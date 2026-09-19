@@ -30,8 +30,17 @@ struct TextModelConfig {
     std::uint32_t per_layer_embedding_length = 0;
     std::size_t vocabulary_size = 0;
     float final_logit_softcap = 0.0F;
+    float layer_norm_epsilon = 0.0F;
+    float rope_freq_base = 0.0F;
+    float rope_freq_base_swa = 0.0F;
+    std::uint32_t rope_dimension_count = 0;
+    std::uint32_t rope_dimension_count_swa = 0;
     std::vector<std::uint32_t> feed_forward_lengths;
     std::vector<bool> sliding_window_pattern;
+
+    bool is_sliding_window(std::uint32_t layer) const;
+    std::uint32_t key_width(std::uint32_t layer) const;
+    std::uint32_t value_width(std::uint32_t layer) const;
 };
 
 struct VisionModelConfig {

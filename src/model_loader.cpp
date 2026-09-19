@@ -344,6 +344,13 @@ TextModelConfig read_text_config(const gguf_context * gguf) {
     config.per_layer_embedding_length =
         u32_value(gguf, "gemma4.embedding_length_per_layer_input");
     config.final_logit_softcap = f32_value(gguf, "gemma4.final_logit_softcapping");
+    config.layer_norm_epsilon =
+        f32_value(gguf, "gemma4.attention.layer_norm_rms_epsilon");
+    config.rope_freq_base = f32_value(gguf, "gemma4.rope.freq_base");
+    config.rope_freq_base_swa = f32_value(gguf, "gemma4.rope.freq_base_swa");
+    config.rope_dimension_count = u32_value(gguf, "gemma4.rope.dimension_count");
+    config.rope_dimension_count_swa =
+        u32_value(gguf, "gemma4.rope.dimension_count_swa");
     config.feed_forward_lengths = u32_values(gguf, "gemma4.feed_forward_length");
     config.sliding_window_pattern =
         bool_values(gguf, "gemma4.attention.sliding_window_pattern");
@@ -471,6 +478,21 @@ void validate_vision_tensors(const LoadedWeights & weights, const VisionModelCon
 }
 
 } // namespace
+
+bool TextModelConfig::is_sliding_window(std::uint32_t layer) const {
+    if (layer >= sliding_window_pattern.size()) {
+        throw std::out_of_range("Gemma 4 layer index is out of range");
+    }
+    return sliding_window_pattern[layer];
+}
+
+std::uint32_t TextModelConfig::key_width(std::uint32_t layer) const {
+    return head_count_kv * (is_sliding_window(layer) ? key_length_swa : key_length);
+}
+
+std::uint32_t TextModelConfig::value_width(std::uint32_t layer) const {
+    return head_count_kv * (is_sliding_window(layer) ? value_length_swa : value_length);
+}
 
 struct ModelBundle::Impl {
     TextModelConfig text_config;

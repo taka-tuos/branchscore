@@ -28,6 +28,7 @@ add_library(branchscore_core
     src/backend_context.cpp
     src/image_preprocessor.cpp
     src/model_loader.cpp
+    src/state_cache.cpp
     src/tokenizer.cpp
     src/vision_encoder.cpp
 )
@@ -62,4 +63,8 @@ if(BRANCHSCORE_BUILD_TESTS)
     add_executable(branchscore_image_preprocessor_test tests/image_preprocessor_test.cpp)
     target_link_libraries(branchscore_image_preprocessor_test PRIVATE branchscore::core)
     add_test(NAME image_preprocessor COMMAND branchscore_image_preprocessor_test)
+
+    add_executable(branchscore_state_cache_test tests/state_cache_test.cpp)
+    target_link_libraries(branchscore_state_cache_test PRIVATE branchscore::core)
+    add_test(NAME state_cache COMMAND branchscore_state_cache_test)
 endif()
