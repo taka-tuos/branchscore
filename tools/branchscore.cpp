@@ -1,4 +1,5 @@
 #include "branchscore/backend_context.hpp"
+#include "branchscore/image_preprocessor.hpp"
 #include "branchscore/model_loader.hpp"
 
 #include <iomanip>
@@ -38,6 +39,7 @@ int main(int argc, char ** argv) {
         std::string selector = "auto";
         std::string model_path;
         std::string mmproj_path;
+        std::string image_path;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
             if (arg == "--list-backends") {
@@ -56,10 +58,14 @@ int main(int argc, char ** argv) {
                 mmproj_path = argv[++i];
                 continue;
             }
+            if (arg == "--image" && i + 1 < argc) {
+                image_path = argv[++i];
+                continue;
+            }
             if (arg == "--help") {
                 std::cout
                     << "Usage: branchscore [--list-backends] [--backend NAME]\n"
-                    << "                   [--model FILE --mmproj FILE]\n";
+                    << "                   [--model FILE --mmproj FILE [--image FILE]]\n";
                 return 0;
             }
             throw std::runtime_error("unknown or incomplete argument: " + arg);
@@ -72,6 +78,9 @@ int main(int argc, char ** argv) {
 
         if (model_path.empty() != mmproj_path.empty()) {
             throw std::runtime_error("--model and --mmproj must be supplied together");
+        }
+        if (!image_path.empty() && model_path.empty()) {
+            throw std::runtime_error("--image requires --model and --mmproj");
         }
         if (!model_path.empty()) {
             auto model = branchscore::ModelLoader::load(model_path, mmproj_path, backend);
@@ -89,6 +98,12 @@ int main(int argc, char ** argv) {
                       << vision.projection_length << ", "
                       << model.vision_tensor_count() << " tensors ("
                       << gib(model.vision_weight_bytes()) << " GiB)\n";
+            if (!image_path.empty()) {
+                const auto image = branchscore::ImagePreprocessor::load(image_path, vision);
+                std::cout << "Prepared image: " << image.width << "x" << image.height
+                          << ", " << image.patch_count(vision) << " patches, "
+                          << image.visual_token_count(vision) << " visual tokens\n";
+            }
         }
         backend.synchronize();
         return 0;

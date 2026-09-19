@@ -26,6 +26,7 @@ add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
 
 add_library(branchscore_core
     src/backend_context.cpp
+    src/image_preprocessor.cpp
     src/model_loader.cpp
     src/tokenizer.cpp
 )
@@ -35,6 +36,8 @@ target_include_directories(branchscore_core
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+target_include_directories(branchscore_core SYSTEM PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/ggml/examples)
 target_link_libraries(branchscore_core PUBLIC ggml::ggml)
 target_compile_features(branchscore_core PUBLIC cxx_std_17)
 
@@ -54,4 +57,8 @@ if(BRANCHSCORE_BUILD_TESTS)
     target_link_libraries(branchscore_tokenizer_test PRIVATE branchscore::core)
     add_test(NAME tokenizer COMMAND branchscore_tokenizer_test ${BRANCHSCORE_TEST_MODEL})
     set_tests_properties(tokenizer PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(branchscore_image_preprocessor_test tests/image_preprocessor_test.cpp)
+    target_link_libraries(branchscore_image_preprocessor_test PRIVATE branchscore::core)
+    add_test(NAME image_preprocessor COMMAND branchscore_image_preprocessor_test)
 endif()

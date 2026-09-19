@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,6 +43,12 @@ struct VisionModelConfig {
     std::uint32_t feed_forward_length = 0;
     std::uint32_t block_count = 0;
     std::uint32_t head_count = 0;
+    std::uint32_t merge_size = 3;
+    std::uint32_t image_min_pixels = 0;
+    std::uint32_t image_max_pixels = 0;
+    float layer_norm_epsilon = 0.0F;
+    std::array<float, 3> image_mean{};
+    std::array<float, 3> image_std{};
 };
 
 class ModelBundle {

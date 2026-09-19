@@ -41,6 +41,11 @@ Weights retain their GGUF tensor types when uploaded to the selected backend.
 Only Gemma 4 vision and projector tensors are loaded from mmproj; bundled audio
 tensors are deliberately excluded.
 
+Pass `--image FILE` with the model arguments to decode and preprocess a PNG,
+JPEG, BMP, TGA, GIF, PSD, HDR, PIC, or PNM image. The image keeps its aspect
+ratio, is aligned to the Gemma 4 patch/pooling grid, and is bicubic-resized to
+the model's supported visual-token range.
+
 Tokenizer IDs and option-boundary behavior can be inspected without loading
 model weights:
 

@@ -196,6 +196,29 @@ float f32_value(const gguf_context * gguf, const std::string & key) {
     return gguf_get_val_f32(gguf, id);
 }
 
+std::uint32_t optional_u32_value(
+    const gguf_context * gguf,
+    const std::string & key,
+    std::uint32_t fallback) {
+    const auto id = gguf_find_key(gguf, key.c_str());
+    if (id < 0) return fallback;
+    if (gguf_get_kv_type(gguf, id) != GGUF_TYPE_UINT32) {
+        throw std::runtime_error("GGUF key has wrong type: " + key);
+    }
+    return gguf_get_val_u32(gguf, id);
+}
+
+std::array<float, 3> f32_triplet(const gguf_context * gguf, const std::string & key) {
+    const auto id = require_key(gguf, key);
+    if (gguf_get_kv_type(gguf, id) != GGUF_TYPE_ARRAY ||
+        gguf_get_arr_type(gguf, id) != GGUF_TYPE_FLOAT32 ||
+        gguf_get_arr_n(gguf, id) < 3) {
+        throw std::runtime_error("GGUF key is not a float32 triplet: " + key);
+    }
+    const auto * values = static_cast<const float *>(gguf_get_arr_data(gguf, id));
+    return {values[0], values[1], values[2]};
+}
+
 std::vector<std::uint32_t> u32_values(const gguf_context * gguf, const std::string & key) {
     const auto id = require_key(gguf, key);
     const auto checked = [&key](std::int64_t value) {
@@ -357,6 +380,31 @@ VisionModelConfig read_vision_config(const gguf_context * gguf) {
     config.feed_forward_length = u32_value(gguf, "clip.vision.feed_forward_length");
     config.block_count = u32_value(gguf, "clip.vision.block_count");
     config.head_count = u32_value(gguf, "clip.vision.attention.head_count");
+    config.merge_size = optional_u32_value(
+        gguf, "clip.vision.projector.scale_factor", 3);
+    config.layer_norm_epsilon =
+        f32_value(gguf, "clip.vision.attention.layer_norm_epsilon");
+    config.image_mean = f32_triplet(gguf, "clip.vision.image_mean");
+    config.image_std = f32_triplet(gguf, "clip.vision.image_std");
+
+    if (config.merge_size == 0 || config.patch_size == 0) {
+        throw std::runtime_error("Gemma 4 vision patch and merge sizes must be positive");
+    }
+    const std::uint64_t aligned_patch =
+        static_cast<std::uint64_t>(config.patch_size) * config.merge_size;
+    const std::uint64_t patch_area = aligned_patch * aligned_patch;
+    const std::uint64_t min_pixels = 70U * patch_area;
+    const std::uint64_t max_pixels = 1120U * patch_area;
+    if (max_pixels > std::numeric_limits<std::uint32_t>::max()) {
+        throw std::runtime_error("Gemma 4 vision pixel limits exceed uint32 range");
+    }
+    config.image_min_pixels = static_cast<std::uint32_t>(min_pixels);
+    config.image_max_pixels = static_cast<std::uint32_t>(max_pixels);
+    for (std::size_t channel = 0; channel < 3; ++channel) {
+        if (config.image_std[channel] == 0.0F) {
+            throw std::runtime_error("Gemma 4 vision image std must be nonzero");
+        }
+    }
     return config;
 }
 
