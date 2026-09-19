@@ -7,6 +7,8 @@ option(BRANCHSCORE_BUILD_TESTS "Build branchscore tests" ON)
 option(BRANCHSCORE_CUDA "Build the ggml CUDA backend" OFF)
 option(BRANCHSCORE_VULKAN "Build the ggml Vulkan backend" OFF)
 set(BRANCHSCORE_TEST_MODEL "" CACHE FILEPATH "Gemma 4 GGUF used by tokenizer tests")
+set(BRANCHSCORE_TEST_MMPROJ "" CACHE FILEPATH "Gemma 4 mmproj GGUF used by model tests")
+set(BRANCHSCORE_TEST_BACKEND "cpu" CACHE STRING "Backend used by model execution tests")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,6 +30,7 @@ add_library(branchscore_core
     src/backend_context.cpp
     src/image_preprocessor.cpp
     src/model_loader.cpp
+    src/prefill_engine.cpp
     src/state_cache.cpp
     src/tokenizer.cpp
     src/vision_encoder.cpp
@@ -67,4 +70,14 @@ if(BRANCHSCORE_BUILD_TESTS)
     add_executable(branchscore_state_cache_test tests/state_cache_test.cpp)
     target_link_libraries(branchscore_state_cache_test PRIVATE branchscore::core)
     add_test(NAME state_cache COMMAND branchscore_state_cache_test)
+
+    add_executable(branchscore_prefill_test tests/prefill_engine_test.cpp)
+    target_link_libraries(branchscore_prefill_test PRIVATE branchscore::core)
+    add_test(
+        NAME prefill
+        COMMAND branchscore_prefill_test
+            ${BRANCHSCORE_TEST_MODEL}
+            ${BRANCHSCORE_TEST_MMPROJ}
+            ${BRANCHSCORE_TEST_BACKEND})
+    set_tests_properties(prefill PROPERTIES SKIP_RETURN_CODE 77)
 endif()
