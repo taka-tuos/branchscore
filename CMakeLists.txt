@@ -6,6 +6,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BRANCHSCORE_BUILD_TESTS "Build branchscore tests" ON)
 option(BRANCHSCORE_CUDA "Build the ggml CUDA backend" OFF)
 option(BRANCHSCORE_VULKAN "Build the ggml Vulkan backend" OFF)
+set(BRANCHSCORE_TEST_MODEL "" CACHE FILEPATH "Gemma 4 GGUF used by tokenizer tests")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,6 +27,7 @@ add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
 add_library(branchscore_core
     src/backend_context.cpp
     src/model_loader.cpp
+    src/tokenizer.cpp
 )
 add_library(branchscore::core ALIAS branchscore_core)
 
@@ -39,9 +41,17 @@ target_compile_features(branchscore_core PUBLIC cxx_std_17)
 add_executable(branchscore tools/branchscore.cpp)
 target_link_libraries(branchscore PRIVATE branchscore::core)
 
+add_executable(branchscore-tokenize tools/tokenize.cpp)
+target_link_libraries(branchscore-tokenize PRIVATE branchscore::core)
+
 if(BRANCHSCORE_BUILD_TESTS)
     enable_testing()
     add_executable(branchscore_backend_test tests/backend_context_test.cpp)
     target_link_libraries(branchscore_backend_test PRIVATE branchscore::core)
     add_test(NAME backend_context COMMAND branchscore_backend_test)
+
+    add_executable(branchscore_tokenizer_test tests/tokenizer_test.cpp)
+    target_link_libraries(branchscore_tokenizer_test PRIVATE branchscore::core)
+    add_test(NAME tokenizer COMMAND branchscore_tokenizer_test ${BRANCHSCORE_TEST_MODEL})
+    set_tests_properties(tokenizer PROPERTIES SKIP_RETURN_CODE 77)
 endif()

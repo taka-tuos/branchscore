@@ -40,3 +40,15 @@ Stage 2.2 model loading can be exercised with a matching text GGUF and mmproj:
 Weights retain their GGUF tensor types when uploaded to the selected backend.
 Only Gemma 4 vision and projector tensors are loaded from mmproj; bundled audio
 tensors are deliberately excluded.
+
+Tokenizer IDs and option-boundary behavior can be inspected without loading
+model weights:
+
+```sh
+./build/branchscore-tokenize --model /path/to/model.gguf --text "Hello world"
+./build/branchscore-tokenize --model /path/to/model.gguf \
+  --prefix $'<|turn>model\n' --option "candidate text"
+```
+
+To enable the model-backed tokenizer CTest, configure with
+`-DBRANCHSCORE_TEST_MODEL=/path/to/gemma-4-E2B-it-Q4_K_M.gguf`.
