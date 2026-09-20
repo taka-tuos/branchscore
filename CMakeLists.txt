@@ -72,6 +72,10 @@ if(BRANCHSCORE_BUILD_TESTS)
     target_link_libraries(branchscore_state_cache_test PRIVATE branchscore::core)
     add_test(NAME state_cache COMMAND branchscore_state_cache_test)
 
+    add_executable(branchscore_option_summary_test tests/option_summary_test.cpp)
+    target_link_libraries(branchscore_option_summary_test PRIVATE branchscore::core)
+    add_test(NAME option_summary COMMAND branchscore_option_summary_test)
+
     add_executable(branchscore_prefill_test tests/prefill_engine_test.cpp)
     target_link_libraries(branchscore_prefill_test PRIVATE branchscore::core)
     add_test(
