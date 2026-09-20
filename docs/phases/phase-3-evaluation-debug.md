@@ -187,3 +187,19 @@ measurements.
   sensitivity observation for the current quantized baseline; CPU and CUDA
   distributions must not be treated as numerically identical until a later
   parity study. CUDA focused/model-backed CTest also passed 10/10.
+- 2026-09-20: The committed shape777 fixture has SHA-256
+  `8dcf414b12fc2684e3c4ca5f3ebfd3f525f5346fec4a9bc67eb65138101f55f1`.
+  Its longest row passed CUDA smoke on the RTX 2060 SUPER for both E2B and E4B:
+  E2B took 920.01 ms (Prefill 640.14 ms), and E4B took 1,475.22 ms
+  (Prefill 1,044.51 ms), with no allocation or context failure. The full
+  fresh sequential 777-row run then completed for both models. E2B took
+  711,256.10 ms (11.85 minutes, 1.0924 decisions/s, request p50/p95
+  918.31/930.47 ms, mean Prefill 628.70 ms, mean option scoring 259.03 ms),
+  while E4B took 1,161,806.31 ms (19.36 minutes, 0.6688 decisions/s, request
+  p50/p95 1,499.00/1,512.87 ms, mean Prefill 1,052.30 ms, mean option scoring
+  414.99 ms). Both artifacts contain 777 decision rows plus run and aggregate
+  rows and are retained locally under ignored `out/shape777-*-cuda.jsonl`.
+  The E2B selections were `no` 573 / `yes` 204 and E4B selections were
+  `no` 162 / `yes` 615; they agreed on 320/777 rows (41.18%). Because this
+  fixture has no semantic gold labels, these counts are descriptive model
+  sensitivity observations, not accuracy measurements.
