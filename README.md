@@ -28,6 +28,28 @@ history, and roadmap.
   normalization.
 - Reports sum/mean log-probabilities, probabilities relative to the supplied
   option set, the selected option, and stage timings.
+- Provides a warm-loaded, sequential branchscore-bench JSONL runner with
+  row-level scores and aggregate latency/throughput measurements.
+
+Run a small sequential benchmark. Each non-empty input line is one decision
+object with required id, state, question, and
+options: [{"id": ..., "description": ...}] fields. Extra fields are ignored
+so existing project fixtures can be reused. An optional image path is resolved
+relative to the input JSONL file.
+
+    ./build/branchscore-bench --backend cpu \
+      --model /path/to/gemma-4-E2B-it-Q4_K_M.gguf \
+      --mmproj /path/to/mmproj-F16.gguf \
+      --input fixtures/phase3-text.jsonl \
+      --output /tmp/branchscore-e2b.jsonl
+
+The default warmup evaluates the first request once and discards its result;
+use --warmup COUNT to change it. The output contains one run metadata row, one
+decision row per input row, and one aggregate row. It includes ordered option
+token IDs/log-probabilities, prompt identity, stage timings, p50/p95 request
+latency, and decisions/second. The output path must not already exist; model
+loading, warmup, and result-file writes are outside the measured request
+interval. Context overflow is an error and is never silently truncated.
 
 The `branchscore_core` CMake target is an internal implementation boundary,
 not a stable or installable library API.

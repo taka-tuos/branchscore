@@ -31,6 +31,7 @@ add_library(branchscore_core
     src/gemma4_decision_engine.cpp
     src/gemma4_prompt_renderer.cpp
     src/image_preprocessor.cpp
+    src/json.cpp
     src/model_loader.cpp
     src/option_scorer.cpp
     src/prefill_engine.cpp
@@ -55,6 +56,9 @@ target_link_libraries(branchscore PRIVATE branchscore::core)
 add_executable(branchscore-tokenize tools/tokenize.cpp)
 target_link_libraries(branchscore-tokenize PRIVATE branchscore::core)
 
+add_executable(branchscore-bench tools/branchscore_bench.cpp)
+target_link_libraries(branchscore-bench PRIVATE branchscore::core)
+
 if(BRANCHSCORE_BUILD_TESTS)
     enable_testing()
     add_executable(branchscore_backend_test tests/backend_context_test.cpp)
@@ -68,6 +72,10 @@ if(BRANCHSCORE_BUILD_TESTS)
     add_executable(branchscore_decision_contract_test tests/decision_contract_test.cpp)
     target_link_libraries(branchscore_decision_contract_test PRIVATE branchscore::core)
     add_test(NAME decision_contract COMMAND branchscore_decision_contract_test)
+
+    add_executable(branchscore_json_test tests/json_test.cpp)
+    target_link_libraries(branchscore_json_test PRIVATE branchscore::core)
+    add_test(NAME json COMMAND branchscore_json_test)
 
     add_executable(branchscore_gemma4_decision_engine_test tests/gemma4_decision_engine_test.cpp)
     target_link_libraries(branchscore_gemma4_decision_engine_test PRIVATE branchscore::core)
