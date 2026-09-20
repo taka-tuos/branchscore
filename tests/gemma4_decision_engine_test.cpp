@@ -14,15 +14,17 @@ void check_result(const branchscore::DecisionResult & result, bool expect_reques
     if (result.option_scores.size() != 2 || result.selected_id.empty() ||
         result.selected_index >= result.option_scores.size() ||
         result.option_scores[result.selected_index].option_id != result.selected_id ||
-        result.scoring_basis != "sum_logprob" || result.terminator_scored ||
-        result.prompt_format.renderer_id != "gemma4-fixed-v1" ||
+        result.scoring_basis != "answer_slot_logit" ||
+        result.readout_id != "gemma4-next-token-categorical-v1" ||
+        result.terminator_scored ||
+        result.prompt_format.renderer_id != "gemma4-categorical-v1" ||
         result.prompt_format.effective_source != "built-in" ||
         result.prompt_format.requested_template_applied ||
         result.prompt_format.requested_template_file.has_value() != expect_requested_template ||
         result.prompt_format.gguf_chat_template_used ||
-        result.rendered_prompt_identity.find("gemma4-fixed-v1/sha256:") != 0 ||
+        result.rendered_prompt_identity.find("gemma4-categorical-v1/sha256:") != 0 ||
         result.rendered_prefix_token_ids.empty() ||
-        result.timings.option_scoring_ms.size() != result.option_scores.size()) {
+        result.timings.readout_graph_node_count == 0) {
         throw std::runtime_error("decision result contract is incorrect");
     }
     const auto nonnegative = [](double value) {
@@ -33,6 +35,7 @@ void check_result(const branchscore::DecisionResult & result, bool expect_reques
         !nonnegative(result.timings.image_preprocessing_ms) ||
         !nonnegative(result.timings.vision_ms) ||
         !nonnegative(result.timings.prefill_ms) ||
+        !nonnegative(result.timings.readout_ms) ||
         !nonnegative(result.timings.score_total_ms) ||
         !nonnegative(result.timings.normalization_ms) ||
         !nonnegative(result.timings.request_total_ms)) {
@@ -41,9 +44,10 @@ void check_result(const branchscore::DecisionResult & result, bool expect_reques
     double probability_sum = 0.0;
     for (const auto & score : result.option_scores) {
         if (score.input_index >= result.option_scores.size() ||
-            !std::isfinite(score.sum_logprob) || !std::isfinite(score.mean_logprob) ||
+            score.answer_label.size() != 1 || score.answer_token_id < 0 ||
+            !std::isfinite(score.raw_score) ||
             !std::isfinite(score.relative_probability) || score.relative_probability < 0.0 ||
-            !nonnegative(score.elapsed_ms)) {
+            score.relative_probability > 1.0) {
             throw std::runtime_error("option result contract is incorrect");
         }
         probability_sum += score.relative_probability;
@@ -102,8 +106,8 @@ int main(int argc, char ** argv) {
                 "reserved template override changed the decision path");
         }
         for (std::size_t i = 0; i < no_op.option_scores.size(); ++i) {
-            if (std::abs(no_op.option_scores[i].sum_logprob -
-                        baseline.option_scores[i].sum_logprob) > 1e-4) {
+            if (std::abs(no_op.option_scores[i].raw_score -
+                        baseline.option_scores[i].raw_score) > 1e-4) {
                 throw std::runtime_error(
                     "reserved template override changed option scores");
             }

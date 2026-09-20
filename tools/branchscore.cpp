@@ -222,20 +222,16 @@ int main(int argc, char ** argv) {
                   << "Prefix IDs: "
                   << format_ids(result.rendered_prefix_token_ids) << '\n';
         for (const auto & score : result.option_scores) {
-            std::cout << "Option " << score.option_id
-                      << " IDs: " << format_ids(score.token_ids) << '\n';
             std::cout << "Score " << score.option_id
                       << " index=" << score.input_index
-                      << " tokens=" << score.token_count
-                      << " sum_logprob=" << score.sum_logprob
-                      << " mean_logprob=" << score.mean_logprob
+                      << " answer_label=" << score.answer_label
+                      << " answer_token_id=" << score.answer_token_id
+                      << " raw_score=" << score.raw_score
                       << " relative_probability=" << score.relative_probability
-                      << " backend_copy_ms=" << score.backend_copy_ms
-                      << " synchronization_ms=" << score.synchronization_ms
-                      << " graph_node_count=" << score.graph_node_count
-                      << " elapsed_ms=" << score.elapsed_ms << '\n';
+                      << '\n';
         }
         std::cout << "scoring_basis=" << result.scoring_basis
+                  << " readout_id=" << result.readout_id
                   << " terminator_scored="
                   << (result.terminator_scored ? "true" : "false") << '\n'
                   << "Selected: " << result.selected_id
@@ -254,9 +250,10 @@ int main(int argc, char ** argv) {
                   << " prefill_synchronization=" << result.timings.prefill_synchronization_ms
                   << " prefill_graph_nodes=" << result.timings.prefill_graph_node_count
                   << " score_total=" << result.timings.score_total_ms
-                  << " option_backend_copy=" << result.timings.option_backend_copy_ms
-                  << " option_synchronization=" << result.timings.option_synchronization_ms
-                  << " option_graph_nodes=" << result.timings.option_graph_node_count
+                  << " readout=" << result.timings.readout_ms
+                  << " readout_backend_copy=" << result.timings.readout_backend_copy_ms
+                  << " readout_synchronization=" << result.timings.readout_synchronization_ms
+                  << " readout_graph_nodes=" << result.timings.readout_graph_node_count
                   << " normalization=" << result.timings.normalization_ms
                   << " request_total=" << result.timings.request_total_ms << '\n';
         std::cout << "Relative probabilities are conditional on the supplied option set;"

@@ -1,5 +1,7 @@
 #include "branchscore/gemma4_prompt_renderer.hpp"
 
+#include "branchscore/json.hpp"
+
 #include <array>
 #include <cstdint>
 #include <iomanip>
@@ -130,7 +132,12 @@ constexpr std::array<std::uint32_t, 64> Sha256::constants_;
 std::string prompt_identity(const std::string & text) {
     Sha256 hash;
     hash.update(text);
-    return "gemma4-fixed-v1/sha256:" + hash.finish();
+    return "gemma4-categorical-v1/sha256:" + hash.finish();
+}
+
+std::string answer_label(const std::size_t index) {
+    if (index >= 16) throw std::runtime_error("Gemma 4 categorical readout supports A-P");
+    return std::string(1, static_cast<char>('A' + index));
 }
 
 } // namespace
@@ -144,32 +151,50 @@ const char * reasoning_policy_name(ReasoningPolicy policy) noexcept {
 }
 
 const char * Gemma4PromptRenderer::renderer_id() noexcept {
-    return "gemma4-fixed-v1";
+    return "gemma4-categorical-v1";
 }
 
 RenderedPrompt Gemma4PromptRenderer::render(
     const std::string & state,
     const std::string & question,
+    const std::vector<DecisionOption> & options,
     bool has_image,
     const PromptPolicy & policy,
     const std::optional<std::string> & requested_template_file,
     bool gguf_chat_template_present) const {
     if (state.empty()) throw std::runtime_error("state must not be empty");
     if (question.empty()) throw std::runtime_error("question must not be empty");
+    if (options.size() < 2 || options.size() > 16) {
+        throw std::runtime_error("categorical prompt requires 2-16 options");
+    }
     if (policy.reasoning != ReasoningPolicy::DirectAnswerDisabled) {
         throw std::runtime_error("unsupported Gemma 4 reasoning policy");
     }
 
     std::string text;
-    text.reserve(state.size() + question.size() + 160);
+    text.reserve(state.size() + question.size() + options.size() * 48 + 240);
     text += "<bos><|turn>system\n";
-    text += "Use the supplied state to answer the question. Return only the answer.";
+    text += "Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning.";
     text += "<turn|>\n<|turn>user\n";
     if (has_image) text += "<|image|>\n";
     text += "State:\n";
     text += state;
     text += "\n\nQuestion:\n";
     text += question;
+    text += "\n\nOptions:\n";
+    json::Value::Array rendered_options;
+    rendered_options.reserve(options.size());
+    std::vector<RenderedAnswerSlot> answer_slots;
+    answer_slots.reserve(options.size());
+    for (std::size_t index = 0; index < options.size(); ++index) {
+        const auto label = answer_label(index);
+        json::Value::Object rendered_option;
+        rendered_option.emplace("letter", label);
+        rendered_option.emplace("description", options[index].description);
+        rendered_options.emplace_back(json::Value(std::move(rendered_option)));
+        answer_slots.push_back(RenderedAnswerSlot{label, index, options[index].id});
+    }
+    text += json::stringify(json::Value(std::move(rendered_options)));
     text += "<turn|>\n<|turn>model\n";
 
     PromptFormatInfo format;
@@ -182,7 +207,8 @@ RenderedPrompt Gemma4PromptRenderer::render(
     format.gguf_chat_template_present = gguf_chat_template_present;
     format.gguf_chat_template_used = false;
     const auto identity = prompt_identity(text);
-    return RenderedPrompt{std::move(text), std::move(format), identity};
+    return RenderedPrompt{
+        std::move(text), std::move(format), identity, std::move(answer_slots)};
 }
 
 } // namespace branchscore

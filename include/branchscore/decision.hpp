@@ -56,10 +56,10 @@ struct TimingInfo {
     double prefill_backend_copy_ms = 0.0;
     double prefill_synchronization_ms = 0.0;
     std::size_t prefill_graph_node_count = 0;
-    std::vector<double> option_scoring_ms;
-    double option_backend_copy_ms = 0.0;
-    double option_synchronization_ms = 0.0;
-    std::size_t option_graph_node_count = 0;
+    double readout_ms = 0.0;
+    double readout_backend_copy_ms = 0.0;
+    double readout_synchronization_ms = 0.0;
+    std::size_t readout_graph_node_count = 0;
     double score_total_ms = 0.0;
     double normalization_ms = 0.0;
     double request_total_ms = 0.0;
@@ -68,16 +68,10 @@ struct TimingInfo {
 struct OptionScore {
     std::size_t input_index = 0;
     std::string option_id;
-    std::size_t token_count = 0;
-    double sum_logprob = 0.0;
-    double mean_logprob = 0.0;
+    std::string answer_label;
+    std::int32_t answer_token_id = -1;
+    double raw_score = 0.0;
     double relative_probability = 0.0;
-    double elapsed_ms = 0.0;
-    double backend_copy_ms = 0.0;
-    double synchronization_ms = 0.0;
-    std::size_t graph_node_count = 0;
-    std::vector<std::int32_t> token_ids;
-    std::vector<float> token_logprobs;
 };
 
 struct VisionDebugInfo {
@@ -87,11 +81,13 @@ struct VisionDebugInfo {
 };
 
 struct DecisionResult {
+    int schema_version = 2;
     std::vector<OptionScore> option_scores;
     std::size_t selected_index = 0;
     std::string selected_id;
     bool exact_tie = false;
-    std::string scoring_basis = "sum_logprob";
+    std::string scoring_basis = "answer_slot_logit";
+    std::string readout_id = "gemma4-next-token-categorical-v1";
     bool terminator_scored = false;
     PromptFormatInfo prompt_format;
     std::string rendered_prompt_identity;

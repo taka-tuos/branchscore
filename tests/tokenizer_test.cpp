@@ -43,17 +43,18 @@ int main(int argc, char ** argv) {
         {2, 1, 106, 50, 954, 236751, 236813},
         "special tokens");
 
-    const auto option = tokenizer.tokenize_option(
-        "<|turn>model\n", "answer", 0, "状態を見て判断する。");
-    valid &= option.boundary_valid;
-    valid &= expect(option.ids, {34593, 90166, 38303, 4042, 236924}, "option");
-
-    try {
-        (void) tokenizer.tokenize_option("Hell", "merged", 1, "o");
-        std::cerr << "changed prefix boundary was accepted\n";
-        valid = false;
-    } catch (const std::runtime_error &) {
+    std::vector<branchscore::TokenId> answer_ids;
+    for (char label = 'A'; label <= 'P'; ++label) {
+        const auto answer = tokenizer.tokenize_answer_label(
+            "<|turn>model\n", std::string(1, label));
+        valid &= answer.boundary_valid;
+        valid &= tokenizer.piece(answer.id) == std::string(1, label);
+        answer_ids.push_back(answer.id);
+    }
+    for (std::size_t i = 0; i < answer_ids.size(); ++i) {
+        for (std::size_t j = i + 1; j < answer_ids.size(); ++j) {
+            valid &= answer_ids[i] != answer_ids[j];
+        }
     }
     return valid ? 0 : 1;
 }
-

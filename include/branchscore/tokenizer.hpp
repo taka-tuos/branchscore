@@ -18,6 +18,12 @@ struct OptionTokens {
     bool boundary_valid = false;
 };
 
+struct AnswerToken {
+    std::string label;
+    TokenId id = -1;
+    bool boundary_valid = false;
+};
+
 class GemmaTokenizer {
 public:
     static GemmaTokenizer from_gguf(const std::string & model_path);
@@ -33,11 +39,9 @@ public:
         bool add_bos,
         bool parse_special = true) const;
 
-    OptionTokens tokenize_option(
+    AnswerToken tokenize_answer_label(
         const std::string & rendered_prefix,
-        const std::string & option_id,
-        std::size_t input_index,
-        const std::string & description) const;
+        const std::string & label) const;
 
     const std::string & piece(TokenId id) const;
     std::size_t vocabulary_size() const noexcept;
@@ -45,6 +49,7 @@ public:
     TokenId eos_id() const noexcept;
     std::optional<std::string> chat_template() const noexcept;
     std::optional<TokenId> find_token(const std::string & piece) const;
+    bool is_special_token(TokenId id) const;
 
 private:
     struct Impl;

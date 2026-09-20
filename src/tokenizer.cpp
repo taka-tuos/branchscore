@@ -368,32 +368,30 @@ std::vector<TokenId> GemmaTokenizer::tokenize(
     return output;
 }
 
-OptionTokens GemmaTokenizer::tokenize_option(
+AnswerToken GemmaTokenizer::tokenize_answer_label(
     const std::string & rendered_prefix,
-    const std::string & option_id,
-    std::size_t input_index,
-    const std::string & description) const {
-    if (description.empty()) throw std::runtime_error("option description must not be empty");
+    const std::string & label) const {
+    if (label.size() != 1 || label[0] < 'A' || label[0] > 'P') {
+        throw std::runtime_error("Gemma 4 answer label must be one uppercase letter A-P");
+    }
     const bool rendered_has_bos = rendered_prefix.rfind("<bos>", 0) == 0;
     const auto prefix_ids = tokenize(rendered_prefix, !rendered_has_bos, true);
-    const auto combined_ids = tokenize(
-        rendered_prefix + description, !rendered_has_bos, true);
-    if (combined_ids.size() < prefix_ids.size() ||
-        !std::equal(prefix_ids.begin(), prefix_ids.end(), combined_ids.begin())) {
+    const auto standalone_ids = tokenize(label, false, true);
+    if (standalone_ids.size() != 1) {
+        throw std::runtime_error("answer label '" + label + "' is not a single token");
+    }
+    const auto id = standalone_ids.front();
+    if (piece(id) != label || id == eos_id() || is_special_token(id)) {
+        throw std::runtime_error("answer label '" + label + "' is not a normal token");
+    }
+    const auto combined_ids = tokenize(rendered_prefix + label, !rendered_has_bos, true);
+    if (combined_ids.size() != prefix_ids.size() + 1 ||
+        !std::equal(prefix_ids.begin(), prefix_ids.end(), combined_ids.begin()) ||
+        combined_ids.back() != id) {
         throw std::runtime_error(
-            "option '" + option_id + "' changes tokenization at the prefix boundary");
+            "answer label '" + label + "' changes tokenization at the prompt boundary");
     }
-    OptionTokens result;
-    result.option_id = option_id;
-    result.input_index = input_index;
-    result.description = description;
-    result.ids.assign(combined_ids.begin() + static_cast<std::ptrdiff_t>(prefix_ids.size()),
-                      combined_ids.end());
-    if (result.ids.empty()) {
-        throw std::runtime_error("option '" + option_id + "' has no continuation tokens");
-    }
-    result.boundary_valid = true;
-    return result;
+    return AnswerToken{label, id, true};
 }
 
 const std::string & GemmaTokenizer::piece(TokenId id) const {
@@ -418,6 +416,12 @@ std::optional<TokenId> GemmaTokenizer::find_token(const std::string & piece) con
     const auto found = impl_->piece_to_id.find(piece);
     if (found == impl_->piece_to_id.end()) return std::nullopt;
     return found->second;
+}
+
+bool GemmaTokenizer::is_special_token(const TokenId id) const {
+    return std::any_of(
+        impl_->special_tokens.begin(), impl_->special_tokens.end(),
+        [id](const SpecialToken & token) { return token.id == id; });
 }
 
 } // namespace branchscore

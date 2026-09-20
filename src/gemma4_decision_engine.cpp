@@ -1,8 +1,8 @@
 #include "branchscore/gemma4_decision_engine.hpp"
 
+#include "branchscore/categorical_readout.hpp"
 #include "branchscore/gemma4_prompt_renderer.hpp"
 #include "branchscore/image_preprocessor.hpp"
-#include "branchscore/option_scorer.hpp"
 #include "branchscore/prefill_engine.hpp"
 #include "branchscore/vision_encoder.hpp"
 
@@ -66,6 +66,7 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     const auto rendered = renderer.render(
         request.state,
         request.question,
+        request.options,
         request.image_path.has_value(),
         request.prompt_policy,
         request.chat_template_file,
@@ -98,17 +99,16 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
         tokens_after.assign(image_position + 1, all_ids.end());
     }
 
-    std::vector<OptionTokens> option_tokens;
-    option_tokens.reserve(request.options.size());
-    std::size_t maximum_option_tokens = 0;
-    for (std::size_t index = 0; index < request.options.size(); ++index) {
-        option_tokens.push_back(tokenizer_.tokenize_option(
-            rendered.text,
-            request.options[index].id,
-            index,
-            request.options[index].description));
-        maximum_option_tokens = std::max(
-            maximum_option_tokens, option_tokens.back().ids.size());
+    std::vector<AnswerToken> answer_tokens;
+    answer_tokens.reserve(rendered.answer_slots.size());
+    std::unordered_set<TokenId> answer_token_ids;
+    for (const auto & slot : rendered.answer_slots) {
+        const auto answer = tokenizer_.tokenize_answer_label(rendered.text, slot.label);
+        if (!answer.boundary_valid || !answer_token_ids.insert(answer.id).second) {
+            throw std::runtime_error(
+                "categorical answer labels must map to distinct valid tokens");
+        }
+        answer_tokens.push_back(answer);
     }
     const auto tokenization_ms = elapsed_ms(tokenization_started);
 
@@ -142,30 +142,41 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
         tokens_before,
         visual_tokens.get(),
         tokens_after,
-        maximum_option_tokens);
+        0);
     const auto prefill_ms = elapsed_ms(prefill_started);
     const auto prefill_backend_timing = prefill_state.backend_timing();
     const auto prefill_graph_node_count = prefill_state.graph_node_count();
 
-    OptionScorer scorer(model_, backend_);
-    const auto score_started = Clock::now();
-    std::vector<OptionScore> scores;
-    scores.reserve(option_tokens.size());
-    for (const auto & option : option_tokens) {
-        scores.push_back(scorer.score(prefill_state, option));
-    }
-    const auto score_total_ms = elapsed_ms(score_started);
+    const auto readout_started = Clock::now();
+    std::vector<TokenId> answer_ids;
+    answer_ids.reserve(answer_tokens.size());
+    for (const auto & answer : answer_tokens) answer_ids.push_back(answer.id);
+    const auto logits = gather_categorical_logits(
+        prefill_state, answer_ids, backend_);
+    const auto readout_ms = elapsed_ms(readout_started);
 
     const auto normalization_started = Clock::now();
-    const auto summary = summarize_options(std::move(scores));
+    const auto summary = summarize_categorical(logits.raw_scores);
     const auto normalization_ms = elapsed_ms(normalization_started);
 
     DecisionResult result;
-    result.option_scores = summary.scores;
-    result.selected_index = result.option_scores[summary.selected_position].input_index;
-    result.selected_id = result.option_scores[summary.selected_position].option_id;
-    result.exact_tie = summary.tie;
-    result.scoring_basis = "sum_logprob";
+    result.option_scores.reserve(rendered.answer_slots.size());
+    for (std::size_t index = 0; index < rendered.answer_slots.size(); ++index) {
+        const auto & slot = rendered.answer_slots[index];
+        result.option_scores.push_back(OptionScore{
+            slot.input_index,
+            slot.option_id,
+            slot.label,
+            answer_tokens[index].id,
+            static_cast<double>(logits.raw_scores[index]),
+            summary.relative_probabilities[index],
+        });
+    }
+    result.selected_index = result.option_scores[summary.selected_index].input_index;
+    result.selected_id = result.option_scores[summary.selected_index].option_id;
+    result.exact_tie = summary.exact_tie;
+    result.scoring_basis = "answer_slot_logit";
+    result.readout_id = "gemma4-next-token-categorical-v1";
     result.terminator_scored = false;
     result.prompt_format = rendered.format;
     result.rendered_prompt_identity = rendered.identity;
@@ -185,14 +196,11 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     result.timings.prefill_backend_copy_ms = prefill_backend_timing.copy_ms;
     result.timings.prefill_synchronization_ms = prefill_backend_timing.synchronization_ms;
     result.timings.prefill_graph_node_count = prefill_graph_node_count;
-    result.timings.option_scoring_ms.reserve(result.option_scores.size());
-    for (const auto & score : result.option_scores) {
-        result.timings.option_scoring_ms.push_back(score.elapsed_ms);
-        result.timings.option_backend_copy_ms += score.backend_copy_ms;
-        result.timings.option_synchronization_ms += score.synchronization_ms;
-        result.timings.option_graph_node_count += score.graph_node_count;
-    }
-    result.timings.score_total_ms = score_total_ms;
+    result.timings.readout_ms = readout_ms;
+    result.timings.readout_backend_copy_ms = logits.backend_timing.copy_ms;
+    result.timings.readout_synchronization_ms = logits.backend_timing.synchronization_ms;
+    result.timings.readout_graph_node_count = logits.graph_node_count;
+    result.timings.score_total_ms = readout_ms;
     result.timings.normalization_ms = normalization_ms;
     result.timings.request_total_ms = elapsed_ms(request_started);
     return result;

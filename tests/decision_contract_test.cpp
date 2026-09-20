@@ -14,10 +14,10 @@ int main() {
         branchscore::DecisionResult result;
         result.option_scores.resize(request.options.size());
         result.prompt_format.prompt_policy = request.prompt_policy;
-        result.scoring_basis = "sum_logprob";
+        result.scoring_basis = "answer_slot_logit";
         result.terminator_scored = false;
         if (request.options.size() != 2 || request.options[0].id != "semantic-a" ||
-            !request.chat_template_file || result.scoring_basis != "sum_logprob" ||
+            !request.chat_template_file || result.scoring_basis != "answer_slot_logit" ||
             result.terminator_scored ||
             result.prompt_format.prompt_policy.reasoning !=
                 branchscore::ReasoningPolicy::DirectAnswerDisabled) {

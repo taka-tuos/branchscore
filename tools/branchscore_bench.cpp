@@ -113,13 +113,11 @@ Json timing_json(const branchscore::TimingInfo & timing) {
     result.emplace("prefill_backend_copy_ms", number(timing.prefill_backend_copy_ms));
     result.emplace("prefill_synchronization_ms", number(timing.prefill_synchronization_ms));
     result.emplace("prefill_graph_node_count", size_number(timing.prefill_graph_node_count));
-    Array options;
-    for (const auto value : timing.option_scoring_ms) options.emplace_back(number(value));
-    result.emplace("option_scoring_ms", Json(std::move(options)));
     result.emplace("score_total_ms", number(timing.score_total_ms));
-    result.emplace("option_backend_copy_ms", number(timing.option_backend_copy_ms));
-    result.emplace("option_synchronization_ms", number(timing.option_synchronization_ms));
-    result.emplace("option_graph_node_count", size_number(timing.option_graph_node_count));
+    result.emplace("readout_ms", number(timing.readout_ms));
+    result.emplace("readout_backend_copy_ms", number(timing.readout_backend_copy_ms));
+    result.emplace("readout_synchronization_ms", number(timing.readout_synchronization_ms));
+    result.emplace("readout_graph_node_count", size_number(timing.readout_graph_node_count));
     result.emplace("normalization_ms", number(timing.normalization_ms));
     result.emplace("request_total_ms", number(timing.request_total_ms));
     return Json(std::move(result));
@@ -156,6 +154,7 @@ Json row_json(
     const double measured_request_ms) {
     Object row;
     row.emplace("kind", "decision");
+    row.emplace("schema_version", size_number(result.schema_version));
     row.emplace("request_id", input.id);
     row.emplace("input_line", size_number(input.line));
     row.emplace("state_byte_count", size_number(input.request.state.size()));
@@ -169,24 +168,10 @@ Json row_json(
         option.emplace("id", score.option_id);
         option.emplace("input_index", size_number(score.input_index));
         option.emplace("description", input_option.description);
-        option.emplace("token_count", size_number(score.token_count));
-        option.emplace("token_ids", [&] {
-            Array ids;
-            for (const auto id : score.token_ids) ids.emplace_back(number(id));
-            return Json(std::move(ids));
-        }());
-        option.emplace("token_logprobs", [&] {
-            Array values;
-            for (const auto value : score.token_logprobs) values.emplace_back(number(value));
-            return Json(std::move(values));
-        }());
-        option.emplace("sum_logprob", number(score.sum_logprob));
-        option.emplace("mean_logprob", number(score.mean_logprob));
+        option.emplace("answer_label", score.answer_label);
+        option.emplace("answer_token_id", number(score.answer_token_id));
+        option.emplace("raw_score", number(score.raw_score));
         option.emplace("relative_probability", number(score.relative_probability));
-        option.emplace("elapsed_ms", number(score.elapsed_ms));
-        option.emplace("backend_copy_ms", number(score.backend_copy_ms));
-        option.emplace("synchronization_ms", number(score.synchronization_ms));
-        option.emplace("graph_node_count", size_number(score.graph_node_count));
         options.emplace_back(Json(std::move(option)));
     }
     row.emplace("options", Json(std::move(options)));
@@ -194,6 +179,7 @@ Json row_json(
     row.emplace("selected_index", size_number(result.selected_index));
     row.emplace("exact_tie", Json(result.exact_tie));
     row.emplace("scoring_basis", result.scoring_basis);
+    row.emplace("readout_id", result.readout_id);
     row.emplace("terminator_scored", Json(result.terminator_scored));
     row.emplace("prompt", prompt_json(result));
     row.emplace("timings_ms", timing_json(result.timings));
@@ -213,7 +199,7 @@ Json run_json(
     const auto & vision = model.vision_config();
     Object run;
     run.emplace("kind", "run");
-    run.emplace("schema_version", "branchscore-bench-v1");
+    run.emplace("schema_version", size_number(2));
     run.emplace("input_path", input_path.string());
     run.emplace("model_path", model_path.string());
     run.emplace("mmproj_path", mmproj_path.string());
@@ -299,14 +285,17 @@ Json aggregate_json(
     timing.emplace("score_total_ms_mean", number(average([](const auto & v) {
         return v.score_total_ms;
     })));
-    timing.emplace("option_backend_copy_ms_mean", number(average([](const auto & v) {
-        return v.option_backend_copy_ms;
+    timing.emplace("readout_ms_mean", number(average([](const auto & v) {
+        return v.readout_ms;
     })));
-    timing.emplace("option_synchronization_ms_mean", number(average([](const auto & v) {
-        return v.option_synchronization_ms;
+    timing.emplace("readout_backend_copy_ms_mean", number(average([](const auto & v) {
+        return v.readout_backend_copy_ms;
     })));
-    timing.emplace("option_graph_node_count_mean", number(average([](const auto & v) {
-        return static_cast<double>(v.option_graph_node_count);
+    timing.emplace("readout_synchronization_ms_mean", number(average([](const auto & v) {
+        return v.readout_synchronization_ms;
+    })));
+    timing.emplace("readout_graph_node_count_mean", number(average([](const auto & v) {
+        return static_cast<double>(v.readout_graph_node_count);
     })));
     timing.emplace("normalization_ms_mean", number(average([](const auto & v) {
         return v.normalization_ms;

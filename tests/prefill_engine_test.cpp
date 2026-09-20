@@ -1,7 +1,7 @@
 #include "branchscore/backend_context.hpp"
+#include "branchscore/categorical_readout.hpp"
 #include "branchscore/image_preprocessor.hpp"
 #include "branchscore/model_loader.hpp"
-#include "branchscore/option_scorer.hpp"
 #include "branchscore/prefill_engine.hpp"
 #include "branchscore/tokenizer.hpp"
 #include "branchscore/vision_encoder.hpp"
@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
         auto tokenizer = branchscore::GemmaTokenizer::from_gguf(argv[1]);
         auto tokens = tokenizer.tokenize("Hello", true, false);
         branchscore::PrefillEngine engine(model, backend);
-        auto state = engine.prefill(tokens, nullptr, {}, 4);
+        auto state = engine.prefill(tokens, nullptr, {}, 0);
         const auto logits = state.download_logits();
         if (state.prefix_length() != tokens.size() ||
             state.cache().cursor() != tokens.size()) {
@@ -43,10 +43,21 @@ int main(int argc, char ** argv) {
             throw std::runtime_error("Prefill logits are unexpectedly constant");
         }
 
-        state.cache().advance(4);
-        state.cache().reset_branch();
-        if (state.cache().cursor() != tokens.size()) {
-            throw std::runtime_error("State-cache branch reset failed");
+        const auto answer_a = tokenizer.tokenize_answer_label("Hello", "A");
+        const auto answer_b = tokenizer.tokenize_answer_label("Hello", "B");
+        const auto categorical = branchscore::gather_categorical_logits(
+            state, {answer_a.id, answer_b.id}, backend);
+        if (categorical.raw_scores.size() != 2 ||
+            std::abs(categorical.raw_scores[0] - logits[answer_a.id]) > 1e-4F ||
+            std::abs(categorical.raw_scores[1] - logits[answer_b.id]) > 1e-4F) {
+            throw std::runtime_error("categorical gather disagrees with Prefill logits");
+        }
+        const auto categorical_summary =
+            branchscore::summarize_categorical(categorical.raw_scores);
+        if (categorical_summary.relative_probabilities.size() != 2 ||
+            !std::isfinite(categorical_summary.relative_probabilities[0]) ||
+            !std::isfinite(categorical_summary.relative_probabilities[1])) {
+            throw std::runtime_error("categorical normalization failed");
         }
         std::cout << "prefill tokens=" << tokens.size()
                   << " logits=" << logits.size() << '\n';
@@ -57,7 +68,7 @@ int main(int argc, char ** argv) {
         branchscore::VisionEncoder vision(model, backend);
         auto visual_tokens = vision.encode(image);
         auto multimodal = engine.prefill(
-            {tokens.front()}, &visual_tokens, {tokens.back()}, 4);
+            {tokens.front()}, &visual_tokens, {tokens.back()}, 0);
         const auto multimodal_logits = multimodal.download_logits();
         const auto expected_prefix = visual_tokens.token_count() + 2;
         if (multimodal.prefix_length() != expected_prefix ||
@@ -69,37 +80,8 @@ int main(int argc, char ** argv) {
         }
         std::cout << "multimodal prefill tokens=" << expected_prefix << '\n';
 
-        branchscore::OptionTokens option;
-        option.option_id = "first";
-        option.input_index = 0;
-        option.ids = {9259, 1902};
-        option.boundary_valid = true;
-        branchscore::OptionScorer scorer(model, backend);
-        const auto expected_logits = state.download_logits();
-        const auto expected_max = *std::max_element(
-            expected_logits.begin(), expected_logits.end());
-        double expected_normalizer = 0.0;
-        for (const auto value : expected_logits) {
-            expected_normalizer += std::exp(value - expected_max);
-        }
-        const auto expected_first =
-            static_cast<double>(expected_logits[option.ids.front()] - expected_max) -
-            std::log(expected_normalizer);
-        const auto first_score = scorer.score(state, option);
-        if (first_score.token_count != option.ids.size() ||
-            first_score.token_logprobs.size() != option.ids.size() ||
-            !std::isfinite(first_score.sum_logprob) ||
-            !std::isfinite(first_score.mean_logprob) ||
-            std::abs(first_score.token_logprobs.front() - expected_first) > 1e-4 ||
-            state.cache().cursor() != state.prefix_length() + option.ids.size() - 1) {
-            throw std::runtime_error("multi-token option scoring produced invalid state");
-        }
-        const auto second_score = scorer.score(state, option);
-        if (std::abs(second_score.sum_logprob - first_score.sum_logprob) > 1e-4) {
-            throw std::runtime_error("option branch reset is not deterministic");
-        }
-        std::cout << "option score tokens=" << first_score.token_count
-                  << " sum=" << first_score.sum_logprob << '\n';
+        std::cout << "categorical logits=" << categorical.raw_scores.size()
+                  << " prefix_tokens=" << state.prefix_length() << '\n';
         return 0;
     } catch (const std::exception & error) {
         std::cerr << error.what() << '\n';
