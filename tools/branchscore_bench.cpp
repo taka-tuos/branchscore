@@ -113,7 +113,6 @@ Json timing_json(const branchscore::TimingInfo & timing) {
     result.emplace("prefill_backend_copy_ms", number(timing.prefill_backend_copy_ms));
     result.emplace("prefill_synchronization_ms", number(timing.prefill_synchronization_ms));
     result.emplace("prefill_graph_node_count", size_number(timing.prefill_graph_node_count));
-    result.emplace("score_total_ms", number(timing.score_total_ms));
     result.emplace("readout_ms", number(timing.readout_ms));
     result.emplace("readout_backend_copy_ms", number(timing.readout_backend_copy_ms));
     result.emplace("readout_synchronization_ms", number(timing.readout_synchronization_ms));
@@ -132,10 +131,10 @@ Json prompt_json(const branchscore::DecisionResult & result) {
         "reasoning_policy",
         branchscore::reasoning_policy_name(result.prompt_format.prompt_policy.reasoning));
     prompt.emplace("identity", result.rendered_prompt_identity);
-    prompt.emplace("prefix_token_count", size_number(result.rendered_prefix_token_ids.size()));
+    prompt.emplace("prompt_token_count", size_number(result.rendered_prompt_token_ids.size()));
     Array prefix_ids;
-    for (const auto id : result.rendered_prefix_token_ids) prefix_ids.emplace_back(number(id));
-    prompt.emplace("prefix_token_ids", Json(std::move(prefix_ids)));
+    for (const auto id : result.rendered_prompt_token_ids) prefix_ids.emplace_back(number(id));
+    prompt.emplace("prompt_token_ids", Json(std::move(prefix_ids)));
     prompt.emplace("gguf_chat_template_present",
                    Json(result.prompt_format.gguf_chat_template_present));
     prompt.emplace("gguf_chat_template_used",
@@ -284,9 +283,6 @@ Json aggregate_json(
     })));
     timing.emplace("prefill_graph_node_count_mean", number(average([](const auto & v) {
         return static_cast<double>(v.prefill_graph_node_count);
-    })));
-    timing.emplace("score_total_ms_mean", number(average([](const auto & v) {
-        return v.score_total_ms;
     })));
     timing.emplace("readout_ms_mean", number(average([](const auto & v) {
         return v.readout_ms;

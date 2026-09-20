@@ -27,15 +27,7 @@ int main() {
     valid &= cache.key(1)->ne[0] == 8;
 
     cache.freeze_prefix(7);
-    cache.advance(3);
-    valid &= cache.cursor() == 10;
-    cache.reset_branch();
     valid &= cache.cursor() == 7;
-    try {
-        cache.advance(6);
-        valid = false;
-    } catch (const std::runtime_error &) {
-    }
 
     if (!valid) std::cerr << "state-cache invariant failed\n";
     return valid ? 0 : 1;

@@ -32,7 +32,7 @@ public:
         bool parse_special = true) const;
 
     AnswerToken tokenize_answer_label(
-        const std::string & rendered_prefix,
+        const std::string & rendered_prompt,
         const std::string & label) const;
 
     const std::string & piece(TokenId id) const;

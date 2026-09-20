@@ -179,7 +179,7 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     result.terminator_scored = false;
     result.prompt_format = rendered.format;
     result.rendered_prompt_identity = rendered.identity;
-    result.rendered_prefix_token_ids = all_ids;
+    result.rendered_prompt_token_ids = all_ids;
     result.vision_debug = std::move(vision_debug);
     result.timings.prompt_rendering_ms = prompt_rendering_ms;
     result.timings.tokenization_ms = tokenization_ms;
@@ -199,7 +199,6 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     result.timings.readout_backend_copy_ms = logits.backend_timing.copy_ms;
     result.timings.readout_synchronization_ms = logits.backend_timing.synchronization_ms;
     result.timings.readout_graph_node_count = logits.graph_node_count;
-    result.timings.score_total_ms = readout_ms;
     result.timings.normalization_ms = normalization_ms;
     result.timings.request_total_ms = elapsed_ms(request_started);
     return result;

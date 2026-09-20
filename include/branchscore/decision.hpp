@@ -60,7 +60,6 @@ struct TimingInfo {
     double readout_backend_copy_ms = 0.0;
     double readout_synchronization_ms = 0.0;
     std::size_t readout_graph_node_count = 0;
-    double score_total_ms = 0.0;
     double normalization_ms = 0.0;
     double request_total_ms = 0.0;
 };
@@ -91,7 +90,7 @@ struct DecisionResult {
     bool terminator_scored = false;
     PromptFormatInfo prompt_format;
     std::string rendered_prompt_identity;
-    std::vector<std::int32_t> rendered_prefix_token_ids;
+    std::vector<std::int32_t> rendered_prompt_token_ids;
     std::optional<VisionDebugInfo> vision_debug;
     TimingInfo timings;
 };

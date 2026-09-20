@@ -23,7 +23,7 @@ void check_result(const branchscore::DecisionResult & result, bool expect_reques
         result.prompt_format.requested_template_file.has_value() != expect_requested_template ||
         result.prompt_format.gguf_chat_template_used ||
         result.rendered_prompt_identity.find("gemma4-categorical-v1/sha256:") != 0 ||
-        result.rendered_prefix_token_ids.empty() ||
+        result.rendered_prompt_token_ids.empty() ||
         result.timings.readout_graph_node_count == 0) {
         throw std::runtime_error("decision result contract is incorrect");
     }
@@ -36,7 +36,6 @@ void check_result(const branchscore::DecisionResult & result, bool expect_reques
         !nonnegative(result.timings.vision_ms) ||
         !nonnegative(result.timings.prefill_ms) ||
         !nonnegative(result.timings.readout_ms) ||
-        !nonnegative(result.timings.score_total_ms) ||
         !nonnegative(result.timings.normalization_ms) ||
         !nonnegative(result.timings.request_total_ms)) {
         throw std::runtime_error("decision timing fields are invalid");
@@ -98,7 +97,7 @@ int main(int argc, char ** argv) {
         request.chat_template_file.reset();
         const auto baseline = engine.evaluate(request);
         check_result(baseline, false);
-        if (no_op.rendered_prefix_token_ids != baseline.rendered_prefix_token_ids ||
+        if (no_op.rendered_prompt_token_ids != baseline.rendered_prompt_token_ids ||
             no_op.rendered_prompt_identity != baseline.rendered_prompt_identity ||
             no_op.selected_id != baseline.selected_id ||
             no_op.option_scores.size() != baseline.option_scores.size()) {
@@ -113,7 +112,7 @@ int main(int argc, char ** argv) {
             }
         }
         std::cout << "engine selected=" << baseline.selected_id
-                  << " prefix_tokens=" << baseline.rendered_prefix_token_ids.size() << '\n';
+                  << " prompt_tokens=" << baseline.rendered_prompt_token_ids.size() << '\n';
         return 0;
     } catch (const std::exception & error) {
         std::cerr << error.what() << '\n';

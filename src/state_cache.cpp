@@ -108,15 +108,4 @@ void StateCache::freeze_prefix(std::size_t length) {
     impl_->cursor = length;
 }
 
-void StateCache::reset_branch() noexcept {
-    impl_->cursor = impl_->prefix_length;
-}
-
-void StateCache::advance(std::size_t token_count) {
-    if (impl_->cursor + token_count > capacity()) {
-        throw std::runtime_error("state-cache branch exceeds reserved capacity");
-    }
-    impl_->cursor += token_count;
-}
-
 } // namespace branchscore

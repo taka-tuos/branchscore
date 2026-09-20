@@ -46,10 +46,6 @@ public:
         const VisualTokens * visual_tokens,
         const std::vector<TokenId> & tokens_after_image) const;
 
-private:
-    void continue_one(PrefillState & state, TokenId token) const;
-    float score_current(const PrefillState & state, TokenId token) const;
-
     ModelBundle & model_;
     BackendContext & backend_;
 };

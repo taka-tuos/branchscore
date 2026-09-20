@@ -369,13 +369,13 @@ std::vector<TokenId> GemmaTokenizer::tokenize(
 }
 
 AnswerToken GemmaTokenizer::tokenize_answer_label(
-    const std::string & rendered_prefix,
+    const std::string & rendered_prompt,
     const std::string & label) const {
     if (label.size() != 1 || label[0] < 'A' || label[0] > 'P') {
         throw std::runtime_error("Gemma 4 answer label must be one uppercase letter A-P");
     }
-    const bool rendered_has_bos = rendered_prefix.rfind("<bos>", 0) == 0;
-    const auto prefix_ids = tokenize(rendered_prefix, !rendered_has_bos, true);
+    const bool rendered_has_bos = rendered_prompt.rfind("<bos>", 0) == 0;
+    const auto prefix_ids = tokenize(rendered_prompt, !rendered_has_bos, true);
     const auto standalone_ids = tokenize(label, false, true);
     if (standalone_ids.size() != 1) {
         throw std::runtime_error("answer label '" + label + "' is not a single token");
@@ -384,7 +384,7 @@ AnswerToken GemmaTokenizer::tokenize_answer_label(
     if (piece(id) != label || id == eos_id() || is_special_token(id)) {
         throw std::runtime_error("answer label '" + label + "' is not a normal token");
     }
-    const auto combined_ids = tokenize(rendered_prefix + label, !rendered_has_bos, true);
+    const auto combined_ids = tokenize(rendered_prompt + label, !rendered_has_bos, true);
     if (combined_ids.size() != prefix_ids.size() + 1 ||
         !std::equal(prefix_ids.begin(), prefix_ids.end(), combined_ids.begin()) ||
         combined_ids.back() != id) {

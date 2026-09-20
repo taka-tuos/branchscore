@@ -237,9 +237,6 @@ ggml_tensor * build_layer(
 
 struct PrefillState::Impl {
     ~Impl() {
-        if (working_logits_buffer != nullptr) {
-            ggml_backend_buffer_free(working_logits_buffer);
-        }
         if (logits_buffer != nullptr) ggml_backend_buffer_free(logits_buffer);
         if (logits_ctx != nullptr) ggml_free(logits_ctx);
     }
@@ -251,8 +248,6 @@ struct PrefillState::Impl {
     ggml_context * logits_ctx = nullptr;
     ggml_backend_buffer_t logits_buffer = nullptr;
     ggml_tensor * logits = nullptr;
-    ggml_backend_buffer_t working_logits_buffer = nullptr;
-    ggml_tensor * working_logits = nullptr;
 };
 
 PrefillState::~PrefillState() = default;
@@ -475,169 +470,9 @@ PrefillState PrefillEngine::prefill(
     }
     result->backend->tensor_copy_timed(
         logits, result->logits, result->backend_timing);
-    result->working_logits = ggml_new_tensor_1d(
-        result->logits_ctx, GGML_TYPE_F32, config.vocabulary_size);
-    result->working_logits_buffer = ggml_backend_alloc_ctx_tensors_from_buft(
-        result->logits_ctx, backend_.buffer_type());
-    if (result->working_logits_buffer == nullptr) {
-        throw std::runtime_error("failed to allocate working Prefill logits");
-    }
-    result->backend->tensor_copy_timed(
-        result->logits, result->working_logits, result->backend_timing);
     result->backend->synchronize(result->backend_timing);
     result->cache->freeze_prefix(token_count);
     return PrefillState(std::move(result));
-}
-
-void PrefillEngine::continue_one(PrefillState & state, TokenId token) const {
-    const auto & config = model_.text_config();
-    const std::size_t cache_start = state.cache().cursor();
-    if (cache_start >= state.cache().capacity()) {
-        throw std::runtime_error("option continuation exceeds state-cache capacity");
-    }
-    const std::size_t cache_count = cache_start + 1;
-    const std::size_t context_size =
-        max_graph_nodes * ggml_tensor_overhead() +
-        ggml_graph_overhead_custom(max_graph_nodes, false);
-    std::vector<std::uint8_t> context_memory(context_size);
-    ggml_init_params params{context_memory.size(), context_memory.data(), true};
-    using ContextPointer = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
-    ContextPointer ctx(ggml_init(params), ggml_free);
-    if (!ctx) throw std::runtime_error("failed to create continuation graph context");
-    auto * graph = ggml_new_graph_custom(ctx.get(), max_graph_nodes, false);
-
-    auto * token_ids = ggml_new_tensor_1d(ctx.get(), GGML_TYPE_I32, 1);
-    auto * positions = ggml_new_tensor_1d(ctx.get(), GGML_TYPE_I32, 1);
-    auto * full_mask = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_F32, cache_count, 1);
-    auto * sliding_mask = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_F32, cache_count, 1);
-    ggml_set_input(token_ids);
-    ggml_set_input(positions);
-    ggml_set_input(full_mask);
-    ggml_set_input(sliding_mask);
-
-    auto * token_embedding = require_text_tensor(model_, "token_embd.weight");
-    auto * input = ggml_scale(
-        ctx.get(), ggml_get_rows(ctx.get(), token_embedding, token_ids),
-        std::sqrt(config.embedding_length));
-    auto * per_layer = ggml_get_rows(
-        ctx.get(), require_text_tensor(model_, "per_layer_token_embd.weight"), token_ids);
-    per_layer = ggml_reshape_3d(
-        ctx.get(), per_layer, config.per_layer_embedding_length,
-        config.block_count, 1);
-    per_layer = ggml_scale(
-        ctx.get(), per_layer, std::sqrt(config.per_layer_embedding_length));
-    auto * projected = ggml_mul_mat(
-        ctx.get(), require_text_tensor(model_, "per_layer_model_proj.weight"), input);
-    projected = ggml_scale(
-        ctx.get(), projected, 1.0F / std::sqrt(config.embedding_length));
-    projected = ggml_reshape_3d(
-        ctx.get(), projected, config.per_layer_embedding_length,
-        config.block_count, 1);
-    projected = rms_norm(
-        ctx.get(), projected,
-        require_text_tensor(model_, "per_layer_proj_norm.weight"),
-        config.layer_norm_epsilon);
-    per_layer = ggml_scale(
-        ctx.get(), ggml_add(ctx.get(), projected, per_layer), 1.0F / std::sqrt(2.0F));
-    per_layer = ggml_cont(ctx.get(), ggml_permute(ctx.get(), per_layer, 0, 2, 1, 3));
-
-    for (std::uint32_t layer = 0; layer < config.block_count; ++layer) {
-        input = build_layer(
-            ctx.get(), graph, model_, *state.impl_->cache, config, layer, 1,
-            cache_start, cache_count, positions, full_mask, sliding_mask,
-            per_layer, input);
-    }
-    input = rms_norm(
-        ctx.get(), input, require_text_tensor(model_, "output_norm.weight"),
-        config.layer_norm_epsilon);
-    auto * logits = ggml_mul_mat(ctx.get(), token_embedding, input);
-    if (config.final_logit_softcap != 0.0F) {
-        logits = ggml_scale(ctx.get(), logits, 1.0F / config.final_logit_softcap);
-        logits = ggml_tanh(ctx.get(), logits);
-        logits = ggml_scale(ctx.get(), logits, config.final_logit_softcap);
-    }
-    ggml_set_output(logits);
-    ggml_build_forward_expand(graph, logits);
-
-    using AllocatorPointer = std::unique_ptr<
-        std::remove_pointer_t<ggml_gallocr_t>, decltype(&ggml_gallocr_free)>;
-    AllocatorPointer allocator(
-        ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
-    if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
-        throw std::runtime_error("failed to allocate continuation graph on selected backend");
-    }
-
-    const std::int32_t token_value = token;
-    const std::int32_t position_value = static_cast<std::int32_t>(cache_start);
-    state.impl_->backend->tensor_set_timed(
-        token_ids, &token_value, 0, sizeof(token_value),
-        state.impl_->backend_timing);
-    state.impl_->backend->tensor_set_timed(
-        positions, &position_value, 0, sizeof(position_value),
-        state.impl_->backend_timing);
-    const auto full_mask_values = causal_mask(cache_start, 1, cache_count, 0);
-    const auto sliding_mask_values = causal_mask(
-        cache_start, 1, cache_count, config.sliding_window);
-    state.impl_->backend->tensor_set_timed(
-        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask),
-        state.impl_->backend_timing);
-    state.impl_->backend->tensor_set_timed(
-        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask),
-        state.impl_->backend_timing);
-
-    const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
-    if (status != GGML_STATUS_SUCCESS) {
-        throw std::runtime_error(
-            "continuation graph compute failed: " +
-            std::string(ggml_status_to_string(status)));
-    }
-    state.impl_->backend->synchronize(state.impl_->backend_timing);
-    state.impl_->backend->tensor_copy_timed(
-        logits, state.impl_->working_logits, state.impl_->backend_timing);
-    state.impl_->backend->synchronize(state.impl_->backend_timing);
-    state.impl_->graph_node_count += ggml_graph_n_nodes(graph);
-    state.cache().advance(1);
-}
-
-float PrefillEngine::score_current(
-    const PrefillState & state, TokenId token) const {
-    if (token < 0 || static_cast<std::size_t>(token) >= model_.text_config().vocabulary_size) {
-        throw std::runtime_error("option token is outside the model vocabulary");
-    }
-    const std::size_t context_size =
-        128 * ggml_tensor_overhead() + ggml_graph_overhead_custom(128, false);
-    std::vector<std::uint8_t> context_memory(context_size);
-    ggml_init_params params{context_memory.size(), context_memory.data(), true};
-    using ContextPointer = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
-    ContextPointer ctx(ggml_init(params), ggml_free);
-    if (!ctx) throw std::runtime_error("failed to create score graph context");
-    auto * graph = ggml_new_graph_custom(ctx.get(), 128, false);
-    auto * logits = state.impl_->working_logits;
-    ggml_set_input(logits);
-    auto * probabilities = ggml_soft_max_ext(ctx.get(), logits, nullptr, 1.0F, 0.0F);
-    auto * selected = ggml_view_1d(
-        ctx.get(), probabilities, 1, static_cast<std::size_t>(token) * sizeof(float));
-    auto * score = ggml_log(ctx.get(), selected);
-    ggml_set_output(score);
-    ggml_build_forward_expand(graph, score);
-    using AllocatorPointer = std::unique_ptr<
-        std::remove_pointer_t<ggml_gallocr_t>, decltype(&ggml_gallocr_free)>;
-    AllocatorPointer allocator(
-        ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
-    if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
-        throw std::runtime_error("failed to allocate score graph on selected backend");
-    }
-    const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
-    if (status != GGML_STATUS_SUCCESS) {
-        throw std::runtime_error(
-            "score graph compute failed: " + std::string(ggml_status_to_string(status)));
-    }
-    state.impl_->backend->synchronize(state.impl_->backend_timing);
-    float value = 0.0F;
-    state.impl_->backend->tensor_get_timed(
-        score, &value, 0, sizeof(value), state.impl_->backend_timing);
-    state.impl_->graph_node_count += ggml_graph_n_nodes(graph);
-    return value;
 }
 
 } // namespace branchscore

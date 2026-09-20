@@ -33,8 +33,6 @@ public:
     ggml_tensor * value(std::uint32_t layer) const;
 
     void freeze_prefix(std::size_t length);
-    void reset_branch() noexcept;
-    void advance(std::size_t token_count);
 
 private:
     struct Impl;

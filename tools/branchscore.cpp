@@ -217,10 +217,10 @@ int main(int argc, char ** argv) {
                   << '\n';
         std::cout << "Rendered prompt identity: "
                   << result.rendered_prompt_identity << '\n'
-                  << "Rendered prefix tokens: "
-                  << result.rendered_prefix_token_ids.size() << '\n'
-                  << "Prefix IDs: "
-                  << format_ids(result.rendered_prefix_token_ids) << '\n';
+                  << "Rendered prompt tokens: "
+                  << result.rendered_prompt_token_ids.size() << '\n'
+                  << "Prompt IDs: "
+                  << format_ids(result.rendered_prompt_token_ids) << '\n';
         for (const auto & score : result.option_scores) {
             std::cout << "Score " << score.option_id
                       << " index=" << score.input_index
@@ -249,7 +249,6 @@ int main(int argc, char ** argv) {
                   << " prefill_backend_copy=" << result.timings.prefill_backend_copy_ms
                   << " prefill_synchronization=" << result.timings.prefill_synchronization_ms
                   << " prefill_graph_nodes=" << result.timings.prefill_graph_node_count
-                  << " score_total=" << result.timings.score_total_ms
                   << " readout=" << result.timings.readout_ms
                   << " readout_backend_copy=" << result.timings.readout_backend_copy_ms
                   << " readout_synchronization=" << result.timings.readout_synchronization_ms
