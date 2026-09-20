@@ -1,9 +1,10 @@
 # branchscore
 
-`branchscore` is a standalone C++/ggml proof of concept for scoring candidate
-decisions with Gemma 4 E2B/E4B GGUF models. It pre-fills a text/image state
-once, scores each option as an exact continuation, and reports relative option
-probabilities. Autoregressive chat generation is not its primary purpose.
+`branchscore` is a standalone C++/ggml proof of concept for categorical
+decisions with Gemma 4 E2B/E4B GGUF models. It displays all candidate
+descriptions in one prompt, reads the single-token A-P answer logits, and
+reports relative option probabilities. Autoregressive chat generation is not
+its primary purpose.
 
 This is a hobby and experimental project developed largely through
 AI-assisted ("vibe coding") workflows. The implementation has been checked
@@ -11,8 +12,8 @@ against pinned upstream sources and exercised with focused tests, but it is
 not production-ready, security-hardened, or covered by API, compatibility, or
 support guarantees.
 
-The current implementation is the sequential Phase 2+ baseline: one model,
-one backend, one request, and 2--16 ordered option continuations. See
+The current implementation is the sequential Phase 3+ path: one model, one
+backend, one request, and 2--16 ordered displayed options. See
 [`docs/README.md`](docs/README.md) for the design, research record, phase
 history, and roadmap.
 
@@ -21,13 +22,11 @@ history, and roadmap.
 - Loads matching Gemma 4 E2B/E4B text and multimodal-projector GGUF files.
 - Selects one ggml CPU, CUDA, or Vulkan backend.
 - Preprocesses an optional image and executes the Gemma 4 vision graph.
-- Renders the fixed, versioned `gemma4-fixed-v1` decision prompt.
-- Prefills the common state once and reuses its immutable cache for every
-  sequential option branch.
-- Scores multi-token option descriptions with full-vocabulary log
-  normalization.
-- Reports sum/mean log-probabilities, probabilities relative to the supplied
-  option set, the selected option, and stage timings.
+- Renders the fixed, versioned `gemma4-categorical-v1` decision prompt.
+- Prefills the complete displayed-options prompt once.
+- Gathers only the A-P answer-slot logits with one small ggml graph.
+- Reports raw answer-slot logits, probabilities relative to the supplied
+  option set, the selected option, and shared readout timings.
 - Provides a warm-loaded, sequential branchscore-bench JSONL runner with
   row-level scores and aggregate latency/throughput measurements.
 
@@ -45,11 +44,12 @@ relative to the input JSONL file.
 
 The default warmup evaluates the first request once and discards its result;
 use --warmup COUNT to change it. The output contains one run metadata row, one
-decision row per input row, and one aggregate row. It includes ordered option
-token IDs/log-probabilities, prompt identity, stage timings, p50/p95 request
-latency, and decisions/second. The output path must not already exist; model
-loading, warmup, and result-file writes are outside the measured request
-interval. Context overflow is an error and is never silently truncated.
+decision row per input row, and one aggregate row. It uses schema version 2 and
+includes ordered answer labels and token IDs, raw logits, prompt/readout
+identity, stage timings, p50/p95 request latency, and decisions/second. The
+output path must not already exist; model loading, warmup, and result-file
+writes are outside the measured request interval. Context overflow is an error
+and is never silently truncated.
 
 The `branchscore_core` CMake target is an internal implementation boundary,
 not a stable or installable library API.
@@ -126,19 +126,19 @@ available device. Add `--image FILE` for one image.
 `--chat-template-file FILE` is currently a transparent reserved no-op. The
 path is retained in result metadata but is not opened or applied. The GGUF
 `tokenizer.chat_template` value is likewise diagnostic metadata; the fixed
-`gemma4-fixed-v1` renderer remains the effective prompt source.
+`gemma4-categorical-v1` renderer remains the effective prompt source.
 
 Use `--vision-dump FILE` with `--image` to request projected embeddings. The
 target file is created or truncated after inference completes and contains two
 int32 dimensions (`tokens`, `width`) followed by row-major float32 values.
 
-Tokenizer IDs and option-boundary behavior can be inspected without loading
+Tokenizer IDs and answer-label boundary behavior can be inspected without loading
 model weights:
 
 ```sh
 ./build/branchscore-tokenize --model /path/to/model.gguf --text "Hello world"
 ./build/branchscore-tokenize --model /path/to/model.gguf \
-  --prefix $'<|turn>model\n' --option "candidate text"
+  --prefix $'<|turn>model\n' --answer-label A
 ```
 
 ## Tested development environment

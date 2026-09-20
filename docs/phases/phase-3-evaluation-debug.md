@@ -1,5 +1,10 @@
 # Phase 3 - Evaluation, debugging, and observation
 
+> Phase 3+ completed (2026-09-20): the continuation results below remain
+> historical evidence. New evaluations use the SemIf-style categorical
+> answer-slot readout and schema 2; pending old continuation evaluations do not
+> block the migration.
+
 ## Goal
 
 Use the single-backend baseline to understand correctness, behavior, and
@@ -128,6 +133,19 @@ measurements.
 
 ## Notes / Findings
 
+- 2026-09-20: Reviewed the initial design against current branchscore,
+  SemIf source, and Jev's public documentation. The continuation scorer is an
+  intentional Phase 1 choice, not SemIf's categorical letter readout; current
+  cache reuse is across options, not questions. Rechecked the saved shape777
+  artifacts: Prefill accounts for roughly 69-70% of mean request time and
+  E2B/E4B agree on 320/777 decisions, without semantic gold labels. The review
+  was subsequently revised to reflect the user's decision to migrate directly
+  to SemIf-style categorical readout in Phase 3+. Comparative scoring research
+  and permanent retention of the old scorer are not required. Cross-question
+  prefix reuse remains a follow-up candidate after migration, not a migration
+  prerequisite. Existing measurements describe the old continuation path.
+  See `docs/research/direction-review-2026-09-20.md` for evidence and limitations.
+
 - 2026-09-20: Planned the Phase 3 benchmark path around a small warm-loaded
   JSONL runner before any server work. The first systems result will be fresh
   sequential shape777 execution; cross-request state-prefix reuse, parallel
@@ -203,3 +221,8 @@ measurements.
   `no` 162 / `yes` 615; they agreed on 320/777 rows (41.18%). Because this
   fixture has no semantic gold labels, these counts are descriptive model
   sensitivity observations, not accuracy measurements.
+- 2026-09-20: The Phase 3+ migration supersedes the continuation production
+  path. The new E2B/E4B text smoke, E2B image smoke, schema-2 JSONL output,
+  and focused readout tests are recorded in
+  `phase-3-plus-categorical-readout.md`; the historical measurements above
+  must not be compared as if they used the same readout contract.

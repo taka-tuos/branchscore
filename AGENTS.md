@@ -1,8 +1,9 @@
 # OpenJev-like GGML Decision Engine
 
-This is a hobby PoC for scoring candidate decisions with Gemma 4 E2B/E4B
-GGUF models.  It pre-fills a text/image state and scores continuations; normal
-autoregressive generation is not the primary feature.
+This is a hobby PoC for categorical candidate decisions with Gemma 4 E2B/E4B
+GGUF models. The current runtime displays option descriptions and reads a
+single-token categorical answer-slot logit. Normal autoregressive generation
+is not the primary feature.
 
 ## Non-negotiable constraints
 
@@ -41,6 +42,8 @@ Do not begin by reading `docs/archive/`; it preserves historical context only.
 | llama.cpp / ggml research | `docs/research/llama-ggml.md` |
 | Current task | matching `docs/phases/phase-*.md` |
 
-Phase 1, Phase 2, and Phase 2+ are complete. New implementation work begins
-with Phase 3; its handoff document is
-`docs/phases/phase-3-evaluation-debug.md`.
+Phase 1, Phase 2, Phase 2+, and the Phase 3+ migration are complete. Phase 3
+has a measured continuation baseline retained as historical evidence. The
+categorical contract and current implementation are recorded in
+`docs/phases/phase-3-plus-categorical-readout.md`. Do not implement the old
+Phase 4–7 option-worker plan before its Phase 3+ handoff revision.

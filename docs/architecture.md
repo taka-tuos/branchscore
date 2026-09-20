@@ -1,82 +1,78 @@
 # Architecture
 
-## Phase 2 execution model
+> Transition completed (2026-09-20): the implemented path is the Phase 3+
+> categorical readout. The continuation baseline below is retained only where
+> it explains historical state/cache behavior; it is not a production mode.
+
+## Current categorical execution model
 
 ```mermaid
 flowchart LR
     I[Text + optional image] --> V[Vision Encoder]
-    V --> P[Prefill common prefix]
-    P --> S[Immutable prefix cache]
-    S --> O0[Score option 0 branch]
-    O0 --> R0[Rewind branch cursor]
-    R0 --> O1[Score option 1 branch]
-    O1 --> RN[Repeat through option N]
-    RN --> N[Sum/mean + softmax]
+    V --> P[Prefill displayed-options prompt]
+    P --> S[Final-position logits]
+    S --> G[Gather A-P answer slots]
+    G --> N[Stable softmax + first max]
     N --> R[Decision result]
 ```
 
 Run this fully sequentially using one model, one selected backend, one request,
-and 2-16 options. Vision and Prefill run once. Option branches reuse the same
-prefix state but never one another's continuation state. Layer split, tensor
-parallelism, workers, and the ggml multi-backend scheduler are not part of this
-baseline.
+and 2-16 options. Vision and Prefill run once, followed by one small categorical
+readout. Layer split, tensor parallelism, workers, and the ggml multi-backend
+scheduler are not part of this baseline.
 
-## Fixed scoring contract
+## Categorical decision contract
 
-The common prefix contains the optional image, state, and question. It does
-not contain option descriptions, option letters, or an option list. The
-initial versioned prompt is conceptually:
+The rendered prompt contains the optional image marker, state, question, and
+ordered option descriptions. The model-visible option IDs are not included;
+input order assigns answer labels A through P. The versioned prompt is:
 
 ```text
-system: Use the supplied state to answer the question. Return only the answer.
+system: Apply the supplied criterion to the supplied evidence. Choose exactly
+        one listed option. Respond with only its uppercase letter, with no
+        explanation or reasoning.
 user:   [optional image]
         State:
         {state}
 
         Question:
         {question}
-model:  <continuation starts here>
+
+        Options:
+        [{"description":"...","letter":"A"}, ...]
+model:  <answer slot follows>
 ```
 
-Phase 2 must render this with Gemma 4's native turn and special tokens, not the
-literal labels above. The rendered prefix and its token IDs are observable and
-versioned. Tokenizing `rendered_prefix + option_description` must preserve the
-prefix token IDs exactly; otherwise the request fails instead of silently
-scoring a different boundary.
+`Gemma4PromptRenderer` renders this with Gemma 4's native turn and special
+tokens as `gemma4-categorical-v1`. The full rendered prompt and token IDs are
+observable and the prompt identity hashes the actual prompt. Each A-P label is
+checked as a standalone normal token, round-trips to the same one-character
+piece, has a distinct token ID, and preserves the full prompt token boundary
+when appended. A failure rejects the request; there is no multi-token
+fallback.
 
-`Gemma4PromptRenderer` is the effective Phase 2+ prompt source. It emits the
-versioned fixed renderer `gemma4-fixed-v1` for the plain Gemma 4
-system/user/image/generation shape, including the direct-answer,
-reasoning-disabled policy. The rendered prefix and token IDs are observable,
-and the result records a stable prompt identity. `--chat-template-file` is a
-reserved no-op: its exact filename is retained in metadata, never opened or
-validated, and never changes the effective prompt. GGUF
-`tokenizer.chat_template` is optional diagnostic metadata and is never used by
-the Phase 2+ renderer.
+`--chat-template-file` remains a reserved no-op: its exact filename is retained
+in metadata, never opened or validated, and never changes the effective prompt.
+GGUF `tokenizer.chat_template` is optional diagnostic metadata and is never
+used by the built-in renderer.
 
-For nonempty option tokens `o[0..m-1]`:
+For answer token IDs `a[0..n-1]`, the categorical readout is:
 
 ```text
-token_logprob[i] = log_softmax(logits(prefix, o[0..i-1]))[o[i]]
-sum_logprob       = sum(token_logprob)
-mean_logprob      = sum_logprob / m
+raw_score[i]             = final_position_logits[a[i]]
+relative_probability[i]  = exp(raw_score[i] - max(raw_score)) /
+                           sum_j exp(raw_score[j] - max(raw_score))
+selected_index           = first argmax(raw_score)
 ```
 
-The state-final logits score `o[0]`. To score `o[i]`, the branch consumes
-through `o[i-1]`. The final option token is scored but need not be consumed,
-because no later option token depends on it. EOS and the model-turn terminator
-are neither consumed nor scored. Thus an `m`-token option needs the Prefill
-logits plus `m-1` continuation steps.
-
-Selection is `argmax(sum_logprob)`. A stable softmax across option
-`sum_logprob` values produces `relative_probability`. `mean_logprob` and token
-count are returned to expose length effects but do not change selection.
+Only the requested 2-16 logits are copied to the host. No answer token is
+sampled or consumed, and no EOS or continuation forward is performed.
 Relative probabilities are conditional on the supplied option set and are not
-calibrated confidence. PMI and calibration remain deferred.
+calibrated confidence.
 
 ## Minimum components
 
-These are narrow Phase 2 boundaries, not framework extension points.
+These are narrow current-phase boundaries, not framework extension points.
 
 ### `BackendContext`
 
@@ -110,9 +106,9 @@ These are narrow Phase 2 boundaries, not framework extension points.
 ### `PrefillEngine`
 
 - Splices projected visual embeddings at the image placeholder and validates
-  the context limit for the already-rendered/tokenized common prefix.
+  the context limit for the already-rendered/tokenized displayed-options prompt.
 - Builds and executes the causal Gemma 4 graph, populates a `StateCache`, and
-  copies the state-final logits needed for every option's first token into
+  copies the state-final logits needed for the answer-slot readout into
   request-scoped backend storage outside the temporary graph buffer.
 - Requests only the final Prefill output row. It returns a `PrefillState` after
   synchronization at the Prefill timing boundary.
@@ -121,33 +117,27 @@ These are narrow Phase 2 boundaries, not framework extension points.
 
 - Owns backend-resident K/V storage and the logical position/sequence metadata
   for one request.
-- Marks `[0, prefix_length)` immutable after Prefill. It reserves a writable
-  tail for the longest option branch.
-- Before each option, resets only the logical branch cursor to
-  `prefix_length`. Later option steps overwrite the same tail rows. Prefix rows
-  are never copied or overwritten, so branch isolation needs no full cache
-  copy in the sequential baseline.
+- Marks `[0, prefix_length)` immutable after Prefill. The categorical path
+  allocates no continuation tail: cache capacity equals the displayed prompt.
+- The cache is request-scoped and is not rewound or copied between candidate
+  options. The final-position logits are read once after Prefill.
 - Encodes Gemma 4's mixed sliding/full attention and shared-KV-layer layout
   behind this boundary; callers do not assume one uniform K/V tensor per layer.
 
-### `OptionScorer`
+### `CategoricalReadout`
 
-- Boundary-tokenizes every option into `OptionTokens` before scoring begins;
-  rejects empty continuations, changed prefix tokenization, or context overflow.
-- For each option in input order, resets the branch cursor, gathers the target
-  token's log-probability from the current full-vocabulary logits, and executes
-  continuation steps only when another target token remains.
-- Computes full-vocabulary log-normalization in ggml graph work and transfers
-  only required scalar/token debug values to the host. It returns `OptionScore`
-  with both sum and mean values.
-- Records per-option score time. It never mutates the immutable prefix or uses
-  another option's tail state.
+- Receives the Prefill final-position logits and the validated A-P answer token
+  IDs in input order.
+- Uses one ggml gather graph to transfer only the requested 2-16 logits to the
+  host. It rejects out-of-range or non-finite values.
+- Applies a temperature-1 stable host softmax, selects the first maximum, and
+  records gather/copy/synchronization timing separately from normalization.
 
 ### `Gemma4PromptRenderer`
 
-- Renders the fixed `gemma4-fixed-v1` system/user/image/generation prefix and
-  records `PromptFormatInfo`.
-- Expresses reasoning behavior as `PromptPolicy`; Phase 2+ supports only
+- Renders the displayed-options `gemma4-categorical-v1`
+  system/user/image/generation prompt and records `PromptFormatInfo`.
+- Expresses reasoning behavior as `PromptPolicy`; the categorical path supports only
   direct-answer/reasoning-disabled behavior and does not invent a think-block
   terminator.
 - Retains a requested template filename as metadata without opening or
@@ -155,15 +145,16 @@ These are narrow Phase 2 boundaries, not framework extension points.
 
 ### `Gemma4DecisionEngine`
 
-- Validates one request, orchestrates Vision -> Prefill -> options in order,
+- Validates one request, orchestrates Vision -> Prefill -> categorical readout
+  in order,
   and owns request-scoped intermediate values. Model loading is outside this
   boundary.
-- Calls the fixed renderer and tokenizer, boundary-tokenizes every option,
+- Calls the fixed renderer and validates every answer label with the tokenizer,
   and passes the split prefix/image spans to the existing Gemma-specific
   execution components.
-- Applies stable host softmax to the 2-16 `sum_logprob` scalars. This small
-  result aggregation is intentionally host-side; model tensor computation and
-  vocabulary normalization remain ggml graph work.
+- Gathers and normalizes 2-16 `answer_slot_logit` values. This small result
+  aggregation is intentionally host-side; final vocabulary projection remains
+  in the Prefill graph.
 - Preserves input order in results, selects the first maximum on an exact tie,
   and reports the tie, scoring basis, relative-probability semantics, and
   `terminator_scored=false` explicitly.
@@ -176,14 +167,14 @@ These are narrow Phase 2 boundaries, not framework extension points.
 |---|---|
 | `EncodedImage` | Host RGB samples after exact resize/padding/normalization preparation; width, height, patch-grid dimensions, x/y positions |
 | `VisualTokens` | Backend tensor `[text_width, visual_token_count]`, element type, backend identity, image-token placement metadata |
-| `OptionTokens` | Stable option ID and input index, exact description, host token IDs, token count, boundary-validation result |
-| `PrefillState` | Rendered-prefix hash/version, prefix token count, image-token count, next absolute position, `StateCache`, persistent backend state-final logits |
-| `OptionScore` | Option ID/index, token count, `sum_logprob`, `mean_logprob`, optional per-token log-probabilities/debug IDs, score duration |
+| `AnswerToken` | Answer label, input index, semantic option ID, one normal token ID, standalone/round-trip/boundary validation |
+| `PrefillState` | Rendered-prompt hash/version, prompt token count, image-token count, next absolute position, `StateCache`, persistent backend final-position logits |
+| `OptionScore` | Option ID/index, answer label/token ID, `raw_score`, relative probability |
 | `DecisionRequest` | State, question, 2-16 ordered semantic options, at most one image path, prompt policy, and optional reserved template filename |
 | `PromptFormatInfo` | Renderer ID/version, model family, effective source, reasoning policy, requested override/applied flag, GGUF-template diagnostic flags |
-| `DecisionResult` | Ordered option scores, relative probabilities, selected ID/index, exact-tie flag, `sum_logprob` ranking/softmax basis, `terminator_scored=false`, prompt identity/metadata, timings |
+| `DecisionResult` | Schema 2, ordered option scores, relative probabilities, selected ID/index, exact-tie flag, `answer_slot_logit` basis, readout identity, `terminator_scored=false`, prompt identity/metadata, timings |
 | `VisionDebugInfo` | Optional host copy of projected visual tokens, populated only when explicitly requested for a debug dump |
-| `TimingInfo` | Prompt rendering, tokenization, image preprocessing, Vision, Prefill, each option, score total, normalization, enclosing request total |
+| `TimingInfo` | Prompt rendering, tokenization, image preprocessing, Vision, Prefill, shared readout/copy/synchronization, normalization, enclosing request total |
 
 Host input validation additionally requires 2-16 options, unique nonempty IDs,
 nonempty descriptions, a nonempty question, and a text state. The first
@@ -194,15 +185,15 @@ milestone accepts at most one image.
 | Category | Location | Owner | Lifetime | Required copies |
 |---|---|---|---|---|
 | Request strings and image path | Host | `Gemma4DecisionEngine` | One request | None until token/image inputs are prepared |
-| Token IDs, positions, option metadata | Host | `Gemma4DecisionEngine` / `OptionScorer` | One request | Host -> backend graph-input tensors per Prefill/step |
+| Token IDs, positions, option metadata | Host | `Gemma4DecisionEngine` / `CategoricalReadout` | One request | Host -> backend graph-input tensors per Prefill/readout |
 | Decoded/resized image samples | Host | `EncodedImage` | Through Vision input upload | Host -> selected backend once |
 | Text and vision weights | Selected backend; GGUF may remain host-mapped as loading source | `ModelLoader` | Engine lifetime | Load/upload once; no per-request backend copy |
 | Vision activations | Selected backend temporary graph buffers | `VisionEncoder` via `BackendContext` | One Vision call | None across backends |
 | Projected visual tokens | Selected backend | Request-scoped `VisualTokens` | Until Prefill consumes them | No backend copy; do not round-trip through host |
-| Prefill/continuation activations | Selected backend temporary graph buffers | `PrefillEngine` / `OptionScorer` via `BackendContext` | One graph execution | None across backends |
-| Prefix and branch K/V | Selected backend persistent request buffer | `StateCache` | Prefill through last option | No prefix copy per option; tail rows are reused sequentially |
-| Prefill-final vocabulary logits | Selected backend persistent request buffer | `PrefillState` | Through the last option's first-token score | Backend -> host only for requested scalar/debug output |
-| Continuation-step logits/log-normalizer | Selected backend graph output | `OptionScorer` via `BackendContext` | Until that step's target scalar is extracted | Backend -> host only for requested scalar/debug output |
+| Prefill activations | Selected backend temporary graph buffers | `PrefillEngine` via `BackendContext` | One graph execution | None across backends |
+| Prefix K/V | Selected backend persistent request buffer | `StateCache` | One Prefill/readout request | No candidate branch copy or tail |
+| Prefill-final vocabulary logits | Selected backend persistent request buffer | `PrefillState` | Through categorical readout completion | Backend -> host only for requested answer logits/debug output |
+| Gathered answer logits | Selected backend readout output | `CategoricalReadout` | One readout graph | Backend -> host only for 2-16 scalars |
 | Option scores and probabilities | Host | `Gemma4DecisionEngine` | Result lifetime | One scalar result per requested value |
 | Optional Vision debug values | Host | `Gemma4DecisionEngine` / CLI | Result and dump lifetime | Backend -> host only when explicitly requested; file output is after request completion |
 
@@ -210,25 +201,26 @@ All backend work is synchronized before its timing interval ends and before a
 host read. Temporary graph tensors must not outlive their graph buffer. A
 `PrefillState` cannot outlive its `ModelBundle` or `BackendContext`.
 
-## Confirmed Phase 2 sequence
+## Confirmed Phase 3+ sequence
 
-1. Validate the request, render the option-free prompt, and boundary-tokenize
-   every option before model work.
+1. Validate the request, render the displayed-options prompt, and validate all
+   A-P answer labels before model work.
 2. If an image exists, decode/preprocess it and run Vision on the selected
    backend, retaining projected tokens there.
-3. Run Prefill once from text plus optional visual embeddings. Freeze prefix
-   cache rows and retain the final output logits in request-scoped backend
-   storage.
-4. For each option in input order, rewind the branch cursor, accumulate exact
-   causal token log-probabilities, and return sum/mean. Do not consume or score
-   a terminator.
-5. Compute stable softmax over sum scores, select the first maximum, and emit
-   the ordered result plus timings and contract metadata.
+3. Run Prefill once from the complete text plus optional visual embeddings.
+   Freeze the request cache and retain the final output logits in request-scoped
+   backend storage.
+4. Gather the A-P answer logits in input order, reject non-finite values, and
+   copy only those scalars to the host.
+5. Compute stable softmax over answer-slot logits, select the first maximum,
+   and emit the ordered semantic result plus timings and contract metadata.
 
 ## Later direction
 
-Phase 4 may assign Vision, Prefill, and Logit to separate backends. Phase 5 may
-fan a Prefill state out to workers, which will require explicit immutable-state
-copies or shared read-only storage plus private branch buffers. Phase 6 may
-pipeline requests. These future constraints do not authorize concurrency,
-cross-backend copies, or scheduler use in Phase 2.
+Phase 4 may assign Vision, Prefill, and readout to separate backends only if
+measurements justify the copies. The next likely optimization is state-only
+prefix reuse across questions on one backend; it requires a separate contract
+for token boundaries, image placement, and cache ownership. Request-level
+parallelism remains a later measurement-driven decision. These future
+constraints do not authorize concurrency, cross-backend copies, or scheduler
+use in the current sequential path.

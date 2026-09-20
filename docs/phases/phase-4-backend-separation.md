@@ -1,5 +1,11 @@
 # Phase 4 - Component/backend separation
 
+> Planning hold (2026-09-20): [Phase 3+](phase-3-plus-categorical-readout.md)
+> is complete and removed option-continuation workers from the normal decision
+> path. The Phase 4–7 separation/worker/scheduler plans still require a revised
+> handoff based on categorical readout measurements before implementation; the
+> stages below are the previous plan.
+
 ## Goal
 
 Make Vision, Prefill, and Logit independently placeable on backends. This is

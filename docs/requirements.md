@@ -1,29 +1,33 @@
 # Requirements and scope
 
+> Transition completed (2026-09-20): the current runtime uses SemIf-style
+> displayed options and categorical answer-slot logits. The old continuation
+> results remain historical evidence and are not a second production mode.
+
 ## Goal
 
 Build a hobby, GGML-based Jev-like multimodal decision engine for Gemma 4 E2B
-and E4B. It must evaluate candidate options semantically from a pre-filled
+and E4B. It must evaluate displayed candidate options semantically from a
 text/image state, rather than serve general-purpose autoregressive generation.
 E2B is the development/debug model; E4B is the evaluation target. Keep
 model-specific differences localized.
 
 ## Required decision flow
 
-1. Build text and optional image state.
+1. Render the text/image state, question, and all ordered option descriptions
+   in one fixed Gemma 4 prompt.
 2. Encode images with a vision encoder when present.
-3. Prefill the state once.
-4. Score each candidate as a continuation.
-5. Return logits or log-probabilities, normalized scores, softmax
-   probabilities, the selected option, and timing information.
+3. Prefill the complete displayed-options prompt once.
+4. Gather the logits of the single-token A–P answer labels at the next model
+   position.
+5. Apply a temperature-1 stable softmax across the supplied labels and return
+   the selected semantic option plus timing information.
 
-The initial scoring target is accumulated continuation log-probability:
-`sum(log P(token_i | state, option_<i))`. Mean log-probability is also
-required as a reported length-normalized value. Selection and softmax use the
-sum score. The common prefix contains the text/image state and question, but
-not the candidate list. Each option description is scored as the exact
-continuation; EOS and turn-ending tokens are excluded. PMI and calibration are
-later experiments.
+The production scoring target is `answer_slot_logit`. Option descriptions are
+judgment context in the prompt, not continuations to score. The model never
+consumes a sampled answer token, and EOS/turn-ending tokens are not scored.
+The returned probabilities are conditional on the supplied option set and are
+not calibrated confidence. PMI, calibration, and sampling remain out of scope.
 
 ## Implementation boundaries
 
@@ -38,10 +42,10 @@ later experiments.
 ## First practical milestone
 
 Input: JPEG/PNG image, text state, question, and 2–16 options. Model: Gemma 4
-E2B Q4/Q5 GGUF. Output: raw and normalized option scores, probabilities,
-selection, and Vision/Prefill/Logit timings. The same code should later be
-checked with E4B. Probabilities are relative to the supplied option set and
-must not be labeled calibrated confidence.
+E2B Q4/Q5 GGUF. Output: answer-slot raw logits, relative probabilities,
+semantic selection, prompt/readout identity, and Vision/Prefill/readout
+timings. The same code is checked with E4B. Probabilities are relative to the
+supplied option set and must not be labeled calibrated confidence.
 
 ## Non-goals
 
