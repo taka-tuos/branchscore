@@ -179,3 +179,11 @@ measurements.
   Q5/Q6/Q8 and F16/BF16 comparison data is therefore pending rather than
   inferred from the E2B/E4B model-size comparison. The frozen TypeSafe
   snapshots required for the 102-row report are also not present locally.
+- 2026-09-20: The same four-row E2B Q4 fixture on the RTX 2060 SUPER CUDA
+  backend completed at 16.76 decisions/s with request p50/p95
+  54.02/97.27 ms and mean Prefill 25.63 ms. The ambiguous row changed from
+  CPU E2B wait=0.599/unknown=0.399, selected wait, to CUDA
+  wait=0.470/unknown=0.527, selected unknown. This is a real backend
+  sensitivity observation for the current quantized baseline; CPU and CUDA
+  distributions must not be treated as numerically identical until a later
+  parity study. CUDA focused/model-backed CTest also passed 10/10.
