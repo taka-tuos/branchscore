@@ -24,8 +24,9 @@ OptionScore OptionScorer::score(
 
     const auto started = std::chrono::steady_clock::now();
     PrefillEngine engine(model_, backend_);
+    const auto timing_before = state.backend_timing();
+    const auto graph_nodes_before = state.graph_node_count();
     state.reset_branch();
-    backend_.synchronize();
 
     OptionScore result;
     result.input_index = option.input_index;
@@ -42,6 +43,11 @@ OptionScore OptionScorer::score(
     }
     for (const auto value : result.token_logprobs) result.sum_logprob += value;
     result.mean_logprob = result.sum_logprob / result.token_count;
+    const auto timing_after = state.backend_timing();
+    result.backend_copy_ms = timing_after.copy_ms - timing_before.copy_ms;
+    result.synchronization_ms =
+        timing_after.synchronization_ms - timing_before.synchronization_ms;
+    result.graph_node_count = state.graph_node_count() - graph_nodes_before;
     result.elapsed_ms = std::chrono::duration<double, std::milli>(
         std::chrono::steady_clock::now() - started).count();
     return result;

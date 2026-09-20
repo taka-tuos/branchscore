@@ -144,6 +144,8 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
         tokens_after,
         maximum_option_tokens);
     const auto prefill_ms = elapsed_ms(prefill_started);
+    const auto prefill_backend_timing = prefill_state.backend_timing();
+    const auto prefill_graph_node_count = prefill_state.graph_node_count();
 
     OptionScorer scorer(model_, backend_);
     const auto score_started = Clock::now();
@@ -173,10 +175,22 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     result.timings.tokenization_ms = tokenization_ms;
     result.timings.image_preprocessing_ms = image_preprocessing_ms;
     result.timings.vision_ms = vision_ms;
+    if (visual_tokens) {
+        const auto timing = visual_tokens->backend_timing();
+        result.timings.vision_backend_copy_ms = timing.copy_ms;
+        result.timings.vision_synchronization_ms = timing.synchronization_ms;
+        result.timings.vision_graph_node_count = visual_tokens->graph_node_count();
+    }
     result.timings.prefill_ms = prefill_ms;
+    result.timings.prefill_backend_copy_ms = prefill_backend_timing.copy_ms;
+    result.timings.prefill_synchronization_ms = prefill_backend_timing.synchronization_ms;
+    result.timings.prefill_graph_node_count = prefill_graph_node_count;
     result.timings.option_scoring_ms.reserve(result.option_scores.size());
     for (const auto & score : result.option_scores) {
         result.timings.option_scoring_ms.push_back(score.elapsed_ms);
+        result.timings.option_backend_copy_ms += score.backend_copy_ms;
+        result.timings.option_synchronization_ms += score.synchronization_ms;
+        result.timings.option_graph_node_count += score.graph_node_count;
     }
     result.timings.score_total_ms = score_total_ms;
     result.timings.normalization_ms = normalization_ms;

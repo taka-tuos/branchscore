@@ -28,6 +28,8 @@ public:
     const StateCache & cache() const noexcept;
     ggml_tensor * logits() const noexcept;
     std::vector<float> download_logits() const;
+    BackendTiming backend_timing() const noexcept;
+    std::size_t graph_node_count() const noexcept;
 
 private:
     struct Impl;

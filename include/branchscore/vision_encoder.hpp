@@ -23,6 +23,8 @@ public:
     std::size_t embedding_length() const noexcept;
     ggml_tensor * tensor() const noexcept;
     std::vector<float> download() const;
+    BackendTiming backend_timing() const noexcept;
+    std::size_t graph_node_count() const noexcept;
 
 private:
     struct Impl;

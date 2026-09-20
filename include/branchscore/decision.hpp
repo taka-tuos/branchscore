@@ -49,8 +49,17 @@ struct TimingInfo {
     double tokenization_ms = 0.0;
     double image_preprocessing_ms = 0.0;
     double vision_ms = 0.0;
+    double vision_backend_copy_ms = 0.0;
+    double vision_synchronization_ms = 0.0;
+    std::size_t vision_graph_node_count = 0;
     double prefill_ms = 0.0;
+    double prefill_backend_copy_ms = 0.0;
+    double prefill_synchronization_ms = 0.0;
+    std::size_t prefill_graph_node_count = 0;
     std::vector<double> option_scoring_ms;
+    double option_backend_copy_ms = 0.0;
+    double option_synchronization_ms = 0.0;
+    std::size_t option_graph_node_count = 0;
     double score_total_ms = 0.0;
     double normalization_ms = 0.0;
     double request_total_ms = 0.0;
@@ -64,6 +73,9 @@ struct OptionScore {
     double mean_logprob = 0.0;
     double relative_probability = 0.0;
     double elapsed_ms = 0.0;
+    double backend_copy_ms = 0.0;
+    double synchronization_ms = 0.0;
+    std::size_t graph_node_count = 0;
     std::vector<std::int32_t> token_ids;
     std::vector<float> token_logprobs;
 };

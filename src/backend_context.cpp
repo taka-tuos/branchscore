@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
@@ -11,6 +12,11 @@ namespace branchscore {
 namespace {
 
 std::once_flag load_backends_once;
+using Clock = std::chrono::steady_clock;
+
+double elapsed_ms(const Clock::time_point started) {
+    return std::chrono::duration<double, std::milli>(Clock::now() - started).count();
+}
 
 void load_backends() {
     std::call_once(load_backends_once, [] { ggml_backend_load_all(); });
@@ -154,6 +160,43 @@ const BackendDevice & BackendContext::device() const noexcept {
 
 void BackendContext::synchronize() const {
     ggml_backend_synchronize(backend_);
+}
+
+void BackendContext::synchronize(BackendTiming & timing) const {
+    const auto started = Clock::now();
+    ggml_backend_synchronize(backend_);
+    timing.synchronization_ms += elapsed_ms(started);
+}
+
+void BackendContext::tensor_set_timed(
+    ggml_tensor * tensor,
+    const void * data,
+    const std::size_t offset,
+    const std::size_t size,
+    BackendTiming & timing) const {
+    const auto started = Clock::now();
+    ggml_backend_tensor_set(tensor, data, offset, size);
+    timing.copy_ms += elapsed_ms(started);
+}
+
+void BackendContext::tensor_get_timed(
+    const ggml_tensor * tensor,
+    void * data,
+    const std::size_t offset,
+    const std::size_t size,
+    BackendTiming & timing) const {
+    const auto started = Clock::now();
+    ggml_backend_tensor_get(tensor, data, offset, size);
+    timing.copy_ms += elapsed_ms(started);
+}
+
+void BackendContext::tensor_copy_timed(
+    const ggml_tensor * source,
+    ggml_tensor * destination,
+    BackendTiming & timing) const {
+    const auto started = Clock::now();
+    ggml_backend_tensor_copy(source, destination);
+    timing.copy_ms += elapsed_ms(started);
 }
 
 } // namespace branchscore

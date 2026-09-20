@@ -106,11 +106,20 @@ Json timing_json(const branchscore::TimingInfo & timing) {
     result.emplace("tokenization_ms", number(timing.tokenization_ms));
     result.emplace("image_preprocessing_ms", number(timing.image_preprocessing_ms));
     result.emplace("vision_ms", number(timing.vision_ms));
+    result.emplace("vision_backend_copy_ms", number(timing.vision_backend_copy_ms));
+    result.emplace("vision_synchronization_ms", number(timing.vision_synchronization_ms));
+    result.emplace("vision_graph_node_count", size_number(timing.vision_graph_node_count));
     result.emplace("prefill_ms", number(timing.prefill_ms));
+    result.emplace("prefill_backend_copy_ms", number(timing.prefill_backend_copy_ms));
+    result.emplace("prefill_synchronization_ms", number(timing.prefill_synchronization_ms));
+    result.emplace("prefill_graph_node_count", size_number(timing.prefill_graph_node_count));
     Array options;
     for (const auto value : timing.option_scoring_ms) options.emplace_back(number(value));
     result.emplace("option_scoring_ms", Json(std::move(options)));
     result.emplace("score_total_ms", number(timing.score_total_ms));
+    result.emplace("option_backend_copy_ms", number(timing.option_backend_copy_ms));
+    result.emplace("option_synchronization_ms", number(timing.option_synchronization_ms));
+    result.emplace("option_graph_node_count", size_number(timing.option_graph_node_count));
     result.emplace("normalization_ms", number(timing.normalization_ms));
     result.emplace("request_total_ms", number(timing.request_total_ms));
     return Json(std::move(result));
@@ -175,6 +184,9 @@ Json row_json(
         option.emplace("mean_logprob", number(score.mean_logprob));
         option.emplace("relative_probability", number(score.relative_probability));
         option.emplace("elapsed_ms", number(score.elapsed_ms));
+        option.emplace("backend_copy_ms", number(score.backend_copy_ms));
+        option.emplace("synchronization_ms", number(score.synchronization_ms));
+        option.emplace("graph_node_count", size_number(score.graph_node_count));
         options.emplace_back(Json(std::move(option)));
     }
     row.emplace("options", Json(std::move(options)));
@@ -263,11 +275,38 @@ Json aggregate_json(
     timing.emplace("vision_ms_mean", number(average([](const auto & v) {
         return v.vision_ms;
     })));
+    timing.emplace("vision_backend_copy_ms_mean", number(average([](const auto & v) {
+        return v.vision_backend_copy_ms;
+    })));
+    timing.emplace("vision_synchronization_ms_mean", number(average([](const auto & v) {
+        return v.vision_synchronization_ms;
+    })));
+    timing.emplace("vision_graph_node_count_mean", number(average([](const auto & v) {
+        return static_cast<double>(v.vision_graph_node_count);
+    })));
     timing.emplace("prefill_ms_mean", number(average([](const auto & v) {
         return v.prefill_ms;
     })));
+    timing.emplace("prefill_backend_copy_ms_mean", number(average([](const auto & v) {
+        return v.prefill_backend_copy_ms;
+    })));
+    timing.emplace("prefill_synchronization_ms_mean", number(average([](const auto & v) {
+        return v.prefill_synchronization_ms;
+    })));
+    timing.emplace("prefill_graph_node_count_mean", number(average([](const auto & v) {
+        return static_cast<double>(v.prefill_graph_node_count);
+    })));
     timing.emplace("score_total_ms_mean", number(average([](const auto & v) {
         return v.score_total_ms;
+    })));
+    timing.emplace("option_backend_copy_ms_mean", number(average([](const auto & v) {
+        return v.option_backend_copy_ms;
+    })));
+    timing.emplace("option_synchronization_ms_mean", number(average([](const auto & v) {
+        return v.option_synchronization_ms;
+    })));
+    timing.emplace("option_graph_node_count_mean", number(average([](const auto & v) {
+        return static_cast<double>(v.option_graph_node_count);
     })));
     timing.emplace("normalization_ms_mean", number(average([](const auto & v) {
         return v.normalization_ms;

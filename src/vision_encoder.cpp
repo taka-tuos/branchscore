@@ -158,6 +158,9 @@ struct VisualTokens::Impl {
 
     std::size_t token_count = 0;
     std::size_t embedding_length = 0;
+    BackendContext * backend = nullptr;
+    BackendTiming backend_timing;
+    std::size_t graph_node_count = 0;
     ggml_context * ctx = nullptr;
     ggml_backend_buffer_t buffer = nullptr;
     ggml_tensor * tensor = nullptr;
@@ -182,9 +185,17 @@ ggml_tensor * VisualTokens::tensor() const noexcept {
 
 std::vector<float> VisualTokens::download() const {
     std::vector<float> values(token_count() * embedding_length());
-    ggml_backend_tensor_get(
-        tensor(), values.data(), 0, values.size() * sizeof(float));
+    impl_->backend->tensor_get_timed(
+        tensor(), values.data(), 0, values.size() * sizeof(float), impl_->backend_timing);
     return values;
+}
+
+BackendTiming VisualTokens::backend_timing() const noexcept {
+    return impl_->backend_timing;
+}
+
+std::size_t VisualTokens::graph_node_count() const noexcept {
+    return impl_->graph_node_count;
 }
 
 VisionEncoder::VisionEncoder(ModelBundle & model, BackendContext & backend)
@@ -284,15 +295,19 @@ VisualTokens VisionEncoder::encode(const PreparedImage & image) const {
         x_positions[index] = static_cast<std::int32_t>(index % patches_x);
         y_positions[index] = static_cast<std::int32_t>(index / patches_x);
     }
-    ggml_backend_tensor_set(input, image.pixels.data(), 0, ggml_nbytes(input));
-    ggml_backend_tensor_set(pos_x, x_positions.data(), 0, ggml_nbytes(pos_x));
-    ggml_backend_tensor_set(pos_y, y_positions.data(), 0, ggml_nbytes(pos_y));
+    BackendTiming backend_timing;
+    backend_.tensor_set_timed(
+        input, image.pixels.data(), 0, ggml_nbytes(input), backend_timing);
+    backend_.tensor_set_timed(
+        pos_x, x_positions.data(), 0, ggml_nbytes(pos_x), backend_timing);
+    backend_.tensor_set_timed(
+        pos_y, y_positions.data(), 0, ggml_nbytes(pos_y), backend_timing);
     const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
     if (status != GGML_STATUS_SUCCESS) {
         throw std::runtime_error(
             "vision graph compute failed: " + std::string(ggml_status_to_string(status)));
     }
-    backend_.synchronize();
+    backend_.synchronize(backend_timing);
 
     const auto result_size = output_tokens * config.projection_length;
     if (current->type != GGML_TYPE_F32 ||
@@ -303,6 +318,9 @@ VisualTokens VisionEncoder::encode(const PreparedImage & image) const {
     auto result = std::make_unique<VisualTokens::Impl>();
     result->token_count = output_tokens;
     result->embedding_length = config.projection_length;
+    result->backend = &backend_;
+    result->backend_timing = backend_timing;
+    result->graph_node_count = ggml_graph_n_nodes(graph);
     ggml_init_params output_params{
         2 * ggml_tensor_overhead(), nullptr, true,
     };
@@ -318,8 +336,8 @@ VisualTokens VisionEncoder::encode(const PreparedImage & image) const {
     if (result->buffer == nullptr) {
         throw std::runtime_error("failed to allocate persistent visual-token buffer");
     }
-    ggml_backend_tensor_copy(current, result->tensor);
-    backend_.synchronize();
+    backend_.tensor_copy_timed(current, result->tensor, result->backend_timing);
+    backend_.synchronize(result->backend_timing);
     return VisualTokens(std::move(result));
 }
 

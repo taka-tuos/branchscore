@@ -17,6 +17,11 @@ struct BackendDevice {
     std::size_t memory_total = 0;
 };
 
+struct BackendTiming {
+    double copy_ms = 0.0;
+    double synchronization_ms = 0.0;
+};
+
 class BackendContext {
 public:
     explicit BackendContext(const std::string & selector);
@@ -34,6 +39,23 @@ public:
     ggml_backend_buffer_type_t buffer_type() const noexcept;
     const BackendDevice & device() const noexcept;
     void synchronize() const;
+    void synchronize(BackendTiming & timing) const;
+    void tensor_set_timed(
+        ggml_tensor * tensor,
+        const void * data,
+        std::size_t offset,
+        std::size_t size,
+        BackendTiming & timing) const;
+    void tensor_get_timed(
+        const ggml_tensor * tensor,
+        void * data,
+        std::size_t offset,
+        std::size_t size,
+        BackendTiming & timing) const;
+    void tensor_copy_timed(
+        const ggml_tensor * source,
+        ggml_tensor * destination,
+        BackendTiming & timing) const;
 
 private:
     ggml_backend_t backend_ = nullptr;
@@ -42,4 +64,3 @@ private:
 };
 
 } // namespace branchscore
-

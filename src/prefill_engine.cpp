@@ -245,6 +245,9 @@ struct PrefillState::Impl {
     }
 
     std::unique_ptr<StateCache> cache;
+    BackendContext * backend = nullptr;
+    BackendTiming backend_timing;
+    std::size_t graph_node_count = 0;
     ggml_context * logits_ctx = nullptr;
     ggml_backend_buffer_t logits_buffer = nullptr;
     ggml_tensor * logits = nullptr;
@@ -267,14 +270,25 @@ ggml_tensor * PrefillState::logits() const noexcept { return impl_->logits; }
 
 std::vector<float> PrefillState::download_logits() const {
     std::vector<float> values(ggml_nelements(impl_->logits));
-    ggml_backend_tensor_get(
-        impl_->logits, values.data(), 0, values.size() * sizeof(float));
+    impl_->backend->tensor_get_timed(
+        impl_->logits, values.data(), 0, values.size() * sizeof(float),
+        impl_->backend_timing);
     return values;
+}
+
+BackendTiming PrefillState::backend_timing() const noexcept {
+    return impl_->backend_timing;
+}
+
+std::size_t PrefillState::graph_node_count() const noexcept {
+    return impl_->graph_node_count;
 }
 
 void PrefillState::reset_branch() {
     impl_->cache->reset_branch();
-    ggml_backend_tensor_copy(impl_->logits, impl_->working_logits);
+    impl_->backend->tensor_copy_timed(
+        impl_->logits, impl_->working_logits, impl_->backend_timing);
+    impl_->backend->synchronize(impl_->backend_timing);
 }
 
 PrefillEngine::PrefillEngine(ModelBundle & model, BackendContext & backend)
@@ -299,6 +313,7 @@ PrefillState PrefillEngine::prefill(
     }
 
     auto result = std::make_unique<PrefillState::Impl>();
+    result->backend = &backend_;
     result->cache = std::make_unique<StateCache>(
         config, token_count + maximum_option_tokens, backend_);
 
@@ -416,36 +431,43 @@ PrefillState PrefillEngine::prefill(
         throw std::runtime_error("failed to allocate prefill graph on selected backend");
     }
 
-    ggml_backend_tensor_set(
-        per_layer_ids, all_token_ids.data(), 0, ggml_nbytes(per_layer_ids));
+    result->backend->tensor_set_timed(
+        per_layer_ids, all_token_ids.data(), 0, ggml_nbytes(per_layer_ids),
+        result->backend_timing);
     if (before_ids != nullptr) {
-        ggml_backend_tensor_set(
-            before_ids, tokens_before_image.data(), 0, ggml_nbytes(before_ids));
+        result->backend->tensor_set_timed(
+            before_ids, tokens_before_image.data(), 0, ggml_nbytes(before_ids),
+            result->backend_timing);
     }
     if (after_ids != nullptr) {
-        ggml_backend_tensor_set(
-            after_ids, tokens_after_image.data(), 0, ggml_nbytes(after_ids));
+        result->backend->tensor_set_timed(
+            after_ids, tokens_after_image.data(), 0, ggml_nbytes(after_ids),
+            result->backend_timing);
     }
     std::vector<std::int32_t> position_values(token_count);
     for (std::size_t index = 0; index < token_count; ++index) {
         position_values[index] = static_cast<std::int32_t>(index);
     }
-    ggml_backend_tensor_set(
-        positions, position_values.data(), 0, ggml_nbytes(positions));
+    result->backend->tensor_set_timed(
+        positions, position_values.data(), 0, ggml_nbytes(positions),
+        result->backend_timing);
     const auto full_mask_values = causal_mask(0, token_count, token_count, 0);
     const auto sliding_mask_values = causal_mask(
         0, token_count, token_count, config.sliding_window);
-    ggml_backend_tensor_set(
-        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask));
-    ggml_backend_tensor_set(
-        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask));
+    result->backend->tensor_set_timed(
+        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask),
+        result->backend_timing);
+    result->backend->tensor_set_timed(
+        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask),
+        result->backend_timing);
 
     const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
     if (status != GGML_STATUS_SUCCESS) {
         throw std::runtime_error(
             "prefill graph compute failed: " + std::string(ggml_status_to_string(status)));
     }
-    backend_.synchronize();
+    result->backend->synchronize(result->backend_timing);
+    result->graph_node_count = ggml_graph_n_nodes(graph);
 
     ggml_init_params logits_params{3 * ggml_tensor_overhead(), nullptr, true};
     result->logits_ctx = ggml_init(logits_params);
@@ -459,7 +481,8 @@ PrefillState PrefillEngine::prefill(
     if (result->logits_buffer == nullptr) {
         throw std::runtime_error("failed to allocate persistent Prefill logits");
     }
-    ggml_backend_tensor_copy(logits, result->logits);
+    result->backend->tensor_copy_timed(
+        logits, result->logits, result->backend_timing);
     result->working_logits = ggml_new_tensor_1d(
         result->logits_ctx, GGML_TYPE_F32, config.vocabulary_size);
     result->working_logits_buffer = ggml_backend_alloc_ctx_tensors_from_buft(
@@ -467,8 +490,9 @@ PrefillState PrefillEngine::prefill(
     if (result->working_logits_buffer == nullptr) {
         throw std::runtime_error("failed to allocate working Prefill logits");
     }
-    ggml_backend_tensor_copy(result->logits, result->working_logits);
-    backend_.synchronize();
+    result->backend->tensor_copy_timed(
+        result->logits, result->working_logits, result->backend_timing);
+    result->backend->synchronize(result->backend_timing);
     result->cache->freeze_prefix(token_count);
     return PrefillState(std::move(result));
 }
@@ -553,15 +577,21 @@ void PrefillEngine::continue_one(PrefillState & state, TokenId token) const {
 
     const std::int32_t token_value = token;
     const std::int32_t position_value = static_cast<std::int32_t>(cache_start);
-    ggml_backend_tensor_set(token_ids, &token_value, 0, sizeof(token_value));
-    ggml_backend_tensor_set(positions, &position_value, 0, sizeof(position_value));
+    state.impl_->backend->tensor_set_timed(
+        token_ids, &token_value, 0, sizeof(token_value),
+        state.impl_->backend_timing);
+    state.impl_->backend->tensor_set_timed(
+        positions, &position_value, 0, sizeof(position_value),
+        state.impl_->backend_timing);
     const auto full_mask_values = causal_mask(cache_start, 1, cache_count, 0);
     const auto sliding_mask_values = causal_mask(
         cache_start, 1, cache_count, config.sliding_window);
-    ggml_backend_tensor_set(
-        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask));
-    ggml_backend_tensor_set(
-        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask));
+    state.impl_->backend->tensor_set_timed(
+        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask),
+        state.impl_->backend_timing);
+    state.impl_->backend->tensor_set_timed(
+        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask),
+        state.impl_->backend_timing);
 
     const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
     if (status != GGML_STATUS_SUCCESS) {
@@ -569,9 +599,11 @@ void PrefillEngine::continue_one(PrefillState & state, TokenId token) const {
             "continuation graph compute failed: " +
             std::string(ggml_status_to_string(status)));
     }
-    backend_.synchronize();
-    ggml_backend_tensor_copy(logits, state.impl_->working_logits);
-    backend_.synchronize();
+    state.impl_->backend->synchronize(state.impl_->backend_timing);
+    state.impl_->backend->tensor_copy_timed(
+        logits, state.impl_->working_logits, state.impl_->backend_timing);
+    state.impl_->backend->synchronize(state.impl_->backend_timing);
+    state.impl_->graph_node_count += ggml_graph_n_nodes(graph);
     state.cache().advance(1);
 }
 
@@ -608,9 +640,11 @@ float PrefillEngine::score_current(
         throw std::runtime_error(
             "score graph compute failed: " + std::string(ggml_status_to_string(status)));
     }
-    backend_.synchronize();
+    state.impl_->backend->synchronize(state.impl_->backend_timing);
     float value = 0.0F;
-    ggml_backend_tensor_get(score, &value, 0, sizeof(value));
+    state.impl_->backend->tensor_get_timed(
+        score, &value, 0, sizeof(value), state.impl_->backend_timing);
+    state.impl_->graph_node_count += ggml_graph_n_nodes(graph);
     return value;
 }
 
