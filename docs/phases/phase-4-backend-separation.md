@@ -1,71 +1,91 @@
-# Phase 4 - Component/backend separation
+# Phase 4 - Measurement-led component/backend boundaries
 
-> Planning hold (2026-09-20): [Phase 3+](phase-3-plus-categorical-readout.md)
-> is complete and removed option-continuation workers from the normal decision
-> path. The Phase 4–7 separation/worker/scheduler plans still require a revised
-> handoff based on categorical readout measurements before implementation; the
-> stages below are the previous plan.
+> Planning handoff (2026-09-20): Phase 3+ categorical readout is complete.
+> This phase does not restore `OptionScorer` or require an independent Logit
+> worker. Separation is selected only when measurements show a useful boundary.
 
 ## Goal
 
-Make Vision, Prefill, and Logit independently placeable on backends. This is
-an architecture phase, not yet a parallelization phase.
+Measure and, when justified, define useful ownership boundaries for Vision,
+Prefill, and categorical readout. Keep the one-model, one-request,
+single-backend path as the baseline while making transfers, lifetimes, and
+synchronization explicit.
 
 ## Prerequisites
 
-Phase 3 has characterized baseline costs and Phase 1 ownership design is
-validated against the implementation.
+- Phase 3+ categorical readout is complete and its current timing/schema
+  contract is understood.
+- Phase 3 evaluation findings and the current backend implementation provide a
+  reproducible baseline.
+- A proposed split has a concrete measurement question; component separation
+  is not a deliverable by itself.
 
 ## Read First
 
 - `docs/architecture.md`
 - `docs/development-rules.md`
-- `docs/phases/phase-1-research-design.md`
+- `docs/phases/phase-3-plus-categorical-readout.md`
 - `docs/phases/phase-3-evaluation-debug.md`
 - Backend findings in `docs/research/llama-ggml.md`
 
 ## Stages
 
-### Stage 4.1 - Backend contexts
+### Stage 4.1 - Baseline ownership and measurements
 
 #### Step 4.1.1
-Remove direct global-backend assumptions. Give Vision, Prefill, and Logit
-contexts independent handles, allocators, compute/temp buffers, and sync.
 
-### Stage 4.2 - Vision separation
+Record the current Vision, Prefill, categorical readout, copy/sync, and
+allocation boundaries on one backend. Measure stage cost and lifetime without
+introducing a component split.
+
+### Stage 4.2 - Vision boundary
 
 #### Step 4.2.1
-Place Vision on its own backend; transfer its output to Prefill and measure the
-copy.
 
-### Stage 4.3 - Prefill separation
+If measurements justify it, prototype a Vision-to-Prefill boundary. Define
+which representation is transferred, who owns it, when it is synchronized,
+and the copy cost. Defer the split when the transfer is not useful.
+
+### Stage 4.3 - Optional categorical readout placement
 
 #### Step 4.3.1
-Place Prefill independently and define the scoring state precisely. Decide from
-evidence whether scoring receives the KV cache, a subset, hidden state, or
-another model-specific reusable representation.
 
-### Stage 4.4 - Logit separation
+Assess whether the small A–P gather/readout benefits from a separate placement.
+An independent readout backend is optional; compare transfer and synchronization
+costs against the current backend-resident logits path before adding one.
+
+### Stage 4.4 - Request/backend contexts
 
 #### Step 4.4.1
-Place OptionScorer independently, implement Prefill-to-Logit transfer, and
-retain sequential scoring on a single Logit backend.
 
-### Stage 4.5 - Transfer and synchronization
+If a boundary is selected, define request-scoped context handles, allocators,
+temporary buffers, and synchronization. Preserve sequential ownership and keep
+layer splitting and tensor parallelism out of scope.
+
+### Stage 4.5 - Transfer and handoff decision
 
 #### Step 4.5.1
-Track `VisionDone`, `PrefillReady`, `LogitReady`, and `LogitDone`. Synchronous
-operation is acceptable initially; use events/async copies only when useful.
+
+Document the selected boundaries, explicit transfers, and synchronization
+contract, or record why the single-backend design remains preferable. Hand off
+only measured, useful boundaries to later phases.
 
 ## Deliverables
 
-Configurable component backends with explicit state transfer and timing.
+- A baseline measurement record for Vision, Prefill, categorical readout,
+  copies, synchronization, and ownership.
+- An explicit transfer/lifetime contract for every implemented boundary.
+- A decision to implement, defer, or reject each proposed separation.
 
 ## Completion Criteria
 
-Vision=A, Prefill=B, and Logit=C can be selected independently; layer splitting
-remains unsupported.
+- Stage costs and ownership are measured on the current sequential path.
+- Any implemented split has explicit state transfer and synchronization, and
+  its cost is recorded.
+- Deferred work is recorded with a reason and a measurement condition.
+- No completion criterion requires `OptionScorer`, candidate continuation
+  workers, or a mandatory independent Logit backend.
 
 ## Notes / Findings
 
-_Pending separation work._
+_Pending measurement-led boundary work._

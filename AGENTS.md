@@ -45,5 +45,7 @@ Do not begin by reading `docs/archive/`; it preserves historical context only.
 Phase 1, Phase 2, Phase 2+, and the Phase 3+ migration are complete. Phase 3
 has a measured continuation baseline retained as historical evidence. The
 categorical contract and current implementation are recorded in
-`docs/phases/phase-3-plus-categorical-readout.md`. Do not implement the old
-Phase 4–7 option-worker plan before its Phase 3+ handoff revision.
+`docs/phases/phase-3-plus-categorical-readout.md`. Phase 4–7 are future
+planning stages with a measurement-led, request-level handoff; do not start
+their work without the stated prerequisites or reintroduce the old
+option-worker plan.

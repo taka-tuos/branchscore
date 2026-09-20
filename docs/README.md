@@ -34,7 +34,9 @@ Phase documents link to canonical sources rather than duplicating them.
 Phase 1, Phase 2, Phase 2+, and Phase 3+ are complete; Phase 3 retains the
 continuation benchmark baseline and historical measurements. Phase 3+ replaced
 option-description continuation scoring with SemIf-style displayed options and
-single-token answer labels. Phase 4–7 remain on hold for a revised handoff.
+single-token answer labels. Phase 4–7 remain future planning stages; their
+handoff now requires measurement-led component boundaries and request-level
+parallelism/pipeline work, not candidate continuation workers.
 This remains an experimental hobby project, not a tagged release or stable API.
 
 1. Partition documentation and establish routing.
@@ -43,7 +45,7 @@ This remains an experimental hobby project, not a tagged release or stable API.
 4. Harden request/result, prompt-rendering, and timing contracts.
 5. Experimentation and observability.
 6. Migrate to categorical answer-slot readout (Phase 3+).
-7. Component/backend separation, subject to the revised readout and measurements.
-8. Workers, with the unit of parallel work to be revised after Phase 3+.
-9. Request pipeline scheduler.
-10. Scheduler tuning.
+7. Measurement-led component/backend boundaries.
+8. Parallel full-decision/request workers when measurements justify them.
+9. Request pipeline scheduler over the actual Vision/Prefill/readout stages.
+10. Request-level scheduler and batch tuning.

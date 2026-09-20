@@ -9,7 +9,8 @@ categorical readout に移行済みで、旧 continuation scorer は削除した
 この文書が新しい判断方式への移行仕様。requirements / architecture は
 移行後の実装へ更新済みである。
 旧 Phase 3 の未完了の全量評価・量子化比較を本 Phase の開始条件にはしない。
-Phase 4–7 の旧 option-worker 前提は、本 Phase 完了時に再整理するまで着手しない。
+Phase 4–7 のhandoffは、categorical readoutの計測と質問/request単位の後続作業を
+前提に再整理済みである。後続Phaseの機能自体は本Phaseに含めない。
 
 ## Goal
 
@@ -242,7 +243,7 @@ requirements / architecture / README / AGENTS を移行後の実装に同期し�
 Phase 3 の次の評価を新readoutへ向け直す。続く改善候補は単一backendのままの
 state-prefix質問間再利用とし、必要なら別の小さいStage/Phaseとして設計する。
 Phase 4–7 から候補continuation worker必須という前提を外し、質問/リクエスト単位の
-並列化とVision分離を計測で選ぶ計画に再整理する。今回は実装しない。
+並列化とVision分離を計測で選ぶ計画に再整理した。後続機能自体は今回は実装しない。
 
 ## Suggested implementation locations
 
@@ -271,6 +272,28 @@ focused verification の記録、現行仕様と後続Phaseの更新。
 - 後続計画が旧option-worker前提に戻らない。Diffusion実装は未着手と明示。
 
 ## Notes / Findings
+
+- 2026-09-20: `28afbb3..78d3dc9` の移行実装をレビュー。候補提示、単一位置の
+  gather、stable softmax、旧continuation経路削除、schema 2の主要実装は設計と整合。
+  CPU model-backed CTestを再実行し10/10成功。別の16候補E2B CPU warm-loaded runでも
+  A-P/ID対応、有限正規化、選択とraw scoreの一致、run/decision/aggregateのschema 2を確認。
+  CUDA版はビルド成功したが、このレビュー環境ではGPU未検出のためmodel-backedの2件は
+  backend初期化で失敗し、CUDA推論は未検証。
+- 2026-09-20: 実装後レビューR1を対応。fixture 3行目を
+  `text-explicit-yes-no` と明確なquestionへ変更し、`expected_selected_id` と
+  `expected_reason` の補助fieldを追加した。修正版のE2B/E4B schema 2結果は
+  ignoredな `out/phase3plus-categorical-text-explicit-{e2b,e4b}.jsonl` に保存し、
+  両方で `yes` を選択した。prompt identityは両モデルで
+  `gemma4-categorical-v1/sha256:4b020de3e50743c1487560d536e3d1ab08938dcead59546626fc4d4202017bd4`
+  だった。E2Bはraw `11.3818397522/-11.0629043579`、相対確率
+  `0.999999999821/1.78801634759e-10`、E4Bはraw
+  `23.6086540222/5.744384288`、相対確率
+  `0.999999982556/1.74440058628e-8`。補助fieldはbenchmarkのproduction request型を
+  拡張しない。
+- 2026-09-20: 実装後レビューR2を対応。Phase 4–7の文書を、計測主導のbackend境界、
+  質問/request単位のworker・pipeline・tuningへ更新した。削除済みOptionScorer、
+  候補continuation worker、候補KV fan-out、max option batchを後続Phaseの必須条件に
+  していない。Phase 3+は完了のまま、後続機能は未実装である。
 
 - 2026-09-20: ユーザーの方向転換に基づき本Phaseを設計。方式比較研究・
   旧scorerの恒久維持は要求しない。設計後にcategorical readout移行まで実装した。
