@@ -55,6 +55,7 @@ ggml_tensor * build_attention(
     value = ggml_permute(ctx, value, 0, 2, 1, 3);
     value = ggml_cont(ctx, ggml_transpose(ctx, value));
     auto * scores = ggml_mul_mat(ctx, key, query);
+    ggml_prec_set_acc(scores, GGML_PREC_F32);
     scores = ggml_soft_max_ext(ctx, scores, mask, 1.0F, 0.0F);
     auto * attended = ggml_mul_mat(ctx, value, scores);
     attended = ggml_permute(ctx, attended, 0, 2, 1, 3);

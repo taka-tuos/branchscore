@@ -133,7 +133,11 @@ int main(int argc, char ** argv) {
                     << "                   --state TEXT --question TEXT\n"
                     << "                   --option ID=DESCRIPTION [--option ID=DESCRIPTION ...]\n"
                     << "                   [--image FILE] [--vision-dump FILE]\n"
-                    << "                   [--chat-template-file FILE]\n";
+                    << "                   [--chat-template-file FILE]\n"
+                    << "\n"
+                    << "Displays all supplied options in one prompt and reads their\n"
+                    << "single-token A-P answer logits; probabilities are relative\n"
+                    << "to the supplied option set.\n";
                 return 0;
             }
             throw std::runtime_error("unknown or incomplete argument: " + arg);
