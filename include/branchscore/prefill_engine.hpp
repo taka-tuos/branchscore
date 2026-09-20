@@ -12,8 +12,6 @@
 
 namespace branchscore {
 
-class OptionScorer;
-
 class PrefillState {
 public:
     ~PrefillState();
@@ -36,9 +34,7 @@ private:
     std::unique_ptr<Impl> impl_;
 
     explicit PrefillState(std::unique_ptr<Impl> impl);
-    void reset_branch();
     friend class PrefillEngine;
-    friend class OptionScorer;
 };
 
 class PrefillEngine {
@@ -48,8 +44,7 @@ public:
     PrefillState prefill(
         const std::vector<TokenId> & tokens_before_image,
         const VisualTokens * visual_tokens,
-        const std::vector<TokenId> & tokens_after_image,
-        std::size_t maximum_option_tokens) const;
+        const std::vector<TokenId> & tokens_after_image) const;
 
 private:
     void continue_one(PrefillState & state, TokenId token) const;
@@ -57,8 +52,6 @@ private:
 
     ModelBundle & model_;
     BackendContext & backend_;
-
-    friend class OptionScorer;
 };
 
 } // namespace branchscore

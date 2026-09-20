@@ -141,8 +141,7 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     auto prefill_state = prefill.prefill(
         tokens_before,
         visual_tokens.get(),
-        tokens_after,
-        0);
+        tokens_after);
     const auto prefill_ms = elapsed_ms(prefill_started);
     const auto prefill_backend_timing = prefill_state.backend_timing();
     const auto prefill_graph_node_count = prefill_state.graph_node_count();

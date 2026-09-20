@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
         auto tokenizer = branchscore::GemmaTokenizer::from_gguf(argv[1]);
         auto tokens = tokenizer.tokenize("Hello", true, false);
         branchscore::PrefillEngine engine(model, backend);
-        auto state = engine.prefill(tokens, nullptr, {}, 0);
+        auto state = engine.prefill(tokens, nullptr, {});
         const auto logits = state.download_logits();
         if (state.prefix_length() != tokens.size() ||
             state.cache().cursor() != tokens.size()) {
@@ -68,7 +68,7 @@ int main(int argc, char ** argv) {
         branchscore::VisionEncoder vision(model, backend);
         auto visual_tokens = vision.encode(image);
         auto multimodal = engine.prefill(
-            {tokens.front()}, &visual_tokens, {tokens.back()}, 0);
+            {tokens.front()}, &visual_tokens, {tokens.back()});
         const auto multimodal_logits = multimodal.download_logits();
         const auto expected_prefix = visual_tokens.token_count() + 2;
         if (multimodal.prefix_length() != expected_prefix ||

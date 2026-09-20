@@ -284,21 +284,13 @@ std::size_t PrefillState::graph_node_count() const noexcept {
     return impl_->graph_node_count;
 }
 
-void PrefillState::reset_branch() {
-    impl_->cache->reset_branch();
-    impl_->backend->tensor_copy_timed(
-        impl_->logits, impl_->working_logits, impl_->backend_timing);
-    impl_->backend->synchronize(impl_->backend_timing);
-}
-
 PrefillEngine::PrefillEngine(ModelBundle & model, BackendContext & backend)
     : model_(model), backend_(backend) {}
 
 PrefillState PrefillEngine::prefill(
     const std::vector<TokenId> & tokens_before_image,
     const VisualTokens * visual_tokens,
-    const std::vector<TokenId> & tokens_after_image,
-    std::size_t maximum_option_tokens) const {
+    const std::vector<TokenId> & tokens_after_image) const {
     const auto & config = model_.text_config();
     if (visual_tokens != nullptr &&
         visual_tokens->embedding_length() != config.embedding_length) {
@@ -308,14 +300,14 @@ PrefillState PrefillEngine::prefill(
         visual_tokens == nullptr ? 0 : visual_tokens->token_count();
     const std::size_t token_count =
         tokens_before_image.size() + visual_count + tokens_after_image.size();
-    if (token_count == 0 || token_count + maximum_option_tokens > config.context_length) {
-        throw std::runtime_error("prefill and option reservation exceed model context");
+    if (token_count == 0 || token_count > config.context_length) {
+        throw std::runtime_error("prefill exceeds model context");
     }
 
     auto result = std::make_unique<PrefillState::Impl>();
     result->backend = &backend_;
     result->cache = std::make_unique<StateCache>(
-        config, token_count + maximum_option_tokens, backend_);
+        config, token_count, backend_);
 
     const std::size_t context_size =
         max_graph_nodes * ggml_tensor_overhead() +

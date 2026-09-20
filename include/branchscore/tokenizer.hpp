@@ -10,14 +10,6 @@ namespace branchscore {
 
 using TokenId = std::int32_t;
 
-struct OptionTokens {
-    std::string option_id;
-    std::size_t input_index = 0;
-    std::string description;
-    std::vector<TokenId> ids;
-    bool boundary_valid = false;
-};
-
 struct AnswerToken {
     std::string label;
     TokenId id = -1;
