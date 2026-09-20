@@ -29,6 +29,12 @@ CategoricalLogits gather_categorical_logits(
     if (state.logits() == nullptr) {
         throw std::runtime_error("categorical readout has no Prefill logits");
     }
+    const auto vocabulary_size = ggml_nelements(state.logits());
+    for (const auto token_id : answer_token_ids) {
+        if (token_id < 0 || static_cast<std::size_t>(token_id) >= vocabulary_size) {
+            throw std::runtime_error("categorical answer token is outside the vocabulary");
+        }
+    }
 
     const auto context_size =
         max_graph_nodes * ggml_tensor_overhead() +
@@ -102,7 +108,8 @@ CategoricalSummary summarize_categorical(const std::vector<float> & raw_scores) 
         if (!std::isfinite(value)) {
             throw std::runtime_error("categorical answer logits must be finite");
         }
-        denominator += std::exp(static_cast<double>(value - *maximum));
+        denominator += std::exp(
+            static_cast<double>(value) - static_cast<double>(*maximum));
     }
     if (!std::isfinite(denominator) || denominator <= 0.0) {
         throw std::runtime_error("categorical softmax normalization failed");
@@ -114,7 +121,9 @@ CategoricalSummary summarize_categorical(const std::vector<float> & raw_scores) 
         maximum - raw_scores.begin());
     for (const auto value : raw_scores) {
         result.relative_probabilities.push_back(
-            std::exp(static_cast<double>(value - *maximum)) / denominator);
+            std::exp(
+                static_cast<double>(value) - static_cast<double>(*maximum)) /
+            denominator);
     }
     for (std::size_t index = 0; index < raw_scores.size(); ++index) {
         if (index != result.selected_index &&

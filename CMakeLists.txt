@@ -73,6 +73,10 @@ if(BRANCHSCORE_BUILD_TESTS)
     target_link_libraries(branchscore_decision_contract_test PRIVATE branchscore::core)
     add_test(NAME decision_contract COMMAND branchscore_decision_contract_test)
 
+    add_executable(branchscore_categorical_readout_test tests/categorical_readout_test.cpp)
+    target_link_libraries(branchscore_categorical_readout_test PRIVATE branchscore::core)
+    add_test(NAME categorical_readout COMMAND branchscore_categorical_readout_test)
+
     add_executable(branchscore_json_test tests/json_test.cpp)
     target_link_libraries(branchscore_json_test PRIVATE branchscore::core)
     add_test(NAME json COMMAND branchscore_json_test)

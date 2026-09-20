@@ -200,6 +200,9 @@ Json run_json(
     Object run;
     run.emplace("kind", "run");
     run.emplace("schema_version", size_number(2));
+    run.emplace("renderer_id", "gemma4-categorical-v1");
+    run.emplace("readout_id", "gemma4-next-token-categorical-v1");
+    run.emplace("scoring_basis", "answer_slot_logit");
     run.emplace("input_path", input_path.string());
     run.emplace("model_path", model_path.string());
     run.emplace("mmproj_path", mmproj_path.string());
@@ -306,6 +309,7 @@ Json aggregate_json(
 
     Object result;
     result.emplace("kind", "aggregate");
+    result.emplace("schema_version", size_number(2));
     result.emplace("row_count", size_number(measured_ms.size()));
     result.emplace("measured_wall_ms", number(wall_ms));
     result.emplace("decisions_per_second",
