@@ -16,10 +16,6 @@ namespace {
 
 constexpr std::size_t max_graph_nodes = 4096;
 
-std::string layer_name(std::uint32_t layer, const char * suffix) {
-    return "v.blk." + std::to_string(layer) + "." + suffix;
-}
-
 ggml_tensor * require_tensor(ModelBundle & model, const std::string & name) {
     auto * tensor = model.vision_tensor(name);
     if (tensor == nullptr) throw std::runtime_error("missing vision tensor: " + name);
@@ -299,7 +295,8 @@ VisualTokens VisionEncoder::encode(const PreparedImage & image) const {
     backend_.synchronize();
 
     const auto result_size = output_tokens * config.projection_length;
-    if (current->type != GGML_TYPE_F32 || ggml_nelements(current) != result_size) {
+    if (current->type != GGML_TYPE_F32 ||
+        static_cast<std::size_t>(ggml_nelements(current)) != result_size) {
         throw std::runtime_error("vision graph output has an unexpected shape or type");
     }
 
