@@ -154,6 +154,7 @@ struct GemmaTokenizer::Impl {
     std::vector<SpecialToken> special_tokens;
     TokenId bos = -1;
     TokenId eos = -1;
+    std::string chat_template;
 
     std::vector<TokenId> tokenize_raw(const std::string & raw) const {
         const std::string text = escape_spaces(raw);
@@ -303,6 +304,7 @@ GemmaTokenizer GemmaTokenizer::from_gguf(const std::string & model_path) {
         static_cast<std::size_t>(impl->eos) >= token_count) {
         throw std::runtime_error("Gemma 4 BOS/EOS IDs are missing or invalid");
     }
+    impl->chat_template = require_string(context, "tokenizer.chat_template");
 
     for (std::size_t i = 0; i < token_count; ++i) {
         auto type = impl->token_types[i];
@@ -366,8 +368,10 @@ OptionTokens GemmaTokenizer::tokenize_option(
     std::size_t input_index,
     const std::string & description) const {
     if (description.empty()) throw std::runtime_error("option description must not be empty");
-    const auto prefix_ids = tokenize(rendered_prefix, true, true);
-    const auto combined_ids = tokenize(rendered_prefix + description, true, true);
+    const bool rendered_has_bos = rendered_prefix.rfind("<bos>", 0) == 0;
+    const auto prefix_ids = tokenize(rendered_prefix, !rendered_has_bos, true);
+    const auto combined_ids = tokenize(
+        rendered_prefix + description, !rendered_has_bos, true);
     if (combined_ids.size() < prefix_ids.size() ||
         !std::equal(prefix_ids.begin(), prefix_ids.end(), combined_ids.begin())) {
         throw std::runtime_error(
@@ -399,5 +403,15 @@ std::size_t GemmaTokenizer::vocabulary_size() const noexcept {
 
 TokenId GemmaTokenizer::bos_id() const noexcept { return impl_->bos; }
 TokenId GemmaTokenizer::eos_id() const noexcept { return impl_->eos; }
+
+const std::string & GemmaTokenizer::chat_template() const noexcept {
+    return impl_->chat_template;
+}
+
+std::optional<TokenId> GemmaTokenizer::find_token(const std::string & piece) const {
+    const auto found = impl_->piece_to_id.find(piece);
+    if (found == impl_->piece_to_id.end()) return std::nullopt;
+    return found->second;
+}
 
 } // namespace branchscore

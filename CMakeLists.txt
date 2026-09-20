@@ -28,6 +28,7 @@ add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
 
 add_library(branchscore_core
     src/backend_context.cpp
+    src/chat_template.cpp
     src/image_preprocessor.cpp
     src/model_loader.cpp
     src/option_scorer.cpp
@@ -58,6 +59,10 @@ if(BRANCHSCORE_BUILD_TESTS)
     add_executable(branchscore_backend_test tests/backend_context_test.cpp)
     target_link_libraries(branchscore_backend_test PRIVATE branchscore::core)
     add_test(NAME backend_context COMMAND branchscore_backend_test)
+
+    add_executable(branchscore_chat_template_test tests/chat_template_test.cpp)
+    target_link_libraries(branchscore_chat_template_test PRIVATE branchscore::core)
+    add_test(NAME chat_template COMMAND branchscore_chat_template_test)
 
     add_executable(branchscore_tokenizer_test tests/tokenizer_test.cpp)
     target_link_libraries(branchscore_tokenizer_test PRIVATE branchscore::core)
