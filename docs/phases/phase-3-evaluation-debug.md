@@ -164,10 +164,10 @@ measurements.
   backend-specific observations rather than portable performance claims.
 - 2026-09-20: The warm-loaded JSONL runner produced row-level and aggregate
   output for the four-row E2B and E4B text fixture. E2B warm-run aggregate
-  throughput was 0.683 decisions/s with request p50/p95 1,366.30/1,817.30
-  ms; E4B was 0.358 decisions/s with p50/p95 2,664.97/3,417.36 ms. These
-  figures exclude model loading, warmup, and JSONL writes as recorded in the
-  output timing boundary.
+  throughput was 0.651 decisions/s with request p50/p95 1,489.63/1,912.19
+  ms; E4B was 0.331 decisions/s with p50/p95 2,917.58/3,767.78 ms. These
+  corrected figures exclude model loading, warmup, and JSONL writes as
+  recorded in the output timing boundary.
 - 2026-09-20: The longest state candidate found in the committed SemIf
   shape777.jsonl input had 1,793 prefix tokens and option lengths 11/12.
   E2B Q4 CPU completed it without truncation or allocation failure in
@@ -180,8 +180,8 @@ measurements.
   inferred from the E2B/E4B model-size comparison. The frozen TypeSafe
   snapshots required for the 102-row report are also not present locally.
 - 2026-09-20: The same four-row E2B Q4 fixture on the RTX 2060 SUPER CUDA
-  backend completed at 16.76 decisions/s with request p50/p95
-  54.02/97.27 ms and mean Prefill 25.63 ms. The ambiguous row changed from
+  backend completed at 17.61 decisions/s with request p50/p95
+  49.76/97.43 ms. The ambiguous row changed from
   CPU E2B wait=0.599/unknown=0.399, selected wait, to CUDA
   wait=0.470/unknown=0.527, selected unknown. This is a real backend
   sensitivity observation for the current quantized baseline; CPU and CUDA

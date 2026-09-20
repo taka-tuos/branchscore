@@ -405,18 +405,24 @@ int main(int argc, char ** argv) {
 
         std::vector<double> measured_ms;
         std::vector<branchscore::TimingInfo> timings;
+        std::vector<branchscore::DecisionResult> results;
         measured_ms.reserve(rows.size());
         timings.reserve(rows.size());
+        results.reserve(rows.size());
         const auto wall_started = Clock::now();
         for (const auto & row : rows) {
             const auto started = Clock::now();
-            const auto result = engine.evaluate(row.request);
+            auto result = engine.evaluate(row.request);
             const auto elapsed = std::chrono::duration<double, std::milli>(Clock::now() - started).count();
             measured_ms.push_back(elapsed);
             timings.push_back(result.timings);
-            output << branchscore::json::stringify(row_json(row, result, elapsed)) << '\n';
+            results.push_back(std::move(result));
         }
         const auto wall_ms = std::chrono::duration<double, std::milli>(Clock::now() - wall_started).count();
+        for (std::size_t index = 0; index < rows.size(); ++index) {
+            output << branchscore::json::stringify(
+                row_json(rows[index], results[index], measured_ms[index])) << '\n';
+        }
         output << branchscore::json::stringify(aggregate_json(measured_ms, timings, wall_ms)) << '\n';
         if (!output) throw std::runtime_error("failed while writing output JSONL");
         std::cout << "Wrote " << rows.size() << " decisions to " << output_path << '\n';
