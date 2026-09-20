@@ -43,7 +43,7 @@ public:
     std::size_t vocabulary_size() const noexcept;
     TokenId bos_id() const noexcept;
     TokenId eos_id() const noexcept;
-    const std::string & chat_template() const noexcept;
+    std::optional<std::string> chat_template() const noexcept;
     std::optional<TokenId> find_token(const std::string & piece) const;
 
 private:

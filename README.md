@@ -16,7 +16,7 @@ ctest --test-dir build --output-on-failure
 CPU is enabled by default. Build an optional GPU backend with
 `-DBRANCHSCORE_CUDA=ON` or `-DBRANCHSCORE_VULKAN=ON`.
 
-The CLI exposes the backend foundation and the sequential Stage 2.7 scoring
+The CLI exposes the backend foundation and the sequential Phase 2+ decision
 path:
 
 ```sh
@@ -43,15 +43,19 @@ matching text GGUF and mmproj:
   --option no="Stop it"
 ```
 
-The request accepts 2--16 unique `--option ID=DESCRIPTION` values. It renders
-the common system/state/question prefix from the GGUF
-`tokenizer.chat_template`, tokenizes and prints the prefix and each option,
-then reports sum/mean continuation log-probabilities, relative softmax
-probabilities, the selected option, and Vision/Prefill/score/total timings.
-Use `--image FILE` to include one image in the request. The optional
-`--chat-template-file FILE` selects a different source for the same supported
-plain Gemma 4 system/user/image shape; Phase 2 validates its required markers
-but does not execute arbitrary Jinja branches yet.
+The request accepts 2--16 unique `--option ID=DESCRIPTION` values. The
+library-level `Gemma4DecisionEngine` renders the fixed, versioned
+`gemma4-fixed-v1` system/state/question prefix, tokenizes and prints the
+prefix, then reports sum/mean continuation log-probabilities, relative
+softmax probabilities, the selected option, explicit scoring metadata, and
+prompt/option/stage timings. Relative probabilities are conditional on the
+supplied option set, not calibrated confidence. Use `--image FILE` to include
+one image in the request.
+
+`--chat-template-file FILE` is accepted as a reserved request. Phase 2+ never
+opens or validates `FILE`; it prints the exact filename with `applied=false`.
+The optional GGUF `tokenizer.chat_template` field is reported as diagnostic
+metadata and is not used by the effective renderer.
 
 Weights retain their GGUF tensor types when uploaded to the selected backend.
 Only Gemma 4 vision and projector tensors are loaded from mmproj; bundled audio
@@ -61,8 +65,10 @@ Pass `--image FILE` with the model arguments to decode and preprocess a PNG,
 JPEG, BMP, TGA, GIF, PSD, HDR, PIC, or PNM image. The image keeps its aspect
 ratio, is aligned to the Gemma 4 patch/pooling grid, and is bicubic-resized to
 the model's supported visual-token range.
-Use `--vision-dump FILE` with `--image` to write the projected embeddings as
-two int32 dimensions (`tokens`, `width`) followed by row-major float32 data.
+Use `--vision-dump FILE` with `--image` to request the projected embeddings.
+The engine includes that explicit host debug read in the Vision interval; the
+CLI writes the two int32 dimensions (`tokens`, `width`) followed by row-major
+float32 data after the decision result is complete.
 
 Tokenizer IDs and option-boundary behavior can be inspected without loading
 model weights:

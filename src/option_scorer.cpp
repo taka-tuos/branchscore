@@ -31,6 +31,7 @@ OptionScore OptionScorer::score(
     result.input_index = option.input_index;
     result.option_id = option.option_id;
     result.token_count = option.ids.size();
+    result.token_ids = option.ids;
     result.token_logprobs.reserve(option.ids.size());
     for (std::size_t index = 0; index < option.ids.size(); ++index) {
         result.token_logprobs.push_back(

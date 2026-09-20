@@ -28,7 +28,8 @@ add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
 
 add_library(branchscore_core
     src/backend_context.cpp
-    src/chat_template.cpp
+    src/gemma4_decision_engine.cpp
+    src/gemma4_prompt_renderer.cpp
     src/image_preprocessor.cpp
     src/model_loader.cpp
     src/option_scorer.cpp
@@ -60,9 +61,23 @@ if(BRANCHSCORE_BUILD_TESTS)
     target_link_libraries(branchscore_backend_test PRIVATE branchscore::core)
     add_test(NAME backend_context COMMAND branchscore_backend_test)
 
-    add_executable(branchscore_chat_template_test tests/chat_template_test.cpp)
-    target_link_libraries(branchscore_chat_template_test PRIVATE branchscore::core)
-    add_test(NAME chat_template COMMAND branchscore_chat_template_test)
+    add_executable(branchscore_gemma4_prompt_renderer_test tests/gemma4_prompt_renderer_test.cpp)
+    target_link_libraries(branchscore_gemma4_prompt_renderer_test PRIVATE branchscore::core)
+    add_test(NAME gemma4_prompt_renderer COMMAND branchscore_gemma4_prompt_renderer_test)
+
+    add_executable(branchscore_decision_contract_test tests/decision_contract_test.cpp)
+    target_link_libraries(branchscore_decision_contract_test PRIVATE branchscore::core)
+    add_test(NAME decision_contract COMMAND branchscore_decision_contract_test)
+
+    add_executable(branchscore_gemma4_decision_engine_test tests/gemma4_decision_engine_test.cpp)
+    target_link_libraries(branchscore_gemma4_decision_engine_test PRIVATE branchscore::core)
+    add_test(
+        NAME gemma4_decision_engine
+        COMMAND branchscore_gemma4_decision_engine_test
+            ${BRANCHSCORE_TEST_MODEL}
+            ${BRANCHSCORE_TEST_MMPROJ}
+            ${BRANCHSCORE_TEST_BACKEND})
+    set_tests_properties(gemma4_decision_engine PROPERTIES SKIP_RETURN_CODE 77)
 
     add_executable(branchscore_tokenizer_test tests/tokenizer_test.cpp)
     target_link_libraries(branchscore_tokenizer_test PRIVATE branchscore::core)

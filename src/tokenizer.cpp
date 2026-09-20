@@ -154,7 +154,7 @@ struct GemmaTokenizer::Impl {
     std::vector<SpecialToken> special_tokens;
     TokenId bos = -1;
     TokenId eos = -1;
-    std::string chat_template;
+    std::optional<std::string> chat_template;
 
     std::vector<TokenId> tokenize_raw(const std::string & raw) const {
         const std::string text = escape_spaces(raw);
@@ -304,7 +304,13 @@ GemmaTokenizer GemmaTokenizer::from_gguf(const std::string & model_path) {
         static_cast<std::size_t>(impl->eos) >= token_count) {
         throw std::runtime_error("Gemma 4 BOS/EOS IDs are missing or invalid");
     }
-    impl->chat_template = require_string(context, "tokenizer.chat_template");
+    const auto chat_template_id = gguf_find_key(context, "tokenizer.chat_template");
+    if (chat_template_id >= 0) {
+        if (gguf_get_kv_type(context, chat_template_id) != GGUF_TYPE_STRING) {
+            throw std::runtime_error("tokenizer.chat_template has wrong type");
+        }
+        impl->chat_template = gguf_get_val_str(context, chat_template_id);
+    }
 
     for (std::size_t i = 0; i < token_count; ++i) {
         auto type = impl->token_types[i];
@@ -404,7 +410,7 @@ std::size_t GemmaTokenizer::vocabulary_size() const noexcept {
 TokenId GemmaTokenizer::bos_id() const noexcept { return impl_->bos; }
 TokenId GemmaTokenizer::eos_id() const noexcept { return impl_->eos; }
 
-const std::string & GemmaTokenizer::chat_template() const noexcept {
+std::optional<std::string> GemmaTokenizer::chat_template() const noexcept {
     return impl_->chat_template;
 }
 

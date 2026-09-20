@@ -1,6 +1,7 @@
 #pragma once
 
 #include "branchscore/prefill_engine.hpp"
+#include "branchscore/decision.hpp"
 
 #include <cstddef>
 #include <string>
@@ -8,17 +9,6 @@
 #include <vector>
 
 namespace branchscore {
-
-struct OptionScore {
-    std::size_t input_index = 0;
-    std::string option_id;
-    std::size_t token_count = 0;
-    double sum_logprob = 0.0;
-    double mean_logprob = 0.0;
-    double relative_probability = 0.0;
-    double elapsed_ms = 0.0;
-    std::vector<float> token_logprobs;
-};
 
 struct OptionSummary {
     std::vector<OptionScore> scores;
