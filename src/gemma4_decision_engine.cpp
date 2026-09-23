@@ -41,10 +41,13 @@ void validate_request(const DecisionRequest & request) {
     if (request.image_path && request.image_path->empty()) {
         throw std::runtime_error("image path must not be empty");
     }
+    if (request.image_path && request.image_bytes) {
+        throw std::runtime_error("request must use either an image path or image bytes");
+    }
     if (request.chat_template_file && request.chat_template_file->empty()) {
         throw std::runtime_error("chat template file name must not be empty");
     }
-    if (request.capture_vision_debug && !request.image_path) {
+    if (request.capture_vision_debug && !request.has_image()) {
         throw std::runtime_error("vision debug capture requires an image");
     }
 }
@@ -67,7 +70,7 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
         request.state,
         request.question,
         request.options,
-        request.image_path.has_value(),
+        request.has_image(),
         request.prompt_policy,
         request.chat_template_file,
         tokenizer_.chat_template().has_value());
@@ -79,11 +82,11 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     const auto image_count = image_id == std::nullopt
         ? 0U
         : static_cast<std::size_t>(std::count(all_ids.begin(), all_ids.end(), *image_id));
-    if (request.image_path.has_value() && image_count != 1) {
+    if (request.has_image() && image_count != 1) {
         throw std::runtime_error(
             "Gemma 4 image request must render exactly one <|image|> token");
     }
-    if (!request.image_path.has_value() && image_count != 0) {
+    if (!request.has_image() && image_count != 0) {
         throw std::runtime_error(
             "text-only request unexpectedly contains an <|image|> token");
     }
@@ -117,10 +120,17 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     std::optional<VisionDebugInfo> vision_debug;
     double image_preprocessing_ms = 0.0;
     double vision_ms = 0.0;
-    if (request.image_path.has_value()) {
+    if (request.has_image()) {
         const auto image_started = Clock::now();
-        prepared_image = std::make_unique<PreparedImage>(ImagePreprocessor::load(
-            *request.image_path, model_.vision_config()));
+        if (request.image_path) {
+            prepared_image = std::make_unique<PreparedImage>(ImagePreprocessor::load(
+                *request.image_path, model_.vision_config()));
+        } else {
+            prepared_image = std::make_unique<PreparedImage>(ImagePreprocessor::load_encoded(
+                request.image_bytes->data(),
+                request.image_bytes->size(),
+                model_.vision_config()));
+        }
         image_preprocessing_ms = elapsed_ms(image_started);
 
         const auto vision_started = Clock::now();

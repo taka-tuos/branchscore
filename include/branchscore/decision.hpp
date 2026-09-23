@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -28,9 +29,14 @@ struct DecisionRequest {
     std::string question;
     std::vector<DecisionOption> options;
     std::optional<std::string> image_path;
+    std::shared_ptr<const std::vector<std::uint8_t>> image_bytes;
     PromptPolicy prompt_policy;
     std::optional<std::string> chat_template_file;
     bool capture_vision_debug = false;
+
+    bool has_image() const noexcept {
+        return image_path.has_value() || static_cast<bool>(image_bytes);
+    }
 };
 
 struct PromptFormatInfo {

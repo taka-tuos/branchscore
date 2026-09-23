@@ -1,5 +1,8 @@
 #include "branchscore/systemone_adapter.hpp"
+#include "branchscore/image_preprocessor.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <set>
@@ -64,6 +67,88 @@ std::string serialize_state(const Json & state) {
     throw RequestError("invalid_request", "state has an unsupported JSON type");
 }
 
+std::vector<std::uint8_t> decode_base64(const std::string & encoded) {
+    if (encoded.empty() || encoded.size() % 4 != 0) {
+        throw RequestError("invalid_image", "image data_base64 is malformed");
+    }
+    const auto decode_digit = [](const unsigned char c) -> int {
+        if (c >= 'A' && c <= 'Z') return c - 'A';
+        if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+        if (c >= '0' && c <= '9') return c - '0' + 52;
+        if (c == '+') return 62;
+        if (c == '/') return 63;
+        return -1;
+    };
+
+    std::size_t padding = 0;
+    if (encoded.back() == '=') ++padding;
+    if (encoded.size() > 1 && encoded[encoded.size() - 2] == '=') ++padding;
+    std::vector<std::uint8_t> decoded;
+    decoded.reserve((encoded.size() / 4) * 3 - padding);
+    for (std::size_t offset = 0; offset < encoded.size(); offset += 4) {
+        const bool last = offset + 4 == encoded.size();
+        const auto c0 = static_cast<unsigned char>(encoded[offset]);
+        const auto c1 = static_cast<unsigned char>(encoded[offset + 1]);
+        const auto c2 = static_cast<unsigned char>(encoded[offset + 2]);
+        const auto c3 = static_cast<unsigned char>(encoded[offset + 3]);
+        const int a = decode_digit(c0);
+        const int b = decode_digit(c1);
+        const int c = c2 == '=' ? 0 : decode_digit(c2);
+        const int d = c3 == '=' ? 0 : decode_digit(c3);
+        const bool has_padding = c2 == '=' || c3 == '=';
+        if (a < 0 || b < 0 || c < 0 || d < 0 ||
+            (has_padding && !last) ||
+            (c2 == '=' && c3 != '=') ||
+            (c2 == '=' && (b & 0x0f) != 0) ||
+            (c3 == '=' && c2 != '=' && (c & 0x03) != 0)) {
+            throw RequestError("invalid_image", "image data_base64 is malformed");
+        }
+        const auto bits = (static_cast<std::uint32_t>(a) << 18U) |
+                          (static_cast<std::uint32_t>(b) << 12U) |
+                          (static_cast<std::uint32_t>(c) << 6U) |
+                          static_cast<std::uint32_t>(d);
+        decoded.push_back(static_cast<std::uint8_t>((bits >> 16U) & 0xffU));
+        if (c2 != '=') decoded.push_back(static_cast<std::uint8_t>((bits >> 8U) & 0xffU));
+        if (c3 != '=') decoded.push_back(static_cast<std::uint8_t>(bits & 0xffU));
+    }
+    return decoded;
+}
+
+bool has_prefix(
+    const std::vector<std::uint8_t> & bytes,
+    const std::array<std::uint8_t, 8> & signature,
+    const std::size_t signature_size) {
+    return bytes.size() >= signature_size &&
+        std::equal(signature.begin(), signature.begin() + signature_size, bytes.begin());
+}
+
+std::shared_ptr<const std::vector<std::uint8_t>> parse_image(const Json & image) {
+    require_object(image, "image");
+    reject_unknown_fields(image, {"media_type", "data_base64"}, "image");
+    const auto & media_type = required_string(image, "media_type");
+    const auto & encoded = required_string(image, "data_base64");
+    if (media_type != "image/png" && media_type != "image/jpeg") {
+        throw RequestError("unsupported_media_type", "image media_type must be PNG or JPEG");
+    }
+    auto bytes = decode_base64(encoded);
+    constexpr std::array<std::uint8_t, 8> png_signature = {
+        0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a};
+    constexpr std::array<std::uint8_t, 8> jpeg_signature = {
+        0xff, 0xd8, 0xff, 0, 0, 0, 0, 0};
+    const auto matches = media_type == "image/png"
+        ? has_prefix(bytes, png_signature, png_signature.size())
+        : has_prefix(bytes, jpeg_signature, 3);
+    if (!matches) {
+        throw RequestError("invalid_image", "image bytes do not match media_type");
+    }
+    try {
+        static_cast<void>(ImagePreprocessor::inspect_encoded(bytes.data(), bytes.size()));
+    } catch (const std::exception &) {
+        throw RequestError("invalid_image", "image data could not be inspected");
+    }
+    return std::make_shared<const std::vector<std::uint8_t>>(std::move(bytes));
+}
+
 Json number(const double value) {
     if (!std::isfinite(value)) {
         throw std::runtime_error("cannot encode a non-finite decision result");
@@ -125,7 +210,7 @@ Request parse_request(
     const std::string & advertised_model_id) {
     require_object(envelope, "request");
     reject_unknown_fields(
-        envelope, {"state", "model", "questions", "request_id"}, "request");
+        envelope, {"state", "model", "questions", "request_id", "image"}, "request");
 
     if (advertised_model_id.empty()) {
         throw std::invalid_argument("advertised model ID must not be empty");
@@ -144,6 +229,9 @@ Request parse_request(
             throw RequestError("invalid_request", "field must be a string: request_id");
         }
         result.request_id = request_id->string();
+    }
+    if (const auto * image = envelope.find("image")) {
+        result.image_bytes = parse_image(*image);
     }
 
     const auto & questions = required(envelope, "questions");
@@ -188,6 +276,7 @@ Request parse_request(
         DecisionRequest decision;
         decision.state = state;
         decision.question = instructions;
+        decision.image_bytes = result.image_bytes;
         decision.options.reserve(criteria.object().size());
         for (const auto & [option_id, description] : criteria.object()) {
             if (option_id.empty()) {

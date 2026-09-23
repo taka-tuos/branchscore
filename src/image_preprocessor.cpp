@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <climits>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -220,6 +221,58 @@ PreparedImage ImagePreprocessor::load(
         throw std::runtime_error(
             "failed to decode image '" + path + "': " +
             (reason == nullptr ? "unknown stb_image error" : reason));
+    }
+    return preprocess_rgb(
+        pixels.get(), static_cast<std::uint32_t>(width),
+        static_cast<std::uint32_t>(height), config);
+}
+
+EncodedImageInfo ImagePreprocessor::inspect_encoded(
+    const std::uint8_t * encoded,
+    const std::size_t encoded_size) {
+    if (encoded == nullptr || encoded_size == 0) {
+        throw std::runtime_error("encoded image data must not be empty");
+    }
+    if (encoded_size > static_cast<std::size_t>(INT_MAX)) {
+        throw std::runtime_error("encoded image exceeds the decoder size limit");
+    }
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    if (!stbi_info_from_memory(
+            encoded, static_cast<int>(encoded_size), &width, &height, &channels)) {
+        const char * reason = stbi_failure_reason();
+        throw std::runtime_error(
+            std::string("failed to inspect encoded image: ") +
+            (reason == nullptr ? "unknown stb_image error" : reason));
+    }
+    if (width <= 0 || height <= 0) {
+        throw std::runtime_error("encoded image has invalid dimensions");
+    }
+    return {static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)};
+}
+
+PreparedImage ImagePreprocessor::load_encoded(
+    const std::uint8_t * encoded,
+    const std::size_t encoded_size,
+    const VisionModelConfig & config) {
+    const auto info = inspect_encoded(encoded, encoded_size);
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    using ImagePointer = std::unique_ptr<stbi_uc, decltype(&stbi_image_free)>;
+    ImagePointer pixels(
+        stbi_load_from_memory(
+            encoded, static_cast<int>(encoded_size), &width, &height, &channels, 3),
+        stbi_image_free);
+    if (!pixels) {
+        const char * reason = stbi_failure_reason();
+        throw std::runtime_error(
+            std::string("failed to decode encoded image: ") +
+            (reason == nullptr ? "unknown stb_image error" : reason));
+    }
+    if (width != static_cast<int>(info.width) || height != static_cast<int>(info.height)) {
+        throw std::runtime_error("encoded image dimensions changed during decoding");
     }
     return preprocess_rgb(
         pixels.get(), static_cast<std::uint32_t>(width),

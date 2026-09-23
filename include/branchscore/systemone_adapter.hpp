@@ -4,8 +4,10 @@
 #include "branchscore/json.hpp"
 
 #include <optional>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <cstdint>
 #include <vector>
 
 namespace branchscore::systemone {
@@ -30,6 +32,7 @@ struct ChoiceQuestion {
 struct Request {
     std::string model_id;
     std::optional<std::string> request_id;
+    std::shared_ptr<const std::vector<std::uint8_t>> image_bytes;
     std::vector<ChoiceQuestion> questions;
 };
 

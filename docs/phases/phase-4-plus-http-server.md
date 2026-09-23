@@ -137,6 +137,13 @@ Example response shape (illustrative probabilities and token count):
   prompt, scoring, timing, and optional raw-logit metadata without including
   prompt text, token IDs, or Vision debug values. The user selected 16 as the
   per-request question limit.
+- 2026-09-23: The adapter now accepts the documented single-image extension
+  as in-memory base64 JPEG/PNG bytes shared across its sequential
+  `DecisionRequest`s. `ImagePreprocessor::inspect_encoded` reads dimensions
+  from encoded bytes before pixel allocation, while `load_encoded` uses the
+  same preprocessing path as path-based images. The engine rejects requests
+  that supply both a filesystem path and in-memory bytes; CLI/JSONL path input
+  remains unchanged.
 - 2026-09-23: `Gemma4DecisionEngine::evaluate` already owns all per-request
   Vision/Prefill/readout state and returns `DecisionResult`; model and backend
   live outside it. `branchscore-bench` demonstrates repeated sequential calls

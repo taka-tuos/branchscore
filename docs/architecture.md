@@ -170,7 +170,7 @@ These are narrow current-phase boundaries, not framework extension points.
 | `AnswerToken` | Answer label, input index, semantic option ID, one normal token ID, standalone/round-trip/boundary validation |
 | `PrefillState` | Rendered-prompt hash/version, prompt token count, image-token count, next absolute position, `StateCache`, persistent backend final-position logits |
 | `OptionScore` | Option ID/index, answer label/token ID, `raw_score`, relative probability |
-| `DecisionRequest` | State, question, 2-16 ordered semantic options, at most one image path, prompt policy, and optional reserved template filename |
+| `DecisionRequest` | State, question, 2-16 ordered semantic options, at most one image path or shared in-memory encoded image, prompt policy, and optional reserved template filename |
 | `PromptFormatInfo` | Renderer ID/version, model family, effective source, reasoning policy, requested override/applied flag, GGUF-template diagnostic flags |
 | `DecisionResult` | Schema 2, ordered option scores, relative probabilities, selected ID/index, exact-tie flag, `answer_slot_logit` basis, readout identity, `terminator_scored=false`, prompt identity/metadata, timings |
 | `VisionDebugInfo` | Optional host copy of projected visual tokens, populated only when explicitly requested for a debug dump |
@@ -184,7 +184,7 @@ milestone accepts at most one image.
 
 | Category | Location | Owner | Lifetime | Required copies |
 |---|---|---|---|---|
-| Request strings and image path | Host | `Gemma4DecisionEngine` | One request | None until token/image inputs are prepared |
+| Request strings and image path/bytes | Host | `Gemma4DecisionEngine`; encoded bytes may be shared across questions in one envelope | One request | None until token/image inputs are prepared |
 | Token IDs, positions, option metadata | Host | `Gemma4DecisionEngine` / `CategoricalReadout` | One request | Host -> backend graph-input tensors per Prefill/readout |
 | Decoded/resized image samples | Host | `EncodedImage` | Through Vision input upload | Host -> selected backend once |
 | Text and vision weights | Selected backend; GGUF may remain host-mapped as loading source | `ModelLoader` | Engine lifetime | Load/upload once; no per-request backend copy |

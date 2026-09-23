@@ -3,6 +3,7 @@
 #include "branchscore/model_loader.hpp"
 
 #include <cstdint>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -17,10 +18,24 @@ struct PreparedImage {
     std::size_t visual_token_count(const VisionModelConfig & config) const;
 };
 
+struct EncodedImageInfo {
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+};
+
 class ImagePreprocessor {
 public:
     static PreparedImage load(
         const std::string & path,
+        const VisionModelConfig & config);
+
+    static EncodedImageInfo inspect_encoded(
+        const std::uint8_t * encoded,
+        std::size_t encoded_size);
+
+    static PreparedImage load_encoded(
+        const std::uint8_t * encoded,
+        std::size_t encoded_size,
         const VisionModelConfig & config);
 
     static PreparedImage preprocess_rgb(
