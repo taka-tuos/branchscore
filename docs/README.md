@@ -29,7 +29,7 @@ Phase documents link to canonical sources rather than duplicating them.
 
 ## Roadmap
 
-`Phase 0 → Phase 1 → Phase 2 → Phase 2+ → Phase 3 → Phase 3+ → Phase 4 → Phase 5 → Phase 6 → Phase 7`
+`Phase 0 → Phase 1 → Phase 2 → Phase 2+ → Phase 3 → Phase 3+ → Phase 4 → Phase 4+ → Phase 5 → Phase 6 → Phase 7`
 
 Phase 1, Phase 2, Phase 2+, and Phase 3+ are complete; Phase 3 retains the
 continuation benchmark baseline and historical measurements. Phase 3+ replaced
@@ -37,6 +37,7 @@ option-description continuation scoring with SemIf-style displayed options and
 single-token answer labels. Phase 4–7 remain future planning stages; their
 handoff now requires measurement-led component boundaries and request-level
 parallelism/pipeline work, not candidate continuation workers.
+Phase 4+ is a draft plan for a sequential HTTP entry point for LAN callers.
 This remains an experimental hobby project, not a tagged release or stable API.
 
 1. Partition documentation and establish routing.
