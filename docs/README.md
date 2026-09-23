@@ -37,8 +37,8 @@ option-description continuation scoring with SemIf-style displayed options and
 single-token answer labels. Phase 4–7 remain future planning stages; their
 handoff now requires measurement-led component boundaries and request-level
 parallelism/pipeline work, not candidate continuation workers.
-Phase 4+ is a draft plan for a sequential HTTP entry point for LAN callers.
-This remains an experimental hobby project, not a tagged release or stable API.
+Phase 4+ implements a sequential HTTP entry point for LAN callers. This remains
+an experimental hobby project, not a tagged release or stable API.
 
 1. Partition documentation and establish routing.
 2. Research and minimal design.

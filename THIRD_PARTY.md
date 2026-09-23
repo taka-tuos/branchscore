@@ -7,6 +7,10 @@
   `456172ec733a135778adcd32d00e576a58232e45` (ggml 0.24.0), is licensed under
   the MIT License. Its license is retained in the submodule. The project also
   uses the `stb_image` copy exposed by that pinned source tree.
+- [llhttp](https://github.com/nodejs/llhttp) 9.3.1, linked through pkg-config
+  for the `branchscore-server` HTTP/1 parser. CMake requires exactly version
+  9.3.1. llhttp is licensed under the MIT License; see the system package's
+  license and source metadata.
 
 ## Research references
 

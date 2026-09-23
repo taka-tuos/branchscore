@@ -4,6 +4,7 @@ project(branchscore VERSION 0.1.0 LANGUAGES C CXX)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BRANCHSCORE_BUILD_TESTS "Build branchscore tests" ON)
+option(BRANCHSCORE_BUILD_SERVER "Build the sequential HTTP server" ON)
 option(BRANCHSCORE_CUDA "Build the ggml CUDA backend" OFF)
 option(BRANCHSCORE_VULKAN "Build the ggml Vulkan backend" OFF)
 set(BRANCHSCORE_TEST_MODEL "" CACHE FILEPATH "Gemma 4 GGUF used by tokenizer tests")
@@ -13,6 +14,11 @@ set(BRANCHSCORE_TEST_BACKEND "cpu" CACHE STRING "Backend used by model execution
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(BRANCHSCORE_BUILD_SERVER)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(LLHTTP REQUIRED IMPORTED_TARGET libllhttp=9.3.1)
+endif()
 
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/ggml/CMakeLists.txt")
     message(FATAL_ERROR
@@ -68,6 +74,12 @@ target_link_libraries(branchscore-tokenize PRIVATE branchscore::core)
 add_executable(branchscore-bench tools/branchscore_bench.cpp)
 target_link_libraries(branchscore-bench PRIVATE branchscore::core)
 
+if(BRANCHSCORE_BUILD_SERVER)
+    add_executable(branchscore-server tools/branchscore_server.cpp)
+    target_link_libraries(branchscore-server
+        PRIVATE branchscore::core branchscore_systemone PkgConfig::LLHTTP)
+endif()
+
 if(BRANCHSCORE_BUILD_TESTS)
     enable_testing()
     add_executable(branchscore_backend_test tests/backend_context_test.cpp)
@@ -89,6 +101,10 @@ if(BRANCHSCORE_BUILD_TESTS)
     add_executable(branchscore_json_test tests/json_test.cpp)
     target_link_libraries(branchscore_json_test PRIVATE branchscore::core)
     add_test(NAME json COMMAND branchscore_json_test)
+
+    add_executable(branchscore_systemone_adapter_test tests/systemone_adapter_test.cpp)
+    target_link_libraries(branchscore_systemone_adapter_test PRIVATE branchscore_systemone)
+    add_test(NAME systemone_adapter COMMAND branchscore_systemone_adapter_test)
 
     add_executable(branchscore_gemma4_decision_engine_test tests/gemma4_decision_engine_test.cpp)
     target_link_libraries(branchscore_gemma4_decision_engine_test PRIVATE branchscore::core)

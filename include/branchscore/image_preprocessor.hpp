@@ -2,9 +2,10 @@
 
 #include "branchscore/model_loader.hpp"
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 namespace branchscore {
@@ -21,6 +22,11 @@ struct PreparedImage {
 struct EncodedImageInfo {
     std::uint32_t width = 0;
     std::uint32_t height = 0;
+};
+
+class ImageDecodeError : public std::runtime_error {
+public:
+    explicit ImageDecodeError(const std::string & message) : std::runtime_error(message) {}
 };
 
 class ImagePreprocessor {

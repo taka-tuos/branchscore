@@ -12,10 +12,11 @@ against pinned upstream sources and exercised with focused tests, but it is
 not production-ready, security-hardened, or covered by API, compatibility, or
 support guarantees.
 
-The current implementation is the sequential Phase 3+ path: one model, one
-backend, one request, and 2--16 ordered displayed options. See
-[`docs/README.md`](docs/README.md) for the design, research record, phase
-history, and roadmap.
+The core decision call remains the sequential Phase 3+ path: one model, one
+backend, one decision, and 2–16 ordered displayed options. The Phase 4+ server
+can accept up to 16 Choice questions in one envelope and evaluates them one at
+a time. See [`docs/README.md`](docs/README.md) for the design, research record,
+phase history, and roadmap.
 
 ## What it currently does
 
@@ -74,7 +75,9 @@ model cards before downloading or using the weights.
 
 Requirements are a C++17 compiler, CMake 3.20 or newer, and the tools needed
 by the selected ggml backend. Ninja is used in the examples but is not a
-project requirement.
+project requirement. The default build includes `branchscore-server` and
+requires pkg-config plus the llhttp 9.3.1 (`libllhttp`) development files. Set
+`-DBRANCHSCORE_BUILD_SERVER=OFF` for a CLI-only build.
 
 ```sh
 git submodule update --init --recursive
@@ -132,6 +135,43 @@ Use `--vision-dump FILE` with `--image` to request projected embeddings. The
 target file is created or truncated after inference completes and contains two
 int32 dimensions (`tokens`, `width`) followed by row-major float32 values.
 
+## Sequential HTTP server
+
+`branchscore-server` loads one model/backend before it starts listening. It
+serves `GET /healthz` and the Choice subset of `POST /v1/systemone`, evaluating
+up to 16 questions sequentially. Each Choice supports 2–16 string or null
+criteria. The request's `model` must be `branchscore-local`; other model IDs,
+Score, and Noul questions are rejected. Question and criteria maps use lexical
+key order. A string criterion is shown to the model as `key: description`,
+while a null criterion shows only its key.
+
+The optional image extension accepts base64 PNG or JPEG bytes. Request bodies
+are limited to 16 MiB; source images are limited to 8,192 pixels per side and
+8 megapixels total before pixel decoding. Requests run one at a time, and the
+server closes each response connection. It logs only request ID, status, and
+wall time by default.
+
+The default bind is loopback on port 8080. A non-loopback bind requires
+`BRANCHSCORE_BEARER_TOKEN` in the environment before model loading; the token
+is sent as `Authorization: Bearer ...`, never as a command-line argument.
+Use a TLS-terminating reverse proxy on untrusted networks.
+
+```sh
+./build/branchscore-server \
+  --model /path/to/gemma-4-E2B-it-Q4_K_M.gguf \
+  --mmproj /path/to/mmproj-F16.gguf \
+  --backend cuda --host 127.0.0.1 --port 8080
+```
+
+Choice responses include the TypeSafe-compatible fixed `confidence: 1.0`
+placeholder, identified by `branchscore.confidence_kind`. It is not calibrated
+confidence and must not be used for threshold decisions. `usage.input_tokens`
+counts rendered text prompt tokens and excludes visual tokens;
+`usage.output_tokens` is zero. Per-question timings and prompt/readout
+identities are in `branchscore.questions`; raw answer-slot logits are included
+there for diagnostics. The separate `branchscore.http_handling_ms` and server
+`wall_ms` log make HTTP request time visible alongside `evaluate` timings.
+
 Tokenizer IDs and answer-label boundary behavior can be inspected without loading
 model weights:
 
@@ -166,8 +206,8 @@ the phase notes contain the exact observations and indicative timings.
   parsers and decoders have not been fuzzed or hardened for hostile input.
 - Probabilities are relative only to the supplied option set and are not
   calibrated confidence values.
-- Selection uses accumulated option-token log-probability. Mean log-probability
-  is reported for observation but does not affect the selected option.
+- Selection uses the requested A–P answer-slot logits and a temperature-1
+  softmax across the supplied options.
 - EOS and turn-ending tokens are not scored.
 - There is no stable API, package installation contract, production fault
   tolerance, or general chat-completion interface.
