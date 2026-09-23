@@ -50,6 +50,15 @@ target_include_directories(branchscore_core SYSTEM PRIVATE
 target_link_libraries(branchscore_core PUBLIC ggml::ggml)
 target_compile_features(branchscore_core PUBLIC cxx_std_17)
 
+# Keep protocol-facing JSON adaptation outside the transport-independent core.
+add_library(branchscore_systemone src/systemone_adapter.cpp)
+target_include_directories(branchscore_systemone
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+target_link_libraries(branchscore_systemone PUBLIC branchscore::core)
+target_compile_features(branchscore_systemone PUBLIC cxx_std_17)
+
 add_executable(branchscore tools/branchscore.cpp)
 target_link_libraries(branchscore PRIVATE branchscore::core)
 

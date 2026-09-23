@@ -126,6 +126,17 @@ Example response shape (illustrative probabilities and token count):
 
 ## Notes / Findings
 
+- 2026-09-23: The initial Choice envelope adapter is implemented in the
+  transport-facing `branchscore_systemone` target, outside
+  `branchscore_core`. It accepts 1–16 Choice questions and 2–16 string/null
+  criteria, traverses question and criteria keys in the JSON codec's lexical
+  order, preserves criteria keys as option IDs, and renders non-null options
+  as `key: description` (null becomes the key alone). Structured object/array
+  state is serialized with the existing deterministic JSON codec. The adapter
+  projects choice/probabilities/confidence/usage and namespaced per-question
+  prompt, scoring, timing, and optional raw-logit metadata without including
+  prompt text, token IDs, or Vision debug values. The user selected 16 as the
+  per-request question limit.
 - 2026-09-23: `Gemma4DecisionEngine::evaluate` already owns all per-request
   Vision/Prefill/readout state and returns `DecisionResult`; model and backend
   live outside it. `branchscore-bench` demonstrates repeated sequential calls
