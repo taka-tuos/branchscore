@@ -273,6 +273,26 @@ focused verification の記録、現行仕様と後続Phaseの更新。
 
 ## Notes / Findings
 
+- 2026-09-21: `kishida/llama.cpp` の `jev` branch（`b779b6ac2ca517e83de42010e54fbe67acf1bb3c`）を
+  調査した。`/v1/systemone` は候補を表示し、次位置の単一 label token logits を読むため、
+  branchscore の現行 categorical readout と計算方式は一致する。公開文書の評価は
+  2--8候補の1,191問、別の358問で温度をNLL fitし、accuracy・T=1/校正後ECE・
+  50逐次requestの平均時間を報告する。これはbranchscoreの2--16候補、raw label logits、
+  warm-loaded逐次runnerで実行可能な形である。一方、同branchには文書が参照する
+  `scripts/bench_models.py` と評価/校正データが含まれず、公開物だけでは表を再実行できない。
+  またforkはmodel固有chat template、異なる固定指示/option layout、A-Z/a-z/0-9、
+  temperature、cyclic permutationを使い、branchscoreはGemma 4固定prompt、A-P、T=1である。
+  従ってデータ入手後も、同一benchmark入力上のbranchscore評価と、forkの表の厳密再現を
+  区別する。文書中のSystem One `choice` 例をoption名込みdescriptionへ変換したE2B CPU
+  smokeは既存runnerで完走し、3候補の有限確率と`technical`選択を確認した。
+
+- 2026-09-20: 修正commit `041a2db` をR1/R2の完了条件に照らして再レビューし、
+  両件の解消を確認した。修正版fixtureと保存済みE2B/E4B JSONLを照合し、全4行のID、
+  schema 2、修正質問、prompt identity、選択yes、logitsから再計算した確率、集計件数が
+  整合していた。Phase 4–7の実行対象は計測に基づく境界と質問/request単位へ更新され、
+  旧候補workerの必須条件は残っていない。今回の変更範囲に追加指摘はない。
+  確認は差分・文書・保存済み成果物を対象とし、モデル推論とCTestは再実行していない。
+
 - 2026-09-20: `28afbb3..78d3dc9` の移行実装をレビュー。候補提示、単一位置の
   gather、stable softmax、旧continuation経路削除、schema 2の主要実装は設計と整合。
   CPU model-backed CTestを再実行し10/10成功。別の16候補E2B CPU warm-loaded runでも
