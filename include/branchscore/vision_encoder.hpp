@@ -10,6 +10,13 @@
 
 namespace branchscore {
 
+enum class VisionAttentionPath {
+    Standard,
+    Flash,
+};
+
+const char * vision_attention_path_name(VisionAttentionPath path) noexcept;
+
 class VisualTokens {
 public:
     ~VisualTokens();
@@ -25,6 +32,7 @@ public:
     std::vector<float> download() const;
     BackendTiming backend_timing() const noexcept;
     std::size_t graph_node_count() const noexcept;
+    VisionAttentionPath attention_path() const noexcept;
 
 private:
     struct Impl;

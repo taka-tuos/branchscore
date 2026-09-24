@@ -169,6 +169,7 @@ Json timing_json(const TimingInfo & timing) {
     result.emplace("vision_backend_copy_ms", number(timing.vision_backend_copy_ms));
     result.emplace("vision_synchronization_ms", number(timing.vision_synchronization_ms));
     result.emplace("vision_graph_node_count", size_number(timing.vision_graph_node_count));
+    result.emplace("vision_attention_path", timing.vision_attention_path);
     result.emplace("prefill_ms", number(timing.prefill_ms));
     result.emplace("prefill_backend_copy_ms", number(timing.prefill_backend_copy_ms));
     result.emplace("prefill_synchronization_ms", number(timing.prefill_synchronization_ms));

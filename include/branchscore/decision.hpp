@@ -58,6 +58,7 @@ struct TimingInfo {
     double vision_backend_copy_ms = 0.0;
     double vision_synchronization_ms = 0.0;
     std::size_t vision_graph_node_count = 0;
+    std::string vision_attention_path = "not_used";
     double prefill_ms = 0.0;
     double prefill_backend_copy_ms = 0.0;
     double prefill_synchronization_ms = 0.0;

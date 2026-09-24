@@ -249,6 +249,7 @@ int main(int argc, char ** argv) {
                   << " vision_backend_copy=" << result.timings.vision_backend_copy_ms
                   << " vision_synchronization=" << result.timings.vision_synchronization_ms
                   << " vision_graph_nodes=" << result.timings.vision_graph_node_count
+                  << " vision_attention_path=" << result.timings.vision_attention_path
                   << " prefill=" << result.timings.prefill_ms
                   << " prefill_backend_copy=" << result.timings.prefill_backend_copy_ms
                   << " prefill_synchronization=" << result.timings.prefill_synchronization_ms

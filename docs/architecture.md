@@ -174,7 +174,7 @@ These are narrow current-phase boundaries, not framework extension points.
 | `PromptFormatInfo` | Renderer ID/version, model family, effective source, reasoning policy, requested override/applied flag, GGUF-template diagnostic flags |
 | `DecisionResult` | Schema 2, ordered option scores, relative probabilities, selected ID/index, exact-tie flag, `answer_slot_logit` basis, readout identity, `terminator_scored=false`, prompt identity/metadata, timings |
 | `VisionDebugInfo` | Optional host copy of projected visual tokens, populated only when explicitly requested for a debug dump |
-| `TimingInfo` | Prompt rendering, tokenization, image preprocessing, Vision, Prefill, shared readout/copy/synchronization, normalization, enclosing request total |
+| `TimingInfo` | Prompt rendering, tokenization, image preprocessing, Vision and selected attention path, Prefill, shared readout/copy/synchronization, normalization, enclosing request total |
 
 Host input validation additionally requires 2-16 options, unique nonempty IDs,
 nonempty descriptions, a nonempty question, and a text state. The first

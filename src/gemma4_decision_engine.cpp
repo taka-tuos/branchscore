@@ -200,6 +200,8 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
         result.timings.vision_backend_copy_ms = timing.copy_ms;
         result.timings.vision_synchronization_ms = timing.synchronization_ms;
         result.timings.vision_graph_node_count = visual_tokens->graph_node_count();
+        result.timings.vision_attention_path =
+            vision_attention_path_name(visual_tokens->attention_path());
     }
     result.timings.prefill_ms = prefill_ms;
     result.timings.prefill_backend_copy_ms = prefill_backend_timing.copy_ms;

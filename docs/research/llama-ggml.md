@@ -83,6 +83,35 @@ milestone and must not leak into the initial interfaces.
   embeddings. E2B/E4B remain causal even for these image chunks; larger Gemma 4
   variants may select non-causal handling and must not determine E2B/E4B logic.
 
+### 2026-09-24 follow-up: large-image CUDA memory
+
+At the pinned revision, `clip_graph_gemma4v::build()` calls the shared ViT graph.
+Its attention builder uses `ggml_flash_attn_ext` when Vision Flash Attention is
+enabled, casting K/V to F16 and requesting F32 accumulation. Otherwise it
+materializes `K*Q`, softmax, and `V*attention` tensors. Vision Flash Attention
+defaults to auto; warmup probes backend support and disables it with a memory
+warning if unsupported. The Gemma 4 Vision warmup uses 256 output tokens to
+avoid a maximum-size warmup allocation. This does not cap real images.
+
+Gemma 4 Vision's default image range is 70--1120 pooled output tokens, with
+3x3 pooling after ViT. Therefore each output token represents nine input
+patches before attention. A 1920x1080 input aligns to 1920x1104, giving 8280
+ViT patches and 920 output tokens. With 12 heads, an F32 full attention score
+tensor at that size is about 3.06 GiB by itself. `--image-max-tokens` can lower
+the preprocessing ceiling for dynamic-resolution models; Flash Attention is
+the upstream way to avoid materializing this large score tensor. These are
+source-based size estimates, not measured CUDA peak memory.
+The separate text-model KV cache defaults to F16 for both K and V in
+`llama_context_default_params()`; its type is not the Vision attention fix.
+
+The Phase 4 implementation builds the Vision graph with the actual Q/K/V
+shapes, checks each `GGML_OP_FLASH_ATTN_EXT` node with the selected backend's
+`ggml_backend_supports_op()` before graph allocation, and rebuilds the existing
+materialized attention path when support is false. It keeps all tensors on the
+selected backend and exposes `vision_attention_path` as `flash`, `standard`, or
+`not_used` in timing diagnostics. This is an implementation finding; it does
+not claim that every ggml backend supports Flash Attention.
+
 ## Prefill, continuation decode, and outputs
 
 - Prefill and continuation use the same model graph family. The concrete graph
