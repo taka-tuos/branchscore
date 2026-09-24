@@ -42,6 +42,8 @@ handoff now requires measurement-led component boundaries and request-level
 parallelism/pipeline work, not candidate continuation workers.
 Phase 4+ implements a sequential HTTP entry point for LAN callers. This remains
 an experimental hobby project, not a tagged release or stable API.
+The focused Phase 4 Vision Flash Attention plan is in
+`phases/phase-4-vision-flash-attention.md`.
 
 1. Partition documentation and establish routing.
 2. Research and minimal design.

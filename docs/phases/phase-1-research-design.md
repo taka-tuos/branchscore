@@ -94,6 +94,11 @@ the required ggml-only components, state ownership, and Phase 2 execution.
 
 ## Notes / Findings
 
+- 2026-09-24: Follow-up on large-image CUDA memory at the pinned llama.cpp
+  revision: Gemma 4 Vision uses shared CLIP Flash Attention when supported,
+  with a full attention fallback. A Full HD image remains near the 1120 output
+  token ceiling and has thousands of pre-pooling ViT patches; the full score
+  tensor can occupy multiple GiB. See `docs/research/llama-ggml.md`.
 - 2026-09-19: Inspected local OpenJev/SemIf revision
   `ca3ba65f142967030ecb453346e94d6f476a69df`. Its preferred direct path scores
   one-token answer letters at the final prompt position; it does not accumulate

@@ -93,3 +93,7 @@ Phase 4 measurement record](../records/phase-4-backend-measurements.md). The
 current conclusion is unchanged: Prefill dominates text requests, Vision and
 Prefill dominate image requests, and the small categorical readout does not
 justify an independent backend in the measured baseline.
+
+Large-image Vision memory optimization is planned separately in
+[`phase-4-vision-flash-attention.md`](phase-4-vision-flash-attention.md),
+without introducing a backend split.
