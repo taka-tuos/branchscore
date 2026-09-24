@@ -20,6 +20,10 @@ that Phase 4's optional backend stages are complete or justified.
 - New `branchscore-server` executable; `--model`, `--mmproj`, `--backend`,
   `--host`, and `--port` are startup options. Load model/tokenizer once before
   listening. Default bind address: `127.0.0.1`; LAN binding is explicit.
+- `GET /ui` serves a self-contained browser page for the Choice workflow. It
+  is the only exact route that is public on a non-loopback bind, so a browser
+  can load the token field; `/healthz` and `/v1/systemone` still require the
+  configured bearer token. The page does not persist or log the token.
 - For a non-loopback bind, require a bearer token loaded from an environment
   variable at startup; reject missing credentials before loading the model.
   Do not put the token in command-line arguments or logs. The server itself
@@ -128,6 +132,80 @@ Example response shape (illustrative probabilities and token count):
   should be chosen from observed queue delay and memory use, not inferred from
   single-request compute speed.
 
+## Follow-up design: small browser UI
+
+This is a design for a later, small implementation slice of the Phase 4+ HTTP
+server. It does not change the Choice API or the sequential engine contract.
+
+### Entry point and ownership
+
+- Serve one self-contained HTML page at `GET /ui` from `branchscore-server`.
+  Include its CSS and JavaScript in the page; do not add a frontend build,
+  package manager, third-party assets, filesystem document root, or proxy.
+  The page uses relative, same-origin `/healthz` and `/v1/systemone` URLs.
+- `GET /ui` is available without a bearer token so a browser can navigate to
+  it. Serve no model paths, token, environment values, or request data in it.
+  Keep authentication on `/healthz` and `/v1/systemone`, including when the
+  server binds to `0.0.0.0`. Other paths retain the current 404 behavior.
+  Match the method and exact path when making the authentication exception;
+  query strings and similar prefixes do not inherit it.
+- Return `Content-Type: text/html; charset=utf-8`, `Cache-Control: no-store`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a
+  restrictive Content Security Policy. The policy should allow only the
+  inline code/style needed by this fixed page, same-origin connections, and
+  no framing or external resources. Keep dynamic text out of the HTML source.
+
+### First-screen workflow
+
+1. Show a password-style **Bearer token** field and a **Connect** button.
+   The user enters only the token value, without the `Bearer ` prefix. Keep it
+   in page memory only; never place it in a URL, cookie, local/session storage,
+   HTML attribute, or log. Clearing the field/reloading the page forgets it.
+   On a loopback bind, an empty token is valid. `Connect` calls `GET /healthz`
+   with `Authorization: Bearer <token>` when nonempty, then displays readiness
+   and the returned `model` ID. A 401 leaves the form editable with an
+   authentication error; the UI must not retry automatically.
+2. Offer one Choice question: text `state`, `instructions`, and 2–16 editable
+   option rows with `key` and optional `description`. The first version
+   generates a fixed question ID such as `decision`; users may add/remove
+   option rows. Require unique nonempty keys, nonempty state/instructions,
+   and the supported option count before sending. Explain that keys are
+   sorted lexically by the server and that a blank description is sent as
+   `null`, making only the key visible to the model.
+3. Allow one optional PNG/JPEG file. Convert it in browser memory to
+   `{media_type, data_base64}` in the existing top-level `image` field;
+   display its filename and a remove action. Check type and the serialized
+   request size against the 16 MiB body limit before fetch. Leave image
+   dimensions and decoded-pixel validation to the server.
+4. Build the existing envelope with the model ID from `/healthz`, `state`,
+   `questions.decision`, and optional `image`; submit it to
+   `POST /v1/systemone` as JSON with the same Bearer header. Disable repeated
+   submission while a request is active. Do not invent model selection,
+   generation controls, or a second inference endpoint.
+5. Show the selected key prominently, then every key's relative probability
+   and raw logit, input-token count, HTTP handling time, and the question's
+   stage timings. Label probabilities as relative to these options and
+   uncalibrated. Do not present `confidence: 1.0` as a confidence meter: it is
+   a compatibility placeholder. Show the server's error code/message and
+   HTTP status on failure, preserving the form for correction. Render all
+   user/server strings with `textContent`, never `innerHTML`.
+
+### Implementation and verification boundary
+
+- Keep the HTML asset and response helper local to the server executable;
+  reuse the current HTTP parser, socket limits, JSON API, and model lifetime.
+  A focused helper for the exact unauthenticated UI route is sufficient.
+- Verify loopback with an empty token, `0.0.0.0` with correct/missing/wrong
+  tokens, and direct API calls without a token. Check that `/ui` works by
+  browser navigation but `/healthz` and inference still return 401 when
+  required; check route prefixes/query strings, security/cache headers,
+  malformed form values, PNG/JPEG, 413/422 errors, and displayed choice/logit
+  mapping. No broad frontend test framework is needed.
+- The token crosses the network in the Authorization header. For a LAN bind
+  over plain HTTP, use only a trusted network; put a TLS-terminating reverse
+  proxy in front when transport encryption is needed. The UI does not add
+  transport security.
+
 ## Notes / Findings
 
 The detailed dated implementation, portability, and HTTP verification record
@@ -135,3 +213,10 @@ is in [the Phase 4+ execution record](../records/phase-4-plus-http-server.md).
 The current server contract and implementation slices remain above; the record
 contains the vendoring investigation, live request checks, and environment-
 specific timing evidence.
+
+2026-09-24 UI design finding: the existing server checks Bearer authorization
+in `on_headers_complete` before route dispatch. A browser navigation cannot
+attach a header from an input field, so `GET /ui` needs one exact, public
+exception there. The existing `/healthz` response provides the model ID needed
+by the form, and the Choice response already includes probabilities, raw
+logits, and timings; no new model or inference API is required.

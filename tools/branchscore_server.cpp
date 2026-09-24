@@ -48,6 +48,290 @@ constexpr auto connection_timeout = std::chrono::seconds(10);
 constexpr auto send_timeout = std::chrono::seconds(10);
 constexpr const char * bearer_token_environment = "BRANCHSCORE_BEARER_TOKEN";
 
+constexpr const char * branchscore_ui_html = R"BRANCHSCORE_UI(<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Branchscore</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<style>
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #24314d, #111827 48rem); }
+main { box-sizing: border-box; width: min(960px, 100%); margin: 0 auto; padding: 2rem 1rem 4rem; }
+h1 { margin: 0 0 .35rem; font-size: 1.8rem; }
+.subtitle { margin: 0 0 1.5rem; color: #aab6cc; }
+section { margin: 1rem 0; padding: 1rem; border: 1px solid #394762; border-radius: .75rem; background: #192235; box-shadow: 0 8px 24px #0003; }
+h2 { margin: 0 0 .8rem; font-size: 1.05rem; }
+label { display: block; margin: .75rem 0 .3rem; font-size: .9rem; color: #c4cee0; }
+input, textarea, button { box-sizing: border-box; font: inherit; border-radius: .4rem; border: 1px solid #4a5a79; }
+input, textarea { width: 100%; padding: .6rem .7rem; color: #f3f4f6; background: #101827; }
+textarea { min-height: 6rem; resize: vertical; }
+button { padding: .58rem .85rem; color: #fff; background: #2563eb; border-color: #3b82f6; cursor: pointer; }
+button.secondary { background: #334155; border-color: #64748b; }
+button.danger { background: #7f1d1d; border-color: #b91c1c; }
+button:disabled { cursor: wait; opacity: .55; }
+.row { display: grid; grid-template-columns: minmax(7rem, .35fr) minmax(0, 1fr) auto; gap: .6rem; align-items: end; margin: .55rem 0; }
+.row label { margin-top: 0; }
+.actions { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+.muted { color: #aab6cc; font-size: .86rem; }
+.status { min-height: 1.3rem; margin: .65rem 0 0; color: #c4cee0; }
+.status.error { color: #fca5a5; }
+.status.ok { color: #86efac; }
+.result-choice { margin: .2rem 0 1rem; font-size: 1.35rem; color: #86efac; }
+.probability { display: grid; grid-template-columns: minmax(7rem, .25fr) minmax(5rem, 1fr) minmax(5rem, .22fr); gap: .55rem; align-items: center; margin: .5rem 0; }
+.bar { height: .65rem; overflow: hidden; border-radius: 99px; background: #334155; }
+.bar > span { display: block; height: 100%; background: #60a5fa; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; margin: .6rem 0 0; font-size: .88rem; }
+dt { color: #aab6cc; } dd { margin: 0; overflow-wrap: anywhere; }
+pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; background: #101827; color: #c4cee0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 620px) { .row { grid-template-columns: 1fr; gap: .25rem; } .row button { justify-self: start; } .probability { grid-template-columns: 5rem minmax(4rem, 1fr) 4rem; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Branchscore</h1>
+<p class="subtitle">Categorical decision readout</p>
+
+<section>
+<h2>Connection</h2>
+<label for="token">Bearer token</label>
+<input id="token" type="password" autocomplete="off" placeholder="Token value only (without Bearer)">
+<div class="actions" style="margin-top:.7rem"><button id="connect" type="button">Connect</button><span id="model-status" class="muted">Not connected</span></div>
+<p id="connection-status" class="status" role="status"></p>
+</section>
+
+<form id="decision-form">
+<section>
+<h2>Decision</h2>
+<label for="state">State</label>
+<textarea id="state" required>Describe the evidence or current situation here.</textarea>
+<label for="instructions">Question</label>
+<textarea id="instructions" required>Which option should be selected?</textarea>
+<p class="muted">The server evaluates one Choice question. Option keys are sorted lexically; a blank description is sent as null.</p>
+<div id="options"></div>
+<div class="actions"><button id="add-option" class="secondary" type="button">Add option</button><button id="submit" type="submit">Evaluate</button></div>
+<label for="image">Optional PNG or JPEG</label>
+<input id="image" type="file" accept="image/png,image/jpeg">
+<p id="image-status" class="muted"></p>
+<p id="form-status" class="status" role="status"></p>
+</section>
+</form>
+
+<section id="results" hidden>
+<h2>Result</h2>
+<p class="result-choice">Selected: <strong id="selected"></strong></p>
+<div id="probabilities"></div>
+<dl id="timings"></dl>
+<details style="margin-top:1rem"><summary>Raw response</summary><pre id="raw-response"></pre></details>
+</section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const maxBodyBytes = 16 * 1024 * 1024;
+  const tokenInput = document.querySelector('#token');
+  const connectButton = document.querySelector('#connect');
+  const modelStatus = document.querySelector('#model-status');
+  const connectionStatus = document.querySelector('#connection-status');
+  const optionsElement = document.querySelector('#options');
+  const addOptionButton = document.querySelector('#add-option');
+  const submitButton = document.querySelector('#submit');
+  const decisionForm = document.querySelector('#decision-form');
+  const imageInput = document.querySelector('#image');
+  const imageStatus = document.querySelector('#image-status');
+  const formStatus = document.querySelector('#form-status');
+  const results = document.querySelector('#results');
+  const selected = document.querySelector('#selected');
+  const probabilities = document.querySelector('#probabilities');
+  const timings = document.querySelector('#timings');
+  const rawResponse = document.querySelector('#raw-response');
+  let authToken = '';
+  let modelId = '';
+  let imageValue = null;
+
+  const setStatus = (element, message, kind = '') => {
+    element.textContent = message;
+    element.className = 'status' + (kind ? ' ' + kind : '');
+  };
+
+  const addOption = (key = '', description = '') => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const keyLabel = document.createElement('label');
+    keyLabel.textContent = 'Key';
+    const keyInput = document.createElement('input');
+    keyInput.className = 'option-key';
+    keyInput.required = true;
+    keyInput.value = key;
+    keyInput.placeholder = 'keep';
+    keyLabel.append(keyInput);
+    const descriptionLabel = document.createElement('label');
+    descriptionLabel.textContent = 'Description (optional)';
+    const descriptionInput = document.createElement('input');
+    descriptionInput.className = 'option-description';
+    descriptionInput.value = description;
+    descriptionInput.placeholder = 'Keep the service running';
+    descriptionLabel.append(descriptionInput);
+    const removeButton = document.createElement('button');
+    removeButton.className = 'danger';
+    removeButton.type = 'button';
+    removeButton.textContent = 'Remove';
+    removeButton.addEventListener('click', () => row.remove());
+    row.append(keyLabel, descriptionLabel, removeButton);
+    optionsElement.append(row);
+  };
+  addOption('keep', 'Keep it running');
+  addOption('stop', 'Stop it');
+  addOptionButton.addEventListener('click', () => {
+    if (optionsElement.children.length < 16) addOption();
+  });
+  tokenInput.addEventListener('input', () => {
+    authToken = '';
+    modelId = '';
+    modelStatus.textContent = 'Not connected';
+  });
+
+  const request = async (url, init = {}) => {
+    const headers = new Headers(init.headers || {});
+    if (authToken) headers.set('Authorization', 'Bearer ' + authToken);
+    return fetch(url, { ...init, headers });
+  };
+  const responseError = async (response) => {
+    let payload = null;
+    try { payload = await response.json(); } catch (_) {}
+    const detail = payload && payload.error ? payload.error.message : response.statusText;
+    const code = payload && payload.error ? ' (' + payload.error.code + ')' : '';
+    throw new Error(response.status + code + ': ' + (detail || 'request failed'));
+  };
+  connectButton.addEventListener('click', async () => {
+    connectButton.disabled = true;
+    setStatus(connectionStatus, 'Connecting...');
+    authToken = tokenInput.value.trim();
+    try {
+      const response = await request('/healthz');
+      if (!response.ok) await responseError(response);
+      const payload = await response.json();
+      modelId = typeof payload.model === 'string' ? payload.model : '';
+      if (!modelId) throw new Error('health response did not include a model');
+      modelStatus.textContent = 'Ready: ' + modelId;
+      setStatus(connectionStatus, 'Connected', 'ok');
+    } catch (error) {
+      authToken = '';
+      modelId = '';
+      modelStatus.textContent = 'Not connected';
+      setStatus(connectionStatus, error.message, 'error');
+    } finally { connectButton.disabled = false; }
+  });
+
+  imageInput.addEventListener('change', () => {
+    imageValue = null;
+    const file = imageInput.files && imageInput.files[0];
+    if (!file) { imageStatus.textContent = ''; return; }
+    if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
+      imageInput.value = '';
+      imageStatus.textContent = 'Choose a PNG or JPEG file.';
+      return;
+    }
+    imageStatus.textContent = file.name + ' selected';
+  });
+  const fileAsImage = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('could not read image file'));
+    reader.onload = () => {
+      const value = String(reader.result || '');
+      const comma = value.indexOf(',');
+      if (comma < 0) reject(new Error('could not encode image file'));
+      else resolve({ media_type: file.type, data_base64: value.slice(comma + 1) });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const appendTiming = (label, value) => {
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = String(value);
+    timings.append(dt, dd);
+  };
+  const renderResponse = (payload) => {
+    results.hidden = false;
+    probabilities.replaceChildren();
+    timings.replaceChildren();
+    const answer = payload.answers && payload.answers.decision;
+    selected.textContent = answer && typeof answer.choice === 'string' ? answer.choice : 'Unavailable';
+    const raw = payload.branchscore && payload.branchscore.questions && payload.branchscore.questions.decision;
+    const logits = raw && raw.raw_logits ? raw.raw_logits : {};
+    const values = answer && answer.probabilities ? answer.probabilities : {};
+    Object.keys(values).forEach((key) => {
+      const probability = Number(values[key]);
+      const row = document.createElement('div');
+      row.className = 'probability';
+      const name = document.createElement('span');
+      name.textContent = key;
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      const fill = document.createElement('span');
+      fill.style.width = Math.max(0, Math.min(100, probability * 100)) + '%';
+      bar.append(fill);
+      const value = document.createElement('span');
+      value.textContent = probability.toFixed(4) + ' | logit ' + (Number(logits[key]).toFixed(4));
+      row.append(name, bar, value);
+      probabilities.append(row);
+    });
+    appendTiming('Input tokens', payload.usage && payload.usage.input_tokens);
+    appendTiming('HTTP handling (ms)', payload.branchscore && payload.branchscore.http_handling_ms);
+    if (raw && raw.timings_ms) Object.entries(raw.timings_ms).forEach(([key, value]) => appendTiming(key, value));
+    rawResponse.textContent = JSON.stringify(payload, null, 2);
+  };
+
+  decisionForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setStatus(formStatus, '');
+    results.hidden = true;
+    if (!modelId || !authToken && tokenInput.value.trim() !== '') {
+      setStatus(formStatus, 'Connect before evaluating.', 'error');
+      return;
+    }
+    const state = document.querySelector('#state').value.trim();
+    const instructions = document.querySelector('#instructions').value.trim();
+    const rows = [...optionsElement.querySelectorAll('.row')];
+    const criteria = {};
+    if (!state || !instructions || rows.length < 2 || rows.length > 16) {
+      setStatus(formStatus, 'Enter state, question, and 2–16 options.', 'error');
+      return;
+    }
+    for (const row of rows) {
+      const key = row.querySelector('.option-key').value.trim();
+      const description = row.querySelector('.option-description').value.trim();
+      if (!key || Object.prototype.hasOwnProperty.call(criteria, key)) {
+        setStatus(formStatus, 'Option keys must be nonempty and unique.', 'error');
+        return;
+      }
+      criteria[key] = description ? description : null;
+    }
+    submitButton.disabled = true;
+    addOptionButton.disabled = true;
+    try {
+      if (imageInput.files && imageInput.files[0]) imageValue = await fileAsImage(imageInput.files[0]);
+      const payload = { state, model: modelId, questions: { decision: { type: 'choice', instructions, criteria } } };
+      if (imageValue) payload.image = imageValue;
+      const body = JSON.stringify(payload);
+      if (new TextEncoder().encode(body).byteLength > maxBodyBytes) throw new Error('request exceeds the 16 MiB body limit');
+      const response = await request('/v1/systemone', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      if (!response.ok) await responseError(response);
+      renderResponse(await response.json());
+      setStatus(formStatus, 'Evaluation complete.', 'ok');
+    } catch (error) { setStatus(formStatus, error.message, 'error'); }
+    finally { submitButton.disabled = false; addOptionButton.disabled = false; }
+  });
+})();
+</script>
+</body>
+</html>
+)BRANCHSCORE_UI";
+
 volatile std::sig_atomic_t stopping = 0;
 
 void on_signal(int) { stopping = 1; }
@@ -265,7 +549,7 @@ int on_headers_complete(llhttp_t * parser) {
         context.failure_code = "invalid_http_request";
         return -1;
     }
-    if (context.require_bearer &&
+    if (context.require_bearer && context.request.url != "/ui" &&
         (context.bearer_token == nullptr ||
          !authorized(context.request.authorization, *context.bearer_token))) {
         context.failure_status = 401;
@@ -438,6 +722,23 @@ bool send_json(const int socket, const int status, const Json & body) {
     return send_all(socket, response);
 }
 
+bool send_ui(const int socket) {
+    const std::string body(branchscore_ui_html);
+    const std::string response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html; charset=utf-8\r\n"
+        "Cache-Control: no-store\r\n"
+        "X-Content-Type-Options: nosniff\r\n"
+        "Referrer-Policy: no-referrer\r\n"
+        "Content-Security-Policy: default-src 'none'; connect-src 'self'; "
+        "style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; "
+        "form-action 'self'; frame-ancestors 'none'; base-uri 'none'\r\n"
+        "X-Frame-Options: DENY\r\n"
+        "Connection: close\r\n"
+        "Content-Length: " + std::to_string(body.size()) + "\r\n\r\n" + body;
+    return send_all(socket, response);
+}
+
 std::string public_message(const std::string & code) {
     if (code == "unauthorized") return "a valid bearer token is required";
     if (code == "unsupported_model") return "requested model is not served here";
@@ -517,10 +818,14 @@ void handle_connection(
         if (parsed.status != 0) {
             status = parsed.status;
             send_json(socket, status, error_json(parsed.error_code, request_id));
-        } else if (parsed.request.url != "/v1/systemone" &&
+        } else if (parsed.request.url != "/ui" &&
+                   parsed.request.url != "/v1/systemone" &&
                    parsed.request.url != "/healthz") {
             status = 404;
             send_json(socket, status, error_json("not_found", request_id));
+        } else if (parsed.request.url == "/ui" && parsed.request.method != "GET") {
+            status = 405;
+            send_json(socket, status, error_json("method_not_allowed", request_id));
         } else if (parsed.request.url == "/healthz" && parsed.request.method != "GET") {
             status = 405;
             send_json(socket, status, error_json("method_not_allowed", request_id));
@@ -528,6 +833,9 @@ void handle_connection(
                    parsed.request.method != "POST") {
             status = 405;
             send_json(socket, status, error_json("method_not_allowed", request_id));
+        } else if (parsed.request.url == "/ui") {
+            status = 200;
+            send_ui(socket);
         } else if (parsed.request.url == "/healthz") {
             Object body;
             body.emplace("status", "ready");

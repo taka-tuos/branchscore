@@ -150,8 +150,12 @@ int32 dimensions (`tokens`, `width`) followed by row-major float32 values.
 ## Sequential HTTP server
 
 `branchscore-server` loads one model/backend before it starts listening. It
-serves `GET /healthz` and the Choice subset of `POST /v1/systemone`, evaluating
-up to 16 questions sequentially. Each Choice supports 2–16 string or null
+serves a small browser UI at `GET /ui`, `GET /healthz`, and the Choice subset
+of `POST /v1/systemone`, evaluating up to 16 questions sequentially. The UI is
+a self-contained page served by the executable: enter the bearer token, press
+Connect, fill in the state/question/options, and submit one decision. The page
+keeps the token in memory and sends it only in the `Authorization` header.
+Each Choice supports 2–16 string or null
 criteria. The request's `model` must be `branchscore-local`; other model IDs,
 Score, and Noul questions are rejected. Question and criteria maps use lexical
 key order. A string criterion is shown to the model as `key: description`,
@@ -163,7 +167,9 @@ are limited to 16 MiB; source images are limited to 8,192 pixels per side and
 server closes each response connection. It logs only request ID, status, and
 wall time by default.
 
-The default bind is loopback on port 8080. A non-loopback bind requires
+The default bind is loopback on port 8080. `/ui` is intentionally reachable
+without a token so that a browser can load the form; `/healthz` and
+`/v1/systemone` remain authenticated on non-loopback binds. A non-loopback bind requires
 `BRANCHSCORE_BEARER_TOKEN` in the environment before model loading; the token
 is sent as `Authorization: Bearer ...`, never as a command-line argument.
 Use a TLS-terminating reverse proxy on untrusted networks.

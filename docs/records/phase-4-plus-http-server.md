@@ -122,3 +122,13 @@ longer chronology and environment-specific evidence out of that contract.
   independent of logits/probabilities. Expose that fact in `branchscore`
   metadata and documentation; do not change the engine's probability contract
   or label the value calibrated confidence.
+- 2026-09-24: Added a self-contained `GET /ui` page to the server. It provides
+  the bearer token field, health check, Choice state/question/options form,
+  optional PNG/JPEG input, and result probability/logit/timing display. The
+  token remains in page memory and is sent only as an Authorization header.
+  The exact `/ui` route is public for browser navigation; all existing API
+  routes retain their non-loopback bearer check. The response adds no external
+  assets and uses restrictive cache/security headers. A CPU E2B server bound to
+  `0.0.0.0` returned 200 for `/ui` without a token, 401 for `/healthz`
+  without or with a wrong token, 200 for `/healthz` with the configured token,
+  and 401 for `/ui?x=1` without a token.
