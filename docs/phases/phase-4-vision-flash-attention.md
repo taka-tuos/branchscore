@@ -148,7 +148,10 @@ backend 対応、実測値、失敗条件を記録する。画像上限や text 
   `1.5625e-2 / 1.7409e-3`、E4B CPU が `2.7777e-3 / 2.7444e-4`、
   E4B CUDA が `1.6602e-2 / 1.4800e-3`。全て非有限値はなく、明確な gray
   fixture の selected ID は一致した。これは数値差の記録であり、全入力の
-  意味判断同等性や calibrated confidence を主張しない。
+  意味判断同等性や calibrated confidence を主張しない。この focused 比較の
+  受け入れ目安は max abs <= `2e-2`、mean abs <= `2e-3`、max relative
+  <= `4e-3`、非有限値なし、明確な fixture の selected ID 一致とする。
+  これは本番の普遍的な数値契約ではない。
 - 2026-09-24: 通常 sandbox では CUDA device が不可視だったため、CUDA 実測は
   昇格した読み取り専用実行で行った。非対応 Flash backend はこの環境で利用
   できず、fallback の実機走行は未測定だが、support probe と通常 graph の
