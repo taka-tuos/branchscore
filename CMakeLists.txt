@@ -15,11 +15,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(BRANCHSCORE_BUILD_SERVER)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LLHTTP REQUIRED IMPORTED_TARGET libllhttp=9.3.1)
-endif()
-
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/ggml/CMakeLists.txt")
     message(FATAL_ERROR
         "ggml submodule is missing. Run: git submodule update --init --recursive")
@@ -31,6 +26,10 @@ set(GGML_CUDA ${BRANCHSCORE_CUDA} CACHE BOOL "" FORCE)
 set(GGML_CUDA_NCCL OFF CACHE BOOL "" FORCE)
 set(GGML_VULKAN ${BRANCHSCORE_VULKAN} CACHE BOOL "" FORCE)
 add_subdirectory(third_party/ggml EXCLUDE_FROM_ALL)
+
+if(BRANCHSCORE_BUILD_SERVER)
+    add_subdirectory(third_party/llhttp EXCLUDE_FROM_ALL)
+endif()
 
 add_library(branchscore_core
     src/backend_context.cpp
@@ -77,7 +76,7 @@ target_link_libraries(branchscore-bench PRIVATE branchscore::core)
 if(BRANCHSCORE_BUILD_SERVER)
     add_executable(branchscore-server tools/branchscore_server.cpp)
     target_link_libraries(branchscore-server
-        PRIVATE branchscore::core branchscore_systemone PkgConfig::LLHTTP)
+        PRIVATE branchscore::core branchscore_systemone branchscore::llhttp)
 endif()
 
 if(BRANCHSCORE_BUILD_TESTS)

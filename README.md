@@ -75,9 +75,10 @@ model cards before downloading or using the weights.
 
 Requirements are a C++17 compiler, CMake 3.20 or newer, and the tools needed
 by the selected ggml backend. Ninja is used in the examples but is not a
-project requirement. The default build includes `branchscore-server` and
-requires pkg-config plus the llhttp 9.3.1 (`libllhttp`) development files. Set
-`-DBRANCHSCORE_BUILD_SERVER=OFF` for a CLI-only build.
+project requirement. The default build includes `branchscore-server` and uses
+the checked-in generated llhttp 9.3.1 C source, so it does not require
+pkg-config or `libllhttp-dev`. Set `-DBRANCHSCORE_BUILD_SERVER=OFF` for a
+CLI-only build.
 
 ```sh
 git submodule update --init --recursive
@@ -85,6 +86,17 @@ cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
+
+The parser's TypeScript grammar and pinned npm lockfile are retained under
+[`third_party/llhttp/upstream`](third_party/llhttp/upstream). After changing
+those generator inputs, regenerate the checked-in C source with:
+
+```sh
+cmake --build build --target branchscore-llhttp-regenerate
+```
+
+Regeneration requires Node.js/npm and network access for the locked npm
+packages; normal CMake builds do not.
 
 CPU is enabled by default. Enable one optional GPU backend with
 `-DBRANCHSCORE_CUDA=ON` or `-DBRANCHSCORE_VULKAN=ON`. NCCL and multi-GPU

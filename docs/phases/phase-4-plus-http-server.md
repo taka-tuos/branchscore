@@ -130,10 +130,56 @@ Example response shape (illustrative probabilities and token count):
 
 ## Notes / Findings
 
+- 2026-09-24: Investigated HTTP dependency portability at branchscore
+  `04f25fa`. Before the vendoring change, the default server build required
+  both pkg-config and exactly
+  `libllhttp=9.3.1`; there is no CMake-package, source-build, or bundled
+  fallback. Consequently an Ubuntu 24.04 installation without the development
+  package cannot configure even the CLI targets unless the server is disabled.
+  A different installed llhttp version also fails the exact check. The core
+  does not use llhttp: only `tools/branchscore_server.cpp` and its executable
+  link do. Socket handling uses POSIX APIs available on Linux; replacing the
+  HTTP implementation is not necessary to solve this dependency issue.
+- 2026-09-24: Inspected the upstream generated-source release
+  [llhttp release/v9.3.1](https://github.com/nodejs/llhttp/tree/release/v9.3.1).
+  It contains `src/{llhttp,http,api}.c`, `include/llhttp.h`, and an MIT license;
+  consuming these generated files needs no Node.js/npm. Its CMake supports
+  `LLHTTP_BUILD_SHARED_LIBS=OFF` / `LLHTTP_BUILD_STATIC_LIBS=ON`, but requires
+  CMake 3.25, above this project's advertised 3.20 minimum. Use the generated
+  `release/v9.3.1` archive, not the generator-source `v9.3.1` tag. The downloaded
+  codeload archive SHA-256 was
+  `c14a93f287d3dbd6580d08af968294f8bcc61e1e1e3c34301549d00f3cf09365`.
+- 2026-09-24: Implemented the vendored-source follow-up. Generated
+  `third_party/llhttp/generated/{src/llhttp.c,include/llhttp.h}` and the native
+  helper C sources are built as a private static `branchscore::llhttp` target;
+  the previous pkg-config discovery and exact system-version requirement were
+  removed. The v9.3.1 TypeScript grammar, generator, npm lockfile, native
+  headers, and license remain under `third_party/llhttp/upstream`, and the
+  opt-in `branchscore-llhttp-regenerate` target refreshes the generated files.
+  Normal builds therefore work without `libllhttp-dev`, pkg-config, Node.js, or
+  network access. Regeneration still needs Node.js/npm and the locked package
+  downloads. A small local CMake target is used instead of upstream llhttp's
+  CMake because the latter requires CMake 3.25 while branchscore supports 3.20.
+- 2026-09-24: The vendored generated C and header hashes match the official
+  `release/v9.3.1` archive. A build with an empty pkg-config search path
+  produced `branchscore-server`; the regeneration target also completed after
+  allowing npm registry access and left the generated files byte-identical.
+- 2026-09-24: Verification on the available Arch Linux host: hiding system
+  pkg-config directories reproduced the configure failure at CMake line 20.
+  Built upstream generated llhttp 9.3.1 statically into a temporary prefix,
+  then configured the unchanged project with `PKG_CONFIG_LIBDIR` pointing only
+  to that prefix's `lib/pkgconfig`. The CPU `branchscore-server` target built
+  successfully. This was the pre-vendoring workaround; it is retained as
+  diagnostic evidence. The committed vendored target removes the need for
+  this user-prefix and pkg-config setup. Ubuntu 24.04 execution and
+  model-backed HTTP inference were not tested here.
+
 - 2026-09-23: The sequential HTTP server, adapter, and in-memory image path are
-  implemented. `branchscore-server` uses the separately linked llhttp 9.3.1
-  package, pinned by an exact pkg-config version check; set
-  `BRANCHSCORE_BUILD_SERVER=OFF` for a CLI-only build without this dependency.
+  implemented. `branchscore-server` originally used a separately installed
+  llhttp 9.3.1 package, pinned by an exact pkg-config version check; the
+  dependency was later vendored as generated C with its generator inputs kept
+  under `third_party/llhttp`. Set `BRANCHSCORE_BUILD_SERVER=OFF` for a
+  CLI-only build if the server target is not wanted.
   The server defaults to `127.0.0.1:8080`; the advertised model ID is
   `branchscore-local`. For a non-loopback bind it requires
   `BRANCHSCORE_BEARER_TOKEN` before backend or model initialization.
