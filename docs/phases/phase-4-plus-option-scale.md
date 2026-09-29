@@ -2,7 +2,8 @@
 
 ## Status / Position
 
-2026-09-29 調査・変更計画。現行の 2–16 件契約は維持し、上限変更は未実装。
+2026-09-29 tokenizer/品質screening、CPU resource sweep、F16/attention probeを実施。
+request-level budget と採用判断は未完了。現行の 2–16 件契約は維持し、上限変更は未実装。
 目標は 512 件程度までの選択を検討すること。これは HTTP の件数定数だけの変更ではなく、
 Phase 3+ の単一 A–P token を読む採点契約の変更を含み得る。
 1 model / 1 backend / 1 request の逐次実行を維持し、backend 分離や option worker は導入しない。
@@ -24,8 +25,8 @@ Phase 3+ の単一 A–P token を読む採点契約の変更を含み得る。
 |---|---|
 | 採点ラベル | `Gemma4PromptRenderer` は A–P のみを割り当て、`GemmaTokenizer::tokenize_answer_label` も A–P の単一通常 token と prompt 境界を要求する。512 件を 3 桁番号で表す案は、手元の Gemma 4 語彙で `000`、`001`、`255`、`511` がいずれも 3 token。現行の「次の 1 token の 1 logit」をそのまま適用できない。 |
 | Prompt と文脈 | `PrefillEngine` は GGUF の `gemma4.context_length` を超えた入力を拒否する。調査済み E2B/E4B GGUF の metadata は 131,072 token だが、長い option 説明と画像 token は同じ枠を消費する。HTTP の 16 MiB 制限だけでは token 数を制御できない。 |
-| Prefill 時間・メモリ | 現実装は全 prompt 長 `T` に対して full/sliding の F32 mask をそれぞれ `T×T` で作り、通常 attention graph も使う。短い説明で 512 件の試作 prompt は 9,257 token、二つの mask の値だけで約 654 MiB。これらは host vector と backend tensor の両方に確保されるため、mask だけでも同時に約 1.28 GiB が必要になり得る。graph buffer の他の値、KV、モデル重み、画像は別。上限 131,072 token は実行可能なメモリ量を保証しない。 |
-| F16 Prefill | 現行の mask と KV cache は F32。F16 mask は `0` と `-∞` をそのまま表現でき、二つの mask の容量を host/backend それぞれ約 654→327 MiB に減らせる見込み。F16 KV も cache 容量を半減できるが、logit 数値差を測る必要がある。一方、通常 attention の `ggml_mul_mat` は F32 の score を作るため、F16 入力だけでは二乗サイズの score を消せない。 |
+| Prefill 時間・メモリ | 現実装は全 prompt 長 `T` に対して full/sliding の F32 mask をそれぞれ `T×T` で作り、通常 attention graph も使う。CPU測定の固定workloadは512件でtext 9,295 token、image 9,297 prompt token+77 visual token。textの二つのmask値だけで合計約659.2 MiB、host vectorとbackend tensorが共存する時は約1.29 GiBになり得る。graph bufferの他の値、KV、モデル重み、画像は別。上限131,072 tokenは実行可能なメモリ量を保証しない。 |
+| F16 Prefill | 現行の mask と KV cache は F32。F16 mask は `0` と `-∞` をそのまま表現でき、text 512件で二つのmaskの値の容量をhost/backendそれぞれ約659→330 MiBにできる。実測ではlogitは一致したがRSS/速度の改善は限定的。F16 KVではcache容量を半減できるが、logit数値差が出た。一方、通常attentionの`ggml_mul_mat`はF32 scoreを作るため、F16入力だけでは二乗サイズのscoreを消せない。 |
 | Tokenization | `evaluate` はラベルごとに完全な prompt と `prompt + label` を再 tokenization して境界検証する。ラベルだけ増やすと件数と prompt 長の双方で検証コストが増える。 |
 | Readout | `ggml_get_rows` は要求 token ID をまとめて取得し、512 個の F32 値は 2 KiB。候補数に応じた graph node 増加は現行構造からは見込まれず、主な性能問題は readout より Prefill/検証にある。実測は必要。 |
 | 品質 | ラベルの token 事前確率、選択肢順序、遠く離れた説明を参照できるかが未検証。既存 SemIf 調査でも順序反転で 36 件中 10 件の argmax が変わった。512 件の条件付き softmax は校正された確信度ではない。 |
@@ -51,7 +52,9 @@ token ID は BPE 語彙上の値であり、モデルの回答 logit や判断�
    ラベルの単一 token・piece round-trip・重複・prompt 境界を機械的に調べる。
    自動選定された語彙 token が「選択肢の番号」としてモデルに理解されるとは
    仮定しない。E2B/E4B では上記の暫定集合の形式検証まで完了した。pinned
-   ggml の project build での照合は残る。
+   ggml の project build でも、2026-09-29 に暫定 512 ラベル全件を現行
+   renderer の回答位置で照合した。単一 normal token、piece、重複なし、prompt
+   境界維持、保存済み token ID のすべてが E2B/E4B とも 512/512 で一致した。
 2. 少数の実際の判断入力で、16 件 baseline と拡張ラベルの選択、順序入替え、
    無関係候補の追加、E2B/E4B 差を測る。`raw_score` と `selected_id` を残し、
    結果の不安定さを件数ごとに記録する。ラベル集合が採点に適さなければ
@@ -120,5 +123,44 @@ token ID は BPE 語彙上の値であり、モデルの回答 logit や判断�
 日付付きの tokenizer 調査、prompt 長・メモリ推算、参照実装との照合は
 [Phase 4+ option 拡大の調査記録](../records/phase-4-plus-option-scale.md) に移した。
 E2B/E4B で暫定 512 ラベルの単一 token・ID・回答位置の境界は確認済み。
-現行上限は 2–16 件のままで、512 件の判断品質・latency・peak memory は
-model-backed で未測定。公開上限は計画の検証後に決める。
+現行上限は 2–16 件のまま。初回の16/32/64件 model-backed screening は
+記録したが、512件の判断品質・latency・peak memory は未測定で、公開上限を
+変更する根拠にはまだ足りない。
+
+2026-09-29: 本 checkout の pinned ggml (`456172ec`) を使った形式照合を完了した。
+初回 model-backed 比較は、ユーザーが追加した E2B/E4B の対応 mmproj GGUF を使い、
+CPU・逐次で実施した。2つの手作り text fixture について、production A–P 16件、
+順序反転、二文字候補ラベル16件、順序反転、無関係候補追加32/64件を比較した。
+全28条件の option 別 `raw_score` と `selected_id` は
+[保存した JSONL](../records/phase-4-plus-option-scale-scores-2026-09-29.jsonl) を参照。
+小規模な screening であり、512件の品質や公開上限を決める完了測定ではない。
+
+2026-09-29: ユーザー指定により CPU backend のみを使い、E2B/E4B×text/image の
+16/64/128/256/512件 resource sweep を完了した。全20条件は成功。短い固定長説明の
+512件 prompt は9,295/9,297 text tokens（画像条件はさらに77 visual tokens）で、
+Prefill は E2B 568/591秒、E4B 843/855秒、peak RSS はそれぞれ8.55/8.65 GiB、
+10.64/11.33 GiBだった。単発 CPU 計測であり、p50/p95 や 512件の意味的な判断品質を
+示さない。詳細・計測上の注意は[CPU resource 記録](../records/phase-4-plus-option-scale-resource-cpu-2026-09-29.jsonl)
+にある。現在の 2–16件契約と公開上限は変更しない。
+
+同日、pinned ggml の CPU softmax が F16 mask を受け付けることを試作 graph で確認した。
+E2B/E4B の text 128/256件で F32/F16 mask の全候補 logits が一致し、winner も同じ。
+256件では F16 によって mask upload が約半分、host build は遅くなり、観測 peak RSS は
+約168 MiB減った。F16 K/V cache も E2B/E4B の text 128/256件で動作したが、raw logits
+には差が出た（最大差1.06–4.97、平均絶対差0.26–3.02）。winner はこの1 fixtureでは
+維持した。数値差と再現性の確認が残るため、どちらの F16 候補も production には採用していない。
+詳細 raw scores は[F16 mask](../records/phase-4-plus-option-scale-f16-mask-cpu-2026-09-29.jsonl)、
+[F16 K/V](../records/phase-4-plus-option-scale-f16-kv-cpu-2026-09-29.jsonl)に保存した。
+2026-09-29: Flash Attention CPU probe はE2B/E4Bの128件でbaselineとraw scoreが異なり、
+E4Bではwinnerも変わったため採用しない。F32 query軸128-token chunkは16件E2Bと
+128件E2B/E4Bでraw scoreが一致した。512件ではbaselineのwinnerを維持し、peak RSSは
+下がったがprocess swapを使い、PrefillはE2Bで3.4%、E4Bで10.6%遅かった。256件以上には
+一時probeでgraph容量65,536が必要だった。品質確認とrequest token/resource budgetは残り、
+Step 2を継続する。詳細は[attention CPU記録](../records/phase-4-plus-option-scale-attention-chunk-cpu-2026-09-29.jsonl)
+と[Flash CPU記録](../records/phase-4-plus-option-scale-flash-cpu-2026-09-29.jsonl)。現行契約・公開上限は変更しない。
+
+2026-09-29: llama.cpp の Gemma 4 text attention 実装を確認した。既定は Flash `AUTO` で、
+対応 device では Flash、非対応なら通常経路を使う。Flash graph は既定 F16 K/V cache と
+F32 accumulation を使い、prompt は既定512-token microbatchで処理する。今回の
+branchscore CPU Flash probeとは条件が異なり、llama.cpp での判断結果のズレは未測定。
+参照 revision とコード上の詳細は[調査記録](../records/phase-4-plus-option-scale.md#llamacpp-gemma-4-text-attention-reference)。
