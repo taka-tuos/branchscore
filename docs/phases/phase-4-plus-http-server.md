@@ -220,3 +220,8 @@ attach a header from an input field, so `GET /ui` needs one exact, public
 exception there. The existing `/healthz` response provides the model ID needed
 by the form, and the Choice response already includes probabilities, raw
 logits, and timings; no new model or inference API is required.
+
+2026-09-29: More than 16 Choice criteria, with a possible 512-option target,
+is under investigation in [the larger-option Phase 4+ plan](phase-4-plus-option-scale.md).
+The current HTTP and categorical contracts remain at 2–16 options until its
+label, resource, and quality gates are resolved.

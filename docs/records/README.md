@@ -18,6 +18,7 @@ first when deciding what is currently in scope.
 | [Phase 3+ implementation review](phase-3-plus-implementation-review.md) | `research/direction-review-2026-09-20.md` |
 | [Phase 4 backend measurements](phase-4-backend-measurements.md) | `phases/phase-4-backend-separation.md` |
 | [Phase 4+ HTTP server](phase-4-plus-http-server.md) | `phases/phase-4-plus-http-server.md` |
+| [Phase 4+ larger Choice option sets](phase-4-plus-option-scale.md) | `phases/phase-4-plus-option-scale.md` |
 
 The original unpartitioned proposal remains under `docs/archive/`; it is not
 an execution record and is intentionally not linked from this index.

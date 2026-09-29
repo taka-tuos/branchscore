@@ -44,6 +44,8 @@ Phase 4+ implements a sequential HTTP entry point for LAN callers. This remains
 an experimental hobby project, not a tagged release or stable API.
 The focused Phase 4 Vision Flash Attention plan is in
 `phases/phase-4-vision-flash-attention.md`.
+The Phase 4+ larger-option investigation and change plan is in
+`phases/phase-4-plus-option-scale.md`.
 
 1. Partition documentation and establish routing.
 2. Research and minimal design.
