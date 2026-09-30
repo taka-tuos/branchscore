@@ -19,7 +19,7 @@ first when deciding what is currently in scope.
 | [Phase 4 backend measurements](phase-4-backend-measurements.md) | `phases/phase-4-backend-separation.md` |
 | [Phase 4+ HTTP server](phase-4-plus-http-server.md) | `phases/phase-4-plus-http-server.md` |
 | [Phase 4+ option-scale investigation (discontinued)](phase-4-plus-option-scale.md) | `phases/phase-4-plus-option-scale.md` (discontinued 2026-09-30) |
-| [Phase 4+ option-scale-2 GPU memory investigation](phase-4-plus-option-scale-2.md) | `phases/phase-4-plus-option-scale-2.md` |
+| [Phase 4+ option-scale-2 memory, reference checks, and precision review](phase-4-plus-option-scale-2.md) | `phases/phase-4-plus-option-scale-2.md` |
 | [Phase 4+ provisional 512-label candidates](phase-4-plus-option-label-candidates.tsv) | `phases/phase-4-plus-option-scale.md` (carried into option-scale-2) |
 | [Phase 4+ option-scale initial raw scores](phase-4-plus-option-scale-scores-2026-09-29.jsonl) | `phases/phase-4-plus-option-scale.md` |
 | [Phase 4+ CPU option-scale resource sweep](phase-4-plus-option-scale-resource-cpu-2026-09-29.jsonl) | `phases/phase-4-plus-option-scale.md` |

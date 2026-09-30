@@ -160,40 +160,108 @@ QのF16化、KVの4/8-bit化、重みの追加量子化、候補説明の短縮�
 
 ## 2026-09-30: Step 1 Prefill microbatch implementation and CPU/reference checks
 
-`PrefillEngine`は最大512 tokenごとに全layerを実行し、request内の全長F32 KVへ追記する。
-absolute positionとchunk終端までのcausal maskを渡し、visual spanはbackend tensor viewで
-各chunkへ切り出す。中間chunkはvocabulary projectionを省略し、graph contextとallocatorは
-同期後にchunk単位で解放する。`PrefillState`からchunk数、上限、cache buffer bytes、
-peak temporary graph bytesを観測できる。HTTP/runtime契約には公開していない。
+2026-09-30: Step 1の実装では最大512 tokenごとに全layerを逐次実行し、全長F32 KVへ
+追記する。absolute position、query chunk幅×chunk終端までのkey幅を持つcausal mask、
+image spanのbackend viewを使い、中間chunkのvocabulary projectionを省略した。
+chunkごとにgraph allocatorとcontextを解放する。PrefillStateからchunk上限、graph数、
+cache buffer bytes、最大一時graph buffer bytesを参照できる。`cmake --build build -j2` は成功。
 
-513-token text fixtureと631-position image fixture（visual span `[470,551)`、512境界を横断）を
-E2B/E4B CPUで実行。どちらもtext 513 tokenは2 graph、image fixtureは2 graphで完了した。
-position 511/512のlayer-0 K値が異なり、A/B readoutがfinal-position logitsと一致した。
-513-token textのcache/peak graph bufferはE2B 18,911,232/120,068,096 bytes、
-E4B 58,834,944/126,883,840 bytes。これらはCPU buffer値でありVRAM推定に使わない。
+同日、E2B/E4BのCPU Prefill testを実行し、両方成功。513-token text caseは2 graph、image span
+`[470,551)`を512境界で分割する631-token入力も2 graphで完了し、logitsはfinite。
+513-token text caseのE2B KV bufferは18,911,232 bytes、最大一時graph bufferは120,068,096 bytes。
+E4Bはそれぞれ58,834,944 bytes、126,883,840 bytes。key layer 0のposition 511/512は異なる値となり、
+513-token PrefillでA/B categorical gatherとfinal logitsの選択IDが一致した。image境界入力でも
+categorical gatherのA/B raw logitsはfinal-position logitsと一致した。
+これはCPU bufferの計測値であり、VRAM見積りには使わない。
 
-長文16候補の画像fixtureは1x1白画像、prompt placeholder込み1,345 token、展開後1,425位置
-(text前37、visual 81、text後1,307)。Branchscore CPUの3 graphで処理した。llama.cpp revision
-`19e28a27702117d8f2eb16b825b9a308111f67d9`のtext modelとmtmd image encoderをCPUへ固定し、
-F32 K/V、Flash Attention disabled、full-size SWA cache、最大physical batch 512で比較した。
-同一のBranchscore-rendered token IDsからimage placeholderを除き、その位置へmtmdで作った
-image embeddingsを入力した。mtmdが通常tokenizeで挿入する`<|image>`/`<image|>` wrapperは
-比較streamへ加えず、Branchscoreと同じtext-token/visual-embedding streamに揃えた。
+16-labelのtext promptを同一のrendered token IDsでllama.cpp (`aa39d7a3e145a88202793a89462d65e94a5fc25f`)
+と比較。双方CPUの既定thread設定、F32 K/V、Flash Attention disabled、referenceの最大physical microbatch 512。
+全4条件でtop-1 (`option_00`)は一致。raw差はbranchscore minus reference。
 
-| Model | Max abs raw diff | Mean common shift | Max centered abs diff | Max relative-probability diff | Top-1 |
-|---|---:|---:|---:|---:|---|
-| E2B | 4.060 | -3.064 | 2.601 | 0.2426 | `option_00`一致 |
-| E4B | 0.690 | +0.112 | 0.578 | 0.0793 | `option_00`一致 |
+| Model | Prompt tokens | Max abs raw diff | Mean common shift | Max centered abs diff | Max relative-probability diff |
+|---|---:|---:|---:|---:|---:|
+| E2B | 328 | 2.049 | -1.069 | 1.230 | 0.0551 |
+| E2B | 737 | 0.781 | -0.233 | 1.014 | 0.00095 |
+| E4B | 328 | 0.434 | +0.028 | 0.406 | 0.0374 |
+| E4B | 737 | 0.970 | +0.136 | 0.834 | 0.00890 |
 
-差はbranchscore minus llama.cpp。E2B vision outputsは両側81×1,536、max abs diff 0.00267、
-mean abs diff 0.000248、cosine similarity 0.99999992。E2Bだけ、Branchscore側vision outputを
-そのままllama.cpp text stackに入力したcontrolも実施し、max raw diff 2.368、mean shift -1.745、
-centered max 0.623、relative-probability max差0.0455、top-1一致だった。encoder出力の差と
-Prefill graph batch shape/kernel差は異なる要因として保持する。これらは各1画像/各1長文promptで、
-相対差許容値、拡張候補数、意味判断品質を決めない。
+比較した品質例は各1件で、差の許容値や拡張件数の意味判断品質を確定しない。
+
+同日、1x1白画像と同じ16候補の長文promptをllama.cppのmtmd image encoderでも照合した。
+branchscoreのrenderer token列はplaceholder込み1,345 tokenで、placeholderを81 visual
+embeddingへ置き換えたPrefill位置数は1,425（画像前37、後1,307）。最大512位置の3 graphで処理し、
+graph node数はE2B 5,199、E4B 6,480。両方のtop-1は`option_00`（A）で一致した。
+
+llama.cpp revision `19e28a27702117d8f2eb16b825b9a308111f67d9`のmodelとmtmdをCPUへ固定し、
+F32 K/V、Flash Attention disabled、full-size SWA cache、最大physical batch 512で照合した。
+同じprompt token IDsから画像placeholderだけを除き、mtmdで作ったimage chunkのembeddingを
+その位置に入力した。標準mtmd tokenizerが加える`<|image>`/`<image|>`境界tokenは含めていない。
+差はbranchscore minus llama.cpp。
+
+| Model | Prompt positions | Max abs raw diff | Mean common shift | Max centered abs diff | Max relative-probability diff | Top-1 |
+|---|---:|---:|---:|---:|---:|---|
+| E2B | 1,425 | 4.060 | -3.064 | 2.601 | 0.2426 | 一致 |
+| E4B | 1,425 | 0.690 | +0.112 | 0.578 | 0.0793 | 一致 |
+
+E2B vision encoderの出力自体は双方81×1,536、max absolute diff 0.00267、mean absolute
+diff 0.000248、cosine similarity 0.99999992だった。E2Bのvision embeddingだけをbranchscoreと
+同一にしてllama.cpp text stackへ入力した場合はtop-1一致、max raw diff 2.368、共通shift -1.745、
+centered max diff 0.623、相対確率max差0.0455となった。通常encoder同士の差がlogitに現れるため、
+これは単一画像fixtureの比較であり、許容誤差や意味判断品質の確定には使わない。
+
+Step 1の位置・chunk・KV・最終位置readoutをCPUで確認し、差分を記録したためStep 1を完了とする。
+これは拡張候補数の品質承認ではない。`branchscore --list-backends`は現buildでCPUのみを表示し、
+llama.cpp比較もCPU固定で実施した。CUDA attention pathの実行確認を含むStep 2と、
+8 GiB以上GPUでのStep 4（現行Step 5）には未着手。
 
 Recorded GPU-reference trials used explicit CPU devices. One earlier auto-device trial selected Vulkan
 on the 2 GiB Quadro P620; that trial is excluded from all recorded numeric comparisons and the text
 comparison was rerun CPU-only. Current `branchscore --list-backends` reports CPU only, so Step 2's
-CUDA attention/model check was not started. The phase's Step 4 explicitly requires an E4B all-loaded
+CUDA attention/model check was not started. The production GPU measurement step (now Step 5) explicitly requires an E4B all-loaded
 single NVIDIA GPU with at least 8 GiB VRAM; it was not attempted.
+
+<a id="precision-baseline-review"></a>
+
+## 2026-09-30: 量子化差を基準にする採用方針の検討
+
+Step 1のCPU/reference結果をレビューした後、ユーザーは、既にQ4_K_Mを使う前提なら、
+高精度重みからQ4_K_Mへの回答差よりruntime最適化の追加差が十分小さいことを
+実用上の採用基準にできるのではないか、と提案した。この方向で測定計画を追加することに合意。
+現在の契約・測定手順は[phaseのStep 4](../phases/phase-4-plus-option-scale-2.md#step-4-precision-baseline)に定める。
+
+重み量子化で既に受け入れている差を物差しにするのは合理的。ただし、差は候補ごとに異なり、
+僅差のtop-1は小さな追加差でも反転し得る。共通logit offsetはsoftmax/argmaxを変えないため、
+最大raw差だけで精度低下を判断しない。選択変更と正解→誤答/誤答→正解を分けて見る。
+量子化差が大きいことをmask・position・shared KV等の実装不具合の許容理由にしない。
+
+比較は、高精度llama.cpp基準(A)、Q4_K_Mの同じ基準(B)、Q4_K_Mのllama.cpp最適化(C)、
+同じQ4_K_M/最適化条件のbranchscore(D)へ分ける。A→Bが量子化、B→Cが最適化、
+C→Dが実装、B→Dが最終的な合成差。画像では同じvisual embeddingを使うcontrolで
+vision差を分離する。モデル規模/bit数や他モデルのPPLから、Gemma 4の候補logits差の
+数値を直接推定できる根拠は得ていない。普遍的な許容比率もこのレビューでは決めていない。
+
+既存Step 1比較はすべてQ4_K_M/CPUで、同一モデルの高精度→Q4_K_M比較ではない。
+E4B textの相対確率max差0.0374/0.00890、画像E4B 0.0793、画像E2B 0.2426、
+同一vision embeddingのE2B control 0.0455は、量子化差より小さいとまだ判断できない。
+拡張ラベルの形式照合と旧16/32/64件の2例のscreeningも、384/512件の品質を承認しない。
+
+本タスクでlocalファイル一覧にE2B/E4BのBF16 GGUFとQ4_K_M、対応F16 mmprojを確認した。
+場所は`/home/ubuntu/llama.cpp/models/gemma-4-E{2,4}B-it-{BF16,Q4_K_M}.gguf`と
+`e{2,4}b-mmproj-F16.gguf`。これは利用候補の存在確認のみで、GGUF内容/同一checkpoint由来、
+量子化設定、実行可能なGPU容量は未確認。本タスクは計画追加であり、高精度比較は未実行。
+
+検討時に確認した一次資料（2026-09-30）:
+
+- [llama.cpp quantize](https://github.com/ggml-org/llama.cpp/blob/master/tools/quantize/README.md):
+  高精度GGUFからの量子化、imatrix/個別tensor設定、PPL/KLによる差の評価。
+- [llama.cpp perplexity](https://github.com/ggml-org/llama.cpp/blob/master/tools/perplexity/README.md):
+  FP16 logitsとのKL、確率差の分布、top-1一致率を測る。今回の候補限定readoutへは
+  同じ指標の考え方を用い、全語彙/PPLの数値をそのまま許容差へ転用しない。
+- [Lee et al., 2024](https://arxiv.org/abs/2409.11055):
+  量子化方式・モデル規模・bit幅・taskごとに性能が異なることを評価した研究。
+  Gemma 4/Q4_K_Mの今回のfixtureを直接評価した資料ではない。
+
+同日、既存変更のコミット時に`cmake --build build -j2`と`git diff --check`を実行し成功。
+`ctest --test-dir build -R '^prefill$' --output-on-failure`もE4B Q4_K_M/対応F16 mmproj、
+CPU backendの設定で成功（1/1、58.66秒）。これは既存Prefill境界testの再確認であり、
+高精度比較やCUDA検証の実施を意味しない。

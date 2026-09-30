@@ -26,7 +26,8 @@ CPUのraw JSONLとlabel TSVは元のrecordsのファイル名で保持する。
 これらは歴史的証拠であり、現在の実装順や採用条件はoption-scale-2に従う。
 
 後続の実装順は、Prefill全体のtoken microbatch化、F16 KVとtext FA、
-必要ならSWA cache短縮、その後に本番GPU計測・label/資源予算・入口の採用判断。
+必要ならSWA cache短縮、量子化差を基準にした精度評価、その後に本番GPU計測・
+label/資源予算・入口の採用判断。
 従来F32 graphへのbit一致を必須とせず、llama.cpp相当条件で照合する方針も後続へ引き継ぐ。
 
 ## Notes / Findings
@@ -34,4 +35,5 @@ CPUのraw JSONLとlabel TSVは元のrecordsのファイル名で保持する。
 2026-09-30: 本文書を旧計画の打切り・引き継ぎの案内に整理した。
 日付付きのtokenizer/CPU計測、既存probeの限界はrecordsへ保持し、
 GPU全載せの追加調査をoption-scale-2 recordsへ移管した。
-[後続計画](phase-4-plus-option-scale-2.md)は計画作成済み、実装は未着手。
+[後続計画](phase-4-plus-option-scale-2.md)のStep 1は実装・CPU照合完了。
+残りの進捗と採用条件は後続計画のStatus / Positionに従う。
