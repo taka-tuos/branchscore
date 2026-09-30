@@ -44,8 +44,11 @@ Phase 4+ implements a sequential HTTP entry point for LAN callers. This remains
 an experimental hobby project, not a tagged release or stable API.
 The focused Phase 4 Vision Flash Attention plan is in
 `phases/phase-4-vision-flash-attention.md`.
-The Phase 4+ larger-option investigation and change plan is in
-`phases/phase-4-plus-option-scale.md`.
+The Phase 4+ larger-option investigation `option-scale` was discontinued
+mid-investigation on 2026-09-30; its results remain under `records/`.
+The current GPU memory reduction and larger-option plan is
+[`phases/phase-4-plus-option-scale-2.md`](phases/phase-4-plus-option-scale-2.md).
+The [old phase document](phases/phase-4-plus-option-scale.md) records the handoff.
 
 1. Partition documentation and establish routing.
 2. Research and minimal design.

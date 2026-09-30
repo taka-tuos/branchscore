@@ -18,7 +18,9 @@ first when deciding what is currently in scope.
 | [Phase 3+ implementation review](phase-3-plus-implementation-review.md) | `research/direction-review-2026-09-20.md` |
 | [Phase 4 backend measurements](phase-4-backend-measurements.md) | `phases/phase-4-backend-separation.md` |
 | [Phase 4+ HTTP server](phase-4-plus-http-server.md) | `phases/phase-4-plus-http-server.md` |
-| [Phase 4+ larger Choice option sets](phase-4-plus-option-scale.md) | `phases/phase-4-plus-option-scale.md` |
+| [Phase 4+ option-scale investigation (discontinued)](phase-4-plus-option-scale.md) | `phases/phase-4-plus-option-scale.md` (discontinued 2026-09-30) |
+| [Phase 4+ option-scale-2 GPU memory investigation](phase-4-plus-option-scale-2.md) | `phases/phase-4-plus-option-scale-2.md` |
+| [Phase 4+ provisional 512-label candidates](phase-4-plus-option-label-candidates.tsv) | `phases/phase-4-plus-option-scale.md` (carried into option-scale-2) |
 | [Phase 4+ option-scale initial raw scores](phase-4-plus-option-scale-scores-2026-09-29.jsonl) | `phases/phase-4-plus-option-scale.md` |
 | [Phase 4+ CPU option-scale resource sweep](phase-4-plus-option-scale-resource-cpu-2026-09-29.jsonl) | `phases/phase-4-plus-option-scale.md` |
 | [Phase 4+ F16 mask CPU comparison](phase-4-plus-option-scale-f16-mask-cpu-2026-09-29.jsonl) | `phases/phase-4-plus-option-scale.md` |
