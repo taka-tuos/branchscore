@@ -72,6 +72,9 @@ StateCache & StateCache::operator=(StateCache &&) noexcept = default;
 std::size_t StateCache::capacity() const noexcept { return impl_->capacity; }
 std::size_t StateCache::prefix_length() const noexcept { return impl_->prefix_length; }
 std::size_t StateCache::cursor() const noexcept { return impl_->cursor; }
+std::size_t StateCache::buffer_bytes() const noexcept {
+    return impl_->buffer == nullptr ? 0 : ggml_backend_buffer_get_size(impl_->buffer);
+}
 
 std::uint32_t StateCache::source_layer(std::uint32_t layer) const {
     if (layer >= impl_->config.block_count) {
