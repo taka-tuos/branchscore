@@ -3,8 +3,9 @@
 ## Status / Position
 
 2026-09-30 計画作成。Step 1の実装とCPU/reference focused verificationを完了。
-Step 2/3は未着手。Step 4はE2B/E4B textとE2B shared-image embeddingのCPU A/B初期比較を記録済み。
-同一checkpoint由来と正解付き評価・CUDA最適化の採用基準は未確定のため未完了。
+Step 2/3は未着手。Step 4はE2B/E4B textとE2B shared-image embeddingのCPU A/B初期比較、
+Unsloth公開履歴の照合、正解付きE4B Q4/CPU screeningを記録済み。
+元checkpointの厳密な由来と正解付きreference A/B・最適化の追加品質評価は未確定のため未完了。
 CUDA pathのmodel-backed照合に必要なGPU実行環境がなく、Step 5の
 E4B全載せ計測にはユーザー指定の8 GiB以上GPUが必要なため、ここで保留する。
 [旧 option-scale](phase-4-plus-option-scale.md) は調査途中で打ち切り、
@@ -232,3 +233,13 @@ A/Bより小さい5条件があるが、確率差では逆転やA/B差の約54�
 十分小さいとの採用判定には至らない。全7表を再検算し、新規inferenceは行っていない。
 比較条件の限界、意味品質とCUDA/384・512件の未測定範囲、残りの確認順は
 [Step 4途中レビュー](../records/phase-4-plus-option-scale-2.md#step-4-interim-review)を参照する。
+
+2026-09-30: Unsloth公開hash/commitとlocal時刻を照合。E2B BF16/Q4は7月版、
+E4B BF16は7月版、Q4は5月版に一致。E4B Q4新旧ヘッダの差はchat templateのみで
+全720 tensor記述が一致。BF16/Q4の同型非量子化tensorもE2B 283個/E4B 339個でbyte一致。
+元checkpointの厳密なrevisionと全量子化recipeは未確定だが、公開品との対応・世代差は説明できた。
+正解・根拠を固定した8シナリオ/24条件を追加し、全4 GGUFでtoken/label境界一致を確認。
+現行E4B Q4/CPU screeningは正解24/24、順序/候補追加の選択変更0件。
+最小marginは3.668でnear-tieは未獲得。正解付きreference A/BとCUDA C/Dは未実施。
+詳細と新fixtureの位置づけは
+[由来照合とquality fixture記録](../records/phase-4-plus-option-scale-2.md#step-4-provenance-and-quality-fixtures)を参照する。

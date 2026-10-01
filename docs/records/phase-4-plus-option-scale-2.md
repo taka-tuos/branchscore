@@ -549,3 +549,110 @@ E2Bで得た大きい量子化差をE4Bの画像実装差0.0793の許容根拠�
 GPUがなくても由来確認と正解付きCPU A/Bの補強は進められる。
 一方、CUDA経路の最終採用、8 GiB以上の単一GPU全載せ、384/512件品質はGPU実測が必要。
 Step 4は未完了のまま、productionの2–16件/A–P契約と現行F32通常attentionを維持する。
+
+<a id="step-4-provenance-and-quality-fixtures"></a>
+
+## 2026-09-30: Unsloth公開履歴の照合と正解付きfixtureの補強
+
+ユーザーから、全GGUFはHugging FaceのUnsloth配布品であり、ローカルファイルの時刻と
+repoのcommit履歴を照合できること、既存fixtureに固執せず必要なデータを作ってよいことを確認した。
+公開ファイルhash・履歴・GGUFヘッダを照合し、正解付きの小さい判断fixtureを追加した。
+runtime、最適化経路、公開件数は変更していない。
+
+### 由来の確認はどこまで進んだか
+
+ローカル時刻は`stat`のmtime/birthを読み取った。これは取得・コピー時刻を反映し得るため、
+モデルの作成・変換日時とは扱わない。既存Step 4 inventoryのSHA-256と、Hugging Face APIの
+公開LFS `oid`（ファイルSHA-256）を照合した。このfollow-upで全ファイルの再hashは行っていない。
+APIの取得結果、size、mtime、revision、hash照合、下記のtensor確認は
+[由来の根拠JSON](phase-4-plus-option-scale-2-provenance-2026-09-30.json)に保存した。
+
+| Local GGUF | Local mtime（JST） | 公開hashと一致する最終変更commit |
+|---|---|---|
+| E2B BF16 | 2026-09-30 15:38:01 | `0314792d7f1f7e229411f620751375812bb9faf2` / 2026-07-17 |
+| E2B Q4_K_M | 2026-09-29 12:20:28 | 同じ`0314792d...` / 2026-07-17 |
+| E4B BF16 | 2026-09-30 15:06:37 | `bfc15c382204943c3a8fff0c750b94ae2364d7a3` / 2026-07-17 |
+| E4B Q4_K_M | 2026-06-18 10:31:05 | `653803f092503c04a65164346f3208a36e707693` / 2026-05-04 |
+
+E2Bの両ファイルは[7月更新版の公開ファイル](https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/tree/0314792d7f1f7e229411f620751375812bb9faf2)に一致。
+E4Bは[BF16が7月版](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/tree/bfc15c382204943c3a8fff0c750b94ae2364d7a3)、
+[Q4が5月版](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/tree/653803f092503c04a65164346f3208a36e707693)に一致した。
+現在公開中のE4B Q4は4,977,171,584 bytes、SHA-256
+`85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87`で、
+ローカル5月版より2,016 bytes大きい。現在の`main`と無条件に同一視しない。
+
+[E4Bの7月commit](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/commit/bfc15c382204943c3a8fff0c750b94ae2364d7a3)の題名は
+chat template更新。題名だけで判断せず、固定revisionのQ4の先頭20 MiBのみをHTTP Rangeで取得し、
+ローカル5月版のヘッダと直接比較した。全metadata値の差は`tokenizer.chat_template`のみ。
+720個のtensor記述（名前・shape・type・相対offset）はすべて一致し、data開始位置だけが
+15,824,736→15,826,752へ2,016 bytesずれる。data領域の容量は双方4,961,344,832 bytes。
+**全tensor payloadの新旧一致は検証していない**ため、ヘッダ比較を重み値の完全一致証明にはしない。
+
+ローカルBF16/Q4間も、tensor名とshapeはE2B/E4Bそれぞれ全数一致。
+同じ非量子化type（F32/F16/BF16）、1個8 MiB以下のtensorを直接byte比較し、
+E2Bは283個/1,169,548 bytes、E4Bは339個/2,263,208 bytesで不一致0だった。
+これは共通の変換元を支持する追加根拠だが、量子化された大きい行列の元checkpoint revisionを特定しない。
+
+この結果により、Unsloth公開品との対応とE4Bのファイル世代差は説明できた。
+同じモデル系統の量子化比較として調査を継続する実用上の根拠は強くなった。
+元Google checkpointの厳密なrevision、imatrix実体と全量子化recipeは引き続き未確定と明示するが、
+それだけで正解付きCPU A/Bの補強を止める必要はない。
+現行branchscore rendererはGGUFのchat templateを使わず、referenceにも同じ固定token列を渡すので、
+確認されたchat template metadata差自体は既存A/Bの入力差にはならない。
+
+### 既存データの弱点と追加したデータ
+
+旧synthetic inputsは数値・chunk境界controlとして保持する。
+しかし意味的な正解がなく、白画像も判断に必要な証拠を提供せず、
+正誤・順序依存・追加誤答を測る用途には不足していた。問題はその用途との不一致。
+既存`text-ambiguous`へ結果を見てから正解を付けることはせず、別の明示ルールfixtureを作った。
+
+新規入力は[quality JSONL](../../fixtures/phase4-step4-quality.jsonl)、設計と利用方法は
+[fixture説明](../../fixtures/phase4-step4-quality.md)。SHA-256は
+`48e43bd6efd77dcc420f765997b6f3a78b866ae92dac47a721769ba06d5bfc21`。
+以下の8独立シナリオから24条件を作り、推論前に正解IDと根拠を固定した。
+
+| シナリオ | 内容 | 基本prompt tokens |
+|---|---|---:|
+| service-policy | checks/incidentから明示ルールで行動選択 | 138 |
+| report-policy | 公開の二条件と明示fallback | 135 |
+| approval-latest | 時系列・承認撤回・否定の解釈 | 166 |
+| close-scores | 無効候補を除外して僅差の数値を比較 | 176 |
+| japanese-priority | 日本語の優先順位と受付時刻 | 174 |
+| long-route-16 | 48件のregisterから特定routeの担当を参照、16候補 | 943 |
+| image-red / image-blue | 同一text/候補で画像だけを変え、色を識別 | 各120（placeholder込み） |
+
+各シナリオに候補逆順と無関係候補4件追加を用意した。16候補の長文は上限を保つため
+候補追加の代わりに5位置rotationとした。意味ID、正解、既存候補の説明は保持。
+画像は全pixelが赤/青の96×96 RGB PNGを決定的に作り、PNG CRCと全pixelを確認した。
+metadataの`expected_selected_id`/`expected_reason`等はbenchmark readerがpromptへ入れない。
+
+全24条件をproduction renderer/tokenizerで確認した。E2B/E4B、BF16/Q4の4 GGUFで
+prompt IDs/answer IDsは全数一致し、A–Pの回答境界検証も成功。
+`(id, token_ids, answer_ids)`配列のcompact JSON SHA-256は
+`8eb0d03ca2389e7ff4d4021b6dc4e7d75d17f685bfb26c72859e558b163c54df`。
+943-token長文は512-token microbatchとSWA幅を越える意味参照controlになる。
+
+### E4B Q4での初期screening
+
+current branchscore、CPU、E4B Q4_K_M/対応F16 mmproj、一度に一つのmodel/requestで逐次実行。
+textはF32 KV・通常attention・全長SWA・microbatch上限512、vision pathは`flash`。
+基本8条件と未測定variant16条件を別runで実行した。これはbranchscoreの現行基準経路のscreeningで、
+BF16 A/B、reference C/D、CUDA最適化比較ではない。
+全候補raw scores/probabilities、prompt IDs、正解照合、margin、revision、run metadataは
+[screen JSONL](phase-4-plus-option-scale-2-quality-e4b-q4-2026-09-30.jsonl)に保存。
+
+- 正解一致24/24条件、8/8シナリオで全variantが正解。
+- 逆順/rotationの選択変更0/8比較、無関係候補追加の選択変更0/7比較。
+- 最小top-two marginは日本語baseの3.667572。close-scores baseは10.970278。
+- close-scoresの証拠値は近いが、観測logitはnear-tieではなかった。
+  既存のmargin 0.0255のCPU Flash反転例のような数値ストレスを、この24条件が再現したとは言わない。
+
+24条件は8シナリオの相関する変形で、独立24標本や一般的な正解率の保証にはしない。
+この小セットは正誤と候補順序の評価を始める基準にはなるが、
+僅差logitのstress cases、複雑な画像判断、384/512候補、実運用の代表性は未充足。
+今後のnear-tie探索で追加fixtureを作る場合は、観測marginによる選定を記録し、
+C/Dを評価する前に固定する。正解をQ4/BF16のwinnerへ合わせて書き換えない。
+
+E2Bのmodel inferenceと全4重みの正解付きreference A/Bは、このfollow-upでは未実施。
+Step 4は未完了を維持し、次のCPU A/Bに新fixtureを使用できる状態にした。
