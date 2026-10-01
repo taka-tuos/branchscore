@@ -54,3 +54,7 @@ For images, reuse the same visual embeddings to separate the text-weight
 comparison from an end-to-end encoder comparison. CPU and CUDA results remain
 separate. The provenance follow-up and dated screen results are recorded in
 [`option-scale-2 records`](../docs/records/phase-4-plus-option-scale-2.md).
+
+For structured counting, dashboard, and table evidence, use the separate
+[`vision fixture set`](phase4-step4-vision/README.md). It adds image-only evidence
+changes and layout invariance controls without changing this set or its results.

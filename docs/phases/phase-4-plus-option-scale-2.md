@@ -243,3 +243,11 @@ E4B BF16は7月版、Q4は5月版に一致。E4B Q4新旧ヘッダの差はchat 
 最小marginは3.668でnear-tieは未獲得。正解付きreference A/BとCUDA C/Dは未実施。
 詳細と新fixtureの位置づけは
 [由来照合とquality fixture記録](../records/phase-4-plus-option-scale-2.md#step-4-provenance-and-quality-fixtures)を参照する。
+
+2026-10-01: Step 4用の複雑な画像証拠をImageMagickで追加。盤面の色/形の計数、
+状態画面の複数条件、表の適格性/最小値比較の3系統に、証拠1か所の変更と配置変更を用意した。
+正解付き9画像/27条件だが、独立27標本ではなく6証拠シナリオと3配置変形。
+全4 GGUFでprompt/回答ID一致、両mmproj設定でdecode/前処理、変更pixelの範囲、
+同環境での再生成hash一致を確認。モデル推論はまだ行わず、Step 4は未完了を維持する。
+設計・正解・利用方法は[vision fixture説明](../../fixtures/phase4-step4-vision/README.md)、
+検証結果は[画像fixture記録](../records/phase-4-plus-option-scale-2.md#step-4-structured-vision-fixtures)に保持する。

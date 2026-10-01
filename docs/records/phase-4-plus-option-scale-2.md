@@ -656,3 +656,55 @@ C/Dを評価する前に固定する。正解をQ4/BF16のwinnerへ合わせて�
 
 E2Bのmodel inferenceと全4重みの正解付きreference A/Bは、このfollow-upでは未実施。
 Step 4は未完了を維持し、次のCPU A/Bに新fixtureを使用できる状態にした。
+
+<a id="step-4-structured-vision-fixtures"></a>
+## 2026-10-01: Step 4 structured vision fixtures
+
+ユーザーの指示で、インストール済みImageMagickを使って複雑な画像証拠を作成した。
+既存の数値control・24条件quality fixtureは保持し、別の
+[vision JSONL](../../fixtures/phase4-step4-vision.jsonl)と
+[画像・再生成方法](../../fixtures/phase4-step4-vision/README.md)を追加。
+正解・根拠は推論前に生成元の事実と明示ルールから決め、
+[manifest](../../fixtures/phase4-step4-vision/manifest.json)に全画像hashと事実を保存した。
+画像内にはbase/changedの識別や正解を記載していない。
+
+| 系統 | 基本の証拠と正解 | 証拠変更と正解 | 配置変更 |
+|---|---|---|---|
+| board | 赤い四角: NORTH 3 / EAST 4 / SOUTH 2 / WEST 1 → `east` | EASTの四角1個をNORTHへ移動: 4/3/2/1 → `north` | 印刷名と物体を保持しcard位置を変更 → `east` |
+| status | FAILEDかつOPENのうち最高severity → `lyra` | LYRAのRESPONSEだけOPEN→ACK → `vega` | 行順と装飾色を変更 → `lyra` |
+| table | READYかつQUALITY≥80のうち最小COST → `birch` | BIRCHのQUALITYだけ84→78（barも同期）→ `aster` | 行順と装飾色を変更 → `birch` |
+
+9枚の各画像に候補基本順・逆順・無関係候補2件追加を用意し、27 request rowsとした。
+4–8候補で現行16候補契約の範囲。各候補順について画像3種間のstate/question/optionsは完全一致。
+画像だけで証拠を変えたときの選択感度と、同じ証拠の配置変更に対する不変性を分けて確認できる。
+3課題系統、6異なる証拠シナリオ、3配置変形であり、独立27標本とは数えない。
+今回の作成ではモデル出力やmarginを見て正解・データを調整していない。
+
+### 入力検証（モデル推論なし）
+
+- ImageMagick 6.9.12-98 Q16、DejaVu Sans/Bold/Monoで全画像960×720のRGB PNGを生成。
+  一覧previewは1032×870で、モデル入力には使わない。9画像・preview・JSONLの
+  再生成SHA-256一致を確認。同じフォント/ツール環境での再現であり他versionのbyte一致は未確認。
+- JSONL SHA-256: `a98647965faa3d53db0d0da08ea0ac2be89ce74e1fed0b174565d99eba02416c`。
+  全27行の一意ID、候補数/ID/正解包含、画像path、manifest hashを確認。
+  逆順と候補追加でも元のsemantic ID/説明を保持。
+- 画像のraw RGB差分を確認。boardは2,738 pixelsで物体の移動元/移動先だけ、
+  statusは7,624 pixelsでLYRAのRESPONSE cellだけ、tableは579 pixelsで
+  BIRCHのQUALITY数値/barだけが変化。relayoutの生成元事実と正解はbaseと一致。
+- production renderer/tokenizerでE2B/E4B BF16/Q4の全27条件を検証。
+  prompt IDsとanswer IDsが全4 GGUFで一致し回答境界検証に成功。
+  `(id, token_ids, answer_ids)`配列のcompact JSON SHA-256:
+  `38d404027731a10bb1790f636681d95f89352417fa75fa1e2eb012eb6e1be339`。
+  基本prompt tokensはboard 149 / status 192 / table 162（画像placeholder込み）。
+  reader/rendererがexpected ID/reasonやmanifestの事実をpromptへ入れないことも確認。
+- production decoder/preprocessorを、local E2B/E4B mmprojのmetadataから得た設定で実行。
+  全画像でprepared size 960×720、2,700 patches、300 visual tokens。
+  path入力とencoded-byte入力の正規化tensorは完全一致し、全値finite。
+  基本promptの画像splice後の計算上のpositionsは448 / 491 / 461。
+  encoderやPrefillは実行しておらず、これらを実測latency/accuracyとは扱わない。
+
+検証時のproduction sourceは`4afcb7c449987dfcf5693659c53f900b96f61d08`、
+ggmlは`456172ec733a135778adcd32d00e576a58232e45`。runtime source変更なし。
+モデル正解率・margin・BF16/Q4 A/B・CUDA C/Dはこの新画像セットでは未測定。
+画像が複雑でもnear-tieの保証にはならない。次のA/Bは同じvisual embeddingsで
+text重み差を分離し、encoderを含むend-to-end比較は別に行う。Step 4は未完了。
