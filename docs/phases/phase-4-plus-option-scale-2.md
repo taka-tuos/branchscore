@@ -3,7 +3,8 @@
 ## Status / Position
 
 2026-09-30 計画作成。Step 1の実装とCPU/reference focused verificationを完了。
-Step 2以降は未着手。Step 4の高精度比較計画を追加済み。
+Step 2/3は未着手。Step 4はE2B/E4B textとE2B shared-image embeddingのCPU A/B初期比較を記録済み。
+同一checkpoint由来と正解付き評価・CUDA最適化の採用基準は未確定のため未完了。
 CUDA pathのmodel-backed照合に必要なGPU実行環境がなく、Step 5の
 E4B全載せ計測にはユーザー指定の8 GiB以上GPUが必要なため、ここで保留する。
 [旧 option-scale](phase-4-plus-option-scale.md) は調査途中で打ち切り、
@@ -217,3 +218,17 @@ E2B/E4BのCPU境界testとllama.cppのtext/image照合を実施し、今回のfi
 追加誤答と同条件referenceとの実装照合を併せて評価するStep 4を追加した。
 従来Step 4–6はStep 5–7へ繰り下げた。判断の背景と未測定事項は
 [採用基準の検討記録](../records/phase-4-plus-option-scale-2.md#precision-baseline-review)に保持する。
+
+2026-09-30: Step 4のCPU A/B初期測定を実施。synthetic 16-option short/long、3-option ambiguity、
+E2B固定visual embeddingを比較し、tokenizer一致とraw/centered logits・候補softmax差を記録した。
+top-1変更はこの7 paired comparisonsで0件だが、全fixtureに評価用の正解labelがないため誤答率・採用基準は未確定。
+CUDA C/D、Step 5 GPU測定は未実施。詳細・由来の未確認事項は
+[Step 4 CPU A/B記録](../records/phase-4-plus-option-scale-2.md#2026-09-30-step-4-cpu-precision-baseline)を参照する。
+
+2026-09-30: 旧option-scale→Step 1→Step 4の経緯と途中結果を再解析した。
+Q4 GGUF本体でimatrix metadataを確認し、初期記録の記載漏れと画像fixtureの説明を訂正。
+同一checkpoint由来・imatrix実体/再現設定は未確定。Step 1との差はcentered最大差で
+A/Bより小さい5条件があるが、確率差では逆転やA/B差の約54–60%の例もあり、
+十分小さいとの採用判定には至らない。全7表を再検算し、新規inferenceは行っていない。
+比較条件の限界、意味品質とCUDA/384・512件の未測定範囲、残りの確認順は
+[Step 4途中レビュー](../records/phase-4-plus-option-scale-2.md#step-4-interim-review)を参照する。
