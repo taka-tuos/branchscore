@@ -45,8 +45,28 @@ accepted all images with the local E2B/E4B mmproj configurations: unchanged
 inputs produced identical finite normalized tensors. The production renderer
 and answer boundary checks passed all 27 rows for E2B/E4B BF16/Q4; their token
 and answer ID sequences matched. Pixel differences for changed images were
-confined to the moved object or edited cell. These checks validate inputs;
-model inference and accuracy measurement for this set remain pending.
+confined to the moved object or edited cell. These checks validate inputs.
+E4B BF16/Q4 and E2B BF16/Q4 CPU semantic screens are recorded in the
+[Step 4 model comparison](../../docs/records/phase-4-plus-option-scale-2/vision-screening.md#vision-multi-model-cpu-comparison-2026-10-01).
+
+## Image-fact text controls
+
+[`../phase4-step4-vision-text-controls.jsonl`](../phase4-step4-vision-text-controls.jsonl)
+contains five text-only controls corresponding to the selected board, status,
+and table requests. Each row keeps the same question and option IDs, descriptions,
+and order, while replacing the image with a literal transcription of its visible
+facts. The transcription does not name the correct choice. `expected_selected_id`,
+`expected_reason`, and source-image metadata are evaluation metadata; the benchmark
+reader does not place them in the prompt. These rows help separate fact extraction
+from applying the text rule, but do not replace the image fixtures.
+
+The E4B Q4 CPU comparison against the local llama.cpp reference, including exact
+shared-embedding prefill, the normal mtmd image path, and these text controls, is
+recorded in the
+[reference/control results](../../docs/records/phase-4-plus-option-scale-2-vision-reference-controls-e4b-q4-cpu-2026-10-01.jsonl).
+This diagnostic covers five selected requests only. The later full 27-row E4B
+BF16/Q4 shared-embedding comparison is summarized below. CUDA comparisons and
+optimized-path adoption remain pending.
 
 ## Evaluation scope
 
@@ -62,6 +82,19 @@ fixed between BF16 and Q4. Measure encoder differences separately in an
 end-to-end comparison. CPU and CUDA results remain separate. The original
 numeric controls and simpler quality set retain their historical inputs.
 Validation details are in the
-[`option-scale-2 records`](../../docs/records/phase-4-plus-option-scale-2.md#step-4-structured-vision-fixtures).
+[`option-scale-2 records`](../../docs/records/phase-4-plus-option-scale-2/vision-screening.md#step-4-structured-vision-fixtures).
 
 ![Preview: rows are board/status/table; columns are base/changed/relayout](contact-sheet.png)
+
+2026-10-01の境界修正以降、rendererは`<|image><|image|><image|>`を明示する。
+中央markerのみをvisual embeddingsへ置換し、境界2tokenは通常textとして保持する。
+修正前のCPU raw結果は境界なし入力の歴史的測定として保持し、新測定とは区別する。
+
+2026-10-01追加レビュー対応: 修正後の画像境界契約で、E4B BF16/Q4の全27条件を
+同じ保存300×2560 embedding・同じCPU reference経路（通常buffer、LLAMAFILE/tiled OFF、
+F32 KV、通常attention、full SWA、512上限）で比較した。両方13/27正解だがwinnerは3件変化、
+正解→誤答と誤答→正解は各1件。branchscore非padding経路12/27との選択差はboard-baseのみ。
+診断用にkey軸paddingを揃えた画像5条件ではreferenceの全候補logitsとF32一致したが、
+全27条件のproduction結果やCUDAの保証とはしない。
+[全27条件shared-embedding記録](../../docs/records/phase-4-plus-option-scale-2-vision-shared-reference-e4b-cpu-2026-10-01.jsonl)と
+[CPU kernel/key軸診断](../../docs/records/phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md#cpu-kernel-alignment-2026-10-01)を参照する。

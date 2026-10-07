@@ -22,13 +22,16 @@ flowchart TD
 | Cross-cutting implementation principles | `development-rules.md` |
 | OpenJev research evidence | `research/openjev.md` |
 | llama.cpp and ggml research evidence | `research/llama-ggml.md` |
-| Executable work plan and current findings summary | `phases/phase-*.md` |
-| Dated implementation, benchmark, and review evidence | `records/README.md` and `records/*.md` |
+| Executable work plan and current findings summary | [Phase index](phases/README.md) and `phases/phase-*.md` |
+| Dated implementation, benchmark, and review evidence | [Record index](records/README.md) and topic records under `records/` |
 | Original unpartitioned proposal | `archive/ggml_jevlike_project_spec.md` (historical only) |
 
 Phase documents link to canonical sources rather than duplicating them. Their
 long dated execution histories live under `records/`; records are evidence,
 not an additional source of current scope or requirements.
+Long record sets have a phase-specific index and a directory of topic records.
+Start with the phase's Read First / record routing, then read the relevant
+record. Raw measurement files remain beside the record indexes.
 
 ## Roadmap
 

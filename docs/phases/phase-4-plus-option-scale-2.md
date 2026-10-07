@@ -2,15 +2,16 @@
 
 ## Status / Position
 
-2026-09-30 計画作成。Step 1の実装とCPU/reference focused verificationを完了。
-Step 2/3は未着手。Step 4はE2B/E4B textとE2B shared-image embeddingのCPU A/B初期比較、
-Unsloth公開履歴の照合、正解付きE4B Q4/CPU screeningを記録済み。
-元checkpointの厳密な由来と正解付きreference A/B・最適化の追加品質評価は未確定のため未完了。
-CUDA pathのmodel-backed照合に必要なGPU実行環境がなく、Step 5の
-E4B全載せ計測にはユーザー指定の8 GiB以上GPUが必要なため、ここで保留する。
-[旧 option-scale](phase-4-plus-option-scale.md) は調査途中で打ち切り、
-未完了の資源・品質・公開契約の判断を本計画へ引き継ぐ。
-旧CPU probeの記録は採用済みruntimeではない。
+2026-09-30計画作成。旧[option-scale](phase-4-plus-option-scale.md)の未完了判断を引き継ぐ。
+Step 1の実装・CPU/reference focused verificationは完了。Step 2/3は未着手。
+Step 4はCPU比較baselineを整備中で、精度採用判定は未完了。
+修正後契約のE4B shared-embedding referenceはBF16/Q4各13/27、現行branchscore Q4は12/27。
+kernel/key軸を揃えた診断版は純text 1条件・画像5条件で候補logitsがF32一致したが、paddingは未採用。
+最適化C/DのE4B画像27条件CPU測定は完了（C=14/27、D=13/27）、数値基準未達で未採用。
+C/D残差の切り分け、通常attentionのpadding版の全条件・chunk/window境界、
+E2B修正後基準とCUDAの品質評価が残る。
+Step 5のE4B全載せ計測には8 GiB以上の単一NVIDIA GPUが必要で、現環境では未実施。
+旧CPU probeを採用済みruntimeやCUDAの採用根拠として扱わない。
 
 優先順位はメモリ削減。本番はE4Bを8 GiB以上のVRAMを持つ単一NVIDIA GPUへ全載せする。
 512件を目標とし、384件を比較点にする。256件では用途上の余裕が足りない懸念がある。
@@ -24,12 +25,23 @@ E4B全載せ計測にはユーザー指定の8 GiB以上GPUが必要なため、
 - `docs/architecture.md`
 - `docs/development-rules.md`
 - `docs/phases/phase-3-plus-categorical-readout.md`（現行採点契約）
-- `docs/records/phase-4-plus-option-scale-2.md`（今回のsource調査・容量推算）
+- [option-scale-2記録索引](../records/phase-4-plus-option-scale-2.md)（下表から担当Stepの記録だけ読む）
 - 必要な項目だけ `docs/records/phase-4-plus-option-scale.md`（旧tokenizer/CPU probe）
 - 入口変更時は `docs/phases/phase-4-plus-http-server.md`
 - 計測境界は `docs/phases/phase-4-backend-separation.md` と
   `docs/records/phase-4-backend-measurements.md`
 - 必要時のみ `docs/research/llama-ggml.md`
+
+## Record routing
+
+| 作業・確認 | 必要な記録 |
+|---|---|
+| Step 1–3の容量・Prefill分割 | [メモリ・Prefill](../records/phase-4-plus-option-scale-2/memory-prefill.md) |
+| Step 4のC/D CPU測定・事前基準・判定 | [C/D CPU評価](../records/phase-4-plus-option-scale-2/cd-cpu-evaluation.md) |
+| Step 4の現在のCPU baseline・残る確認 | [CPU kernel/key padding](../records/phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md) |
+| Step 4の初期A/BとGGUF由来 | [初期baseline](../records/phase-4-plus-option-scale-2/precision-baseline.md)、[由来・quality fixture](../records/phase-4-plus-option-scale-2/precision-review-provenance.md) |
+| 画像fixtureと境界修正の経緯 | [vision screening](../records/phase-4-plus-option-scale-2/vision-screening.md)、[reference/control](../records/phase-4-plus-option-scale-2/vision-reference-controls.md)、[境界・buffer](../records/phase-4-plus-option-scale-2/image-boundary-buffer.md) |
+| 以前のF16/Flash/query-only chunk実験 | [旧CPU probe](../records/phase-4-plus-option-scale/cpu-memory-probes.md) |
 
 ## Goal / Constraints
 
@@ -201,53 +213,41 @@ referenceとの実装差を説明できる。採用基準・判定・比較で�
 
 ## Notes / Findings
 
-2026-09-30: 旧option-scaleはStep 1/2の調査途中で打ち切り、メモリ削減を優先する本計画へ移行。
-旧tokenizer照合・初期品質screening・CPU resource/F16/FA/query-chunk probeは
-[旧調査記録](../records/phase-4-plus-option-scale.md)に保持する。
-重み容量の訂正、llama.cppのmicrobatch/SWA、CUDA FAの型・padding条件、
-容量式と数値差の再解析は[option-scale-2調査記録](../records/phase-4-plus-option-scale-2.md)に移管した。
-512件を目標、384件を比較点とする。GPU peak VRAM・拡張label品質・request budgetは未確定。
+- 2026-09-30: Step 1を完了。512-token全layer microbatch、全長F32 KV、absolute position、
+  画像span分割と最終位置readoutをCPU/referenceで確認。[実行記録](../records/phase-4-plus-option-scale-2/memory-prefill.md)。
+- 2026-09-30〜2026-10-02: Step 4の初期A/B、GGUF由来、quality/vision fixture、画像境界修正、
+  CPU buffer/kernel/key軸の診断を実施。[最新baseline・再レビュー](../records/phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md)。
+  BF16/Q4各13/27は正誤変化各1件の相殺で、画像判断の品質達成を示さない。
+  診断6条件の一致を全条件・長文・CUDAへ一般化しない。
+- 次は未採用C/Dのkernel・decode shape差を切り分け、padding採用候補の全27条件・
+  chunk/window境界と時間/メモリ差を確認する。E2B修正後基準・CUDA品質・384/512件・VRAMは未測定。
+  Step 4と公開件数の採用判定は未完了。
+- 2026-10-02: recordsをテーマ別に分割し、phaseは計画・現在の進捗・読む記録の案内に整理。
+  過去のFindings全文は[履歴](../records/phase-4-plus-option-scale-2/plan-findings-history.md)へ移管。
+  測定本文・rawデータを保持し、移動後の参照リンクを更新した。
+  元の24節・Findingsの本文保存、計画のGoal/Steps/完了条件不変、raw hash、相対リンク・旧anchorを検証。
 
-2026-09-30: Step 1を完了。最大512 tokenの全layer microbatch、全長F32 KV、
-absolute position、画像spanのchunk分割、最終位置readoutを実装した。
-E2B/E4BのCPU境界testとllama.cppのtext/image照合を実施し、今回のfixtureではtop-1が一致。
-相対logits/probability差は残り、拡張候補数の品質とCUDAの許容差は未確定。
-容量値・比較条件・全数値表・vision差の切り分けは
-[Step 1実行記録](../records/phase-4-plus-option-scale-2.md#2026-09-30-step-1-prefill-microbatch-implementation-and-cpureference-checks)へ移管した。
+- 2026-10-02: Step 4のC/D CPU測定に着手。F16 KV・host F16 mask・Flash Attention・
+  全長SWA・512-token上限の測定専用copyを作成し、結果を見る前に
+  [採用screening基準](../records/phase-4-plus-option-scale-2/cd-cpu-evaluation.md)を固定。
+  E4B修正後27画像条件へ同じ保存済みvisual embeddingsを入力する。通常runtimeは未変更。
+  E2B・純text/16件・長文/window境界・CUDAと公開件数の判定は別途残る。
 
-2026-09-30: 重み量子化差をruntime最適化の追加差の物差しにする方針をユーザーと合意。
-追加誤答と同条件referenceとの実装照合を併せて評価するStep 4を追加した。
-従来Step 4–6はStep 5–7へ繰り下げた。判断の背景と未測定事項は
-[採用基準の検討記録](../records/phase-4-plus-option-scale-2.md#precision-baseline-review)に保持する。
+- 2026-10-02: E4B修正後27画像条件のCPU C/Dを完了。B/C/Dの正解は13/14/13。
+  B→Cは誤答→正解1件、C→Dはその正解→誤答1件、B→Dは選択変更0件。
+  事前数値screeningはB→C 12/27、C→D 0/27、B→D 11/27で未達のため未採用。
+  [結果・限界](../records/phase-4-plus-option-scale-2/cd-cpu-evaluation.md)。523 positionsの
+  2 chunkは成功。通常runtimeは未変更。ggml/kernel・decode shape差の切り分け、
+  E2B・純text/16件・window境界・CUDA・384/512候補は残り、Step 4全体は未完了。
 
-2026-09-30: Step 4のCPU A/B初期測定を実施。synthetic 16-option short/long、3-option ambiguity、
-E2B固定visual embeddingを比較し、tokenizer一致とraw/centered logits・候補softmax差を記録した。
-top-1変更はこの7 paired comparisonsで0件だが、全fixtureに評価用の正解labelがないため誤答率・採用基準は未確定。
-CUDA C/D、Step 5 GPU測定は未実施。詳細・由来の未確認事項は
-[Step 4 CPU A/B記録](../records/phase-4-plus-option-scale-2.md#2026-09-30-step-4-cpu-precision-baseline)を参照する。
+- 2026-10-02: [C/D再レビュー](../records/phase-4-plus-option-scale-2/cd-cpu-evaluation.md#cd-cpu-review-2026-10-02)で
+  生出力・入力/embedding・source/binary/事前基準hashと27条件の数値・正誤集計を独立照合。
+  B→Dの選択一致27/27は確認できたが、C→Dの数値基準は0/27で未達。
+  両ggmlのCPU Flashは64未満のqueryでvector経路を使い、F16 Vでは加重和をF16で蓄積する。
+  F32指定が全経路の内部F32 accumulationを保証するとは扱わない。
+  Cの冒頭38 queryとDの混在chunk、Dの11-query tailでこの経路差が生じる。
+  少数例でdecode shapeとFlash kernel/内部精度を揃えるcontrolを次の切り分けとし、原因の確定は留保する。
 
-2026-09-30: 旧option-scale→Step 1→Step 4の経緯と途中結果を再解析した。
-Q4 GGUF本体でimatrix metadataを確認し、初期記録の記載漏れと画像fixtureの説明を訂正。
-同一checkpoint由来・imatrix実体/再現設定は未確定。Step 1との差はcentered最大差で
-A/Bより小さい5条件があるが、確率差では逆転やA/B差の約54–60%の例もあり、
-十分小さいとの採用判定には至らない。全7表を再検算し、新規inferenceは行っていない。
-比較条件の限界、意味品質とCUDA/384・512件の未測定範囲、残りの確認順は
-[Step 4途中レビュー](../records/phase-4-plus-option-scale-2.md#step-4-interim-review)を参照する。
-
-2026-09-30: Unsloth公開hash/commitとlocal時刻を照合。E2B BF16/Q4は7月版、
-E4B BF16は7月版、Q4は5月版に一致。E4B Q4新旧ヘッダの差はchat templateのみで
-全720 tensor記述が一致。BF16/Q4の同型非量子化tensorもE2B 283個/E4B 339個でbyte一致。
-元checkpointの厳密なrevisionと全量子化recipeは未確定だが、公開品との対応・世代差は説明できた。
-正解・根拠を固定した8シナリオ/24条件を追加し、全4 GGUFでtoken/label境界一致を確認。
-現行E4B Q4/CPU screeningは正解24/24、順序/候補追加の選択変更0件。
-最小marginは3.668でnear-tieは未獲得。正解付きreference A/BとCUDA C/Dは未実施。
-詳細と新fixtureの位置づけは
-[由来照合とquality fixture記録](../records/phase-4-plus-option-scale-2.md#step-4-provenance-and-quality-fixtures)を参照する。
-
-2026-10-01: Step 4用の複雑な画像証拠をImageMagickで追加。盤面の色/形の計数、
-状態画面の複数条件、表の適格性/最小値比較の3系統に、証拠1か所の変更と配置変更を用意した。
-正解付き9画像/27条件だが、独立27標本ではなく6証拠シナリオと3配置変形。
-全4 GGUFでprompt/回答ID一致、両mmproj設定でdecode/前処理、変更pixelの範囲、
-同環境での再生成hash一致を確認。モデル推論はまだ行わず、Step 4は未完了を維持する。
-設計・正解・利用方法は[vision fixture説明](../../fixtures/phase4-step4-vision/README.md)、
-検証結果は[画像fixture記録](../records/phase-4-plus-option-scale-2.md#step-4-structured-vision-fixtures)に保持する。
+- 2026-10-07: GPU検証への引き継ぎ準備として、画像境界修正・CPU測定資料・記録整理を分けてcommit。
+  既存CPU buildでrenderer/tokenizer/E4B engineの対象をbuildし、focused CTest 3/3を確認。
+  CUDAの品質・384/512候補・peak VRAMとruntime採用判定は未完了のまま引き継ぐ。

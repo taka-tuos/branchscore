@@ -21,7 +21,8 @@ Step 3の契約・入口変更は未着手で、productionは2–16件・A–P�
 ## Handoff
 
 旧計画の調査結果・問題点一覧・暫定512labelの説明・打切り時点の到達点は
-[旧調査記録](../records/phase-4-plus-option-scale.md#2026-09-30-旧計画の打切りと引き継ぎ)へ移管した。
+[旧調査記録索引](../records/phase-4-plus-option-scale.md)からテーマ別に参照する。
+打切り時点の到達点は[引き継ぎ記録](../records/phase-4-plus-option-scale/handoff.md#2026-09-30-旧計画の打切りと引き継ぎ)に保持する。
 CPUのraw JSONLとlabel TSVは元のrecordsのファイル名で保持する。
 これらは歴史的証拠であり、現在の実装順や採用条件はoption-scale-2に従う。
 
@@ -37,3 +38,6 @@ label/資源予算・入口の採用判断。
 GPU全載せの追加調査をoption-scale-2 recordsへ移管した。
 [後続計画](phase-4-plus-option-scale-2.md)のStep 1は実装・CPU照合完了。
 残りの進捗と採用条件は後続計画のStatus / Positionに従う。
+
+2026-10-02: 旧recordsをラベル/品質、CPU probe、打切り/引き継ぎに分割。
+索引から必要な履歴へ辿る形にし、当時の本文とraw測定を保持した。
