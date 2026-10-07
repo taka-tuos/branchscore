@@ -34,6 +34,7 @@ int main() {
     valid &= small.width == 54 && small.height == 54;
     valid &= small.patch_count(config) == 729;
     valid &= small.visual_token_count(config) == 81;
+    valid &= branchscore::ImagePreprocessor::estimate_visual_token_count(1, 1, config) == small.visual_token_count(config);
     const std::size_t plane = static_cast<std::size_t>(small.width) * small.height;
     valid &= close(small.pixels[0], 1.0F);
     valid &= close(small.pixels[plane], (128.0F / 255.0F - 0.25F) / 0.25F);
@@ -44,6 +45,7 @@ int main() {
         large.data(), 1000, 500, config);
     valid &= reduced.width == 282 && reduced.height == 138;
     valid &= reduced.visual_token_count(config) <= 1120;
+    valid &= branchscore::ImagePreprocessor::estimate_visual_token_count(1000, 500, config) == reduced.visual_token_count(config);
 
     if (!valid) std::cerr << "image preprocessing result differs from expected values\n";
     return valid ? 0 : 1;

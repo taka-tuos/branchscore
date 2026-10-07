@@ -208,6 +208,15 @@ std::size_t PreparedImage::visual_token_count(const VisionModelConfig & config) 
            (patches_y / config.merge_size);
 }
 
+std::size_t ImagePreprocessor::estimate_visual_token_count(
+    const std::uint32_t width, const std::uint32_t height, const VisionModelConfig & config) {
+    const auto size = target_size(checked_int(width, "image width"), checked_int(height, "image height"), config);
+    PreparedImage shape;
+    shape.width = static_cast<std::uint32_t>(size.width);
+    shape.height = static_cast<std::uint32_t>(size.height);
+    return shape.visual_token_count(config);
+}
+
 PreparedImage ImagePreprocessor::load(
     const std::string & path,
     const VisionModelConfig & config) {

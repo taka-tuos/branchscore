@@ -54,6 +54,12 @@ ggml_tensor * build_attention(
     query = ggml_permute(ctx, query, 0, 2, 1, 3);
     key = ggml_permute(ctx, key, 0, 2, 1, 3);
     value = ggml_permute(ctx, value, 0, 2, 1, 3);
+    if (key->type == GGML_TYPE_F16) {
+        auto * attended = ggml_flash_attn_ext(ctx, query, key, value, mask, 1.0F, 0.0F, 0.0F);
+        ggml_prec_set_acc(attended, GGML_PREC_F32);
+        return ggml_reshape_2d(ctx, attended,
+            attended->ne[0] * attended->ne[1], attended->ne[2]);
+    }
     value = ggml_cont(ctx, ggml_transpose(ctx, value));
     auto * scores = ggml_mul_mat(ctx, key, query);
     ggml_prec_set_acc(scores, GGML_PREC_F32);
@@ -72,12 +78,13 @@ ggml_tensor * append_tokens(
     return current == nullptr ? additional : ggml_concat(ctx, current, additional, 1);
 }
 
-std::vector<float> causal_mask(
+template <typename Scalar>
+std::vector<Scalar> causal_mask(
     std::size_t query_start,
     std::size_t query_count,
     std::size_t key_count,
     std::size_t window) {
-    std::vector<float> result(query_count * key_count);
+    std::vector<Scalar> result(query_count * key_count);
     const float blocked = -std::numeric_limits<float>::infinity();
     for (std::size_t query = 0; query < query_count; ++query) {
         const std::size_t absolute_query = query_start + query;
@@ -85,11 +92,25 @@ std::vector<float> causal_mask(
             const bool after_query = key > absolute_query;
             const bool before_window =
                 window != 0 && key + window <= absolute_query;
-            result.at(query * key_count + key) =
-                after_query || before_window ? blocked : 0.0F;
+            const float value = after_query || before_window ? blocked : 0.0F;
+            if constexpr (std::is_same_v<Scalar, ggml_fp16_t>) {
+                result.at(query * key_count + key) = ggml_fp32_to_fp16(value);
+            } else {
+                result.at(query * key_count + key) = value;
+            }
         }
     }
     return result;
+}
+
+template <typename Scalar>
+void set_masks(const BackendContext & backend, ggml_tensor * full, ggml_tensor * sliding,
+               std::size_t start, std::size_t count, std::size_t keys, std::size_t window,
+               BackendTiming & timing) {
+    const auto full_values = causal_mask<Scalar>(start, count, keys, 0);
+    const auto sliding_values = causal_mask<Scalar>(start, count, keys, window);
+    backend.tensor_set_timed(full, full_values.data(), 0, ggml_nbytes(full), timing);
+    backend.tensor_set_timed(sliding, sliding_values.data(), 0, ggml_nbytes(sliding), timing);
 }
 
 ggml_tensor * cache_current_kv(
@@ -322,7 +343,10 @@ PrefillState PrefillEngine::prefill(
 
     auto result = std::make_unique<PrefillState::Impl>();
     result->backend = &backend_;
-    result->cache = std::make_unique<StateCache>(config, token_count, backend_);
+    const bool flash = backend_.device().family == "CUDA";
+    const auto padded_count = [](std::size_t count) { return ((count + 255) / 256) * 256; };
+    const auto capacity = flash ? padded_count(token_count) : token_count;
+    result->cache = std::make_unique<StateCache>(config, capacity, backend_);
     result->token_microbatch_size = prefill_token_microbatch_size;
 
     ggml_init_params logits_params{3 * ggml_tensor_overhead(), nullptr, true};
@@ -355,7 +379,7 @@ PrefillState PrefillEngine::prefill(
         const std::size_t query_count = std::min(
             prefill_token_microbatch_size, token_count - chunk_start);
         const std::size_t chunk_end = chunk_start + query_count;
-        const std::size_t cache_count = chunk_end;
+        const std::size_t cache_count = flash ? padded_count(chunk_end) : chunk_end;
 
         std::vector<std::uint8_t> context_memory(context_size);
         ggml_init_params params{context_memory.size(), context_memory.data(), true};
@@ -383,9 +407,9 @@ PrefillState PrefillEngine::prefill(
             ctx.get(), GGML_TYPE_I32, query_count);
         ggml_set_input(positions);
         auto * full_mask = ggml_new_tensor_2d(
-            ctx.get(), GGML_TYPE_F32, cache_count, query_count);
+            ctx.get(), flash ? GGML_TYPE_F16 : GGML_TYPE_F32, cache_count, query_count);
         auto * sliding_mask = ggml_new_tensor_2d(
-            ctx.get(), GGML_TYPE_F32, cache_count, query_count);
+            ctx.get(), flash ? GGML_TYPE_F16 : GGML_TYPE_F32, cache_count, query_count);
         ggml_set_input(full_mask);
         ggml_set_input(sliding_mask);
 
@@ -484,6 +508,13 @@ PrefillState PrefillEngine::prefill(
             ggml_build_forward_expand(graph, input);
         }
 
+        for (int index = 0; index < ggml_graph_n_nodes(graph); ++index) {
+            auto * node = ggml_graph_node(graph, index);
+            if (!ggml_backend_supports_op(backend_.backend(), node)) {
+                throw std::runtime_error("unsupported Prefill graph op on selected backend: " +
+                                         std::string(ggml_op_name(node->op)));
+            }
+        }
         AllocatorPointer allocator(
             ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
         if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
@@ -505,16 +536,13 @@ PrefillState PrefillEngine::prefill(
                 text_input.first, text_input.second.data(), 0,
                 ggml_nbytes(text_input.first), result->backend_timing);
         }
-        const auto full_mask_values =
-            causal_mask(chunk_start, query_count, cache_count, 0);
-        const auto sliding_mask_values = causal_mask(
-            chunk_start, query_count, cache_count, config.sliding_window);
-        result->backend->tensor_set_timed(
-            full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask),
-            result->backend_timing);
-        result->backend->tensor_set_timed(
-            sliding_mask, sliding_mask_values.data(), 0,
-            ggml_nbytes(sliding_mask), result->backend_timing);
+        if (flash) {
+            set_masks<ggml_fp16_t>(backend_, full_mask, sliding_mask, chunk_start,
+                query_count, cache_count, config.sliding_window, result->backend_timing);
+        } else {
+            set_masks<float>(backend_, full_mask, sliding_mask, chunk_start,
+                query_count, cache_count, config.sliding_window, result->backend_timing);
+        }
 
         const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
         if (status != GGML_STATUS_SUCCESS) {

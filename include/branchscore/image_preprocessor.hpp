@@ -39,6 +39,9 @@ public:
         const std::uint8_t * encoded,
         std::size_t encoded_size);
 
+    static std::size_t estimate_visual_token_count(
+        std::uint32_t width, std::uint32_t height, const VisionModelConfig & config);
+
     static PreparedImage load_encoded(
         const std::uint8_t * encoded,
         std::size_t encoded_size,

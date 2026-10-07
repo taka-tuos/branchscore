@@ -1,0 +1,53 @@
+// Fixed labels from docs/records/phase-4-plus-option-label-candidates.tsv.
+#pragma once
+
+#include "branchscore/decision_limits.hpp"
+#include <array>
+
+namespace branchscore {
+inline constexpr std::array<const char *, max_decision_options> gemma4_extended_answer_labels = {
+    "AB", "BA", "CB", "DA", "EC", "FA", "GA", "HA", "IA", "JA", "KA", "LA",
+    "MA", "NA", "OB", "PA", "QA", "RA", "SB", "TA", "UB", "VA", "WA", "XA",
+    "YA", "ZA", "AD", "BB", "CD", "DB", "ED", "FB", "GB", "HB", "IB", "JB",
+    "KB", "LC", "MB", "NB", "OC", "PD", "QB", "RC", "SD", "TB", "UC", "VB",
+    "WB", "XB", "YC", "ZC", "AF", "BC", "CF", "DC", "EF", "FC", "GC", "HC",
+    "IC", "JC", "KE", "LD", "ME", "NC", "OD", "PE", "QC", "RE", "SE", "TC",
+    "UD", "VC", "WC", "XC", "YD", "ZD", "AG", "BD", "CG", "DD", "EG", "FE",
+    "GE", "HD", "ID", "JD", "KG", "LE", "MF", "ND", "OF", "PF", "QD", "RF",
+    "SF", "TE", "UE", "VD", "WD", "XD", "YE", "ZE", "AH", "BF", "CH", "DE",
+    "EJ", "FF", "GF", "HE", "IF", "JE", "KH", "LF", "MG", "NE", "OG", "PG",
+    "QE", "RG", "SH", "TG", "UG", "VE", "WE", "XE", "YG", "ZF", "AJ", "BG",
+    "CJ", "DF", "EK", "FG", "GG", "HF", "IG", "JG", "KI", "LG", "MH", "NF",
+    "OH", "PH", "QF", "RH", "SI", "TH", "UI", "VF", "WF", "XH", "YH", "ZH",
+    "AK", "BH", "CK", "DH", "EL", "FI", "GH", "HH", "II", "JH", "KJ", "LI",
+    "MI", "NG", "OJ", "PI", "QH", "RI", "SK", "TI", "UJ", "VG", "WG", "XI",
+    "YK", "ZI", "AL", "BI", "CL", "DI", "EM", "FJ", "GI", "HI", "IJ", "JI",
+    "KK", "LJ", "MJ", "NH", "OK", "PJ", "QI", "RJ", "SL", "TJ", "UK", "VI",
+    "WH", "XK", "YL", "ZM", "AM", "BJ", "CM", "DJ", "EN", "FK", "GJ", "HJ",
+    "IK", "JJ", "KL", "LL", "MK", "NJ", "OL", "PK", "QK", "RK", "SM", "TL",
+    "UL", "VJ", "WI", "XL", "YM", "ZN", "AN", "BL", "CN", "DK", "EO", "FL",
+    "GL", "HK", "IL", "JK", "KM", "LO", "ML", "NK", "OM", "PL", "QL", "RL",
+    "SN", "TM", "UM", "VK", "WM", "XM", "YN", "ZO", "AP", "BM", "CO", "DN",
+    "EP", "FN", "GM", "HL", "IM", "JM", "KN", "LP", "MM", "NN", "ON", "PM",
+    "QM", "RN", "SP", "TO", "UN", "VM", "WO", "XO", "YO", "ZQ", "AQ", "BN",
+    "CP", "DO", "EQ", "FO", "GN", "HO", "IN", "JO", "KO", "LQ", "MN", "NO",
+    "OP", "PN", "QN", "RO", "SQ", "TP", "UP", "VN", "WP", "XP", "YP", "ZR",
+    "AR", "BO", "CQ", "DP", "ER", "FQ", "GO", "HP", "IO", "JP", "KQ", "LR",
+    "MP", "NS", "OR", "PO", "QP", "RP", "SR", "TR", "UR", "VO", "WQ", "XR",
+    "YS", "ZS", "AT", "BQ", "CT", "DQ", "ES", "FR", "GP", "HQ", "IP", "JQ",
+    "KS", "LS", "MQ", "NT", "OS", "PQ", "QQ", "RQ", "ST", "TS", "US", "VP",
+    "WR", "XS", "YT", "ZT", "AU", "BS", "CU", "DR", "ET", "FT", "GQ", "HR",
+    "IQ", "JR", "KT", "LT", "MR", "NU", "OT", "PR", "QR", "RS", "SU", "TV",
+    "UT", "VQ", "WS", "XT", "YU", "ZU", "AV", "BU", "CV", "DS", "EU", "FU",
+    "GR", "HS", "IR", "JS", "KU", "LU", "MS", "NV", "OU", "PT", "QS", "RU",
+    "SV", "TW", "UU", "VR", "WT", "XV", "YW", "ZW", "AW", "BW", "CW", "DU",
+    "EV", "FV", "GU", "HT", "IT", "JU", "KV", "LV", "MV", "NW", "OW", "PU",
+    "QT", "RV", "SW", "TX", "UV", "VS", "WW", "XX", "YX", "ZX", "AX", "BX",
+    "CX", "DW", "EX", "FW", "GV", "HW", "IV", "JV", "KW", "LX", "MW", "NX",
+    "OX", "PV", "QU", "RW", "SY", "TY", "UX", "VT", "WX", "XY", "YY", "ZY",
+    "AY", "BY", "CY", "DX", "EY", "FX", "GW", "HY", "IX", "JW", "KY", "LY",
+    "MX", "NY", "OY", "PW", "QV", "RX", "SZ", "TZ", "UZ", "VV", "WY", "XZ",
+    "YZ", "ZZ", "AZ", "BZ", "CZ", "DZ", "EZ", "FZ", "GY", "HZ", "IZ", "JZ",
+    "KZ", "LZ", "MY", "NZ", "OZ", "PY", "QX", "RY",
+};
+} // namespace branchscore

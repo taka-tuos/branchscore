@@ -1,6 +1,7 @@
 #pragma once
 
 #include "branchscore/decision.hpp"
+#include "branchscore/decision_limits.hpp"
 
 #include <optional>
 #include <string>
@@ -23,7 +24,7 @@ struct RenderedPrompt {
 
 class Gemma4PromptRenderer {
 public:
-    static const char * renderer_id() noexcept;
+    static const char * renderer_id(std::size_t option_count = 2) noexcept;
 
     RenderedPrompt render(
         const std::string & state,

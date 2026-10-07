@@ -1,9 +1,12 @@
 #include "branchscore/tokenizer.hpp"
+#include "branchscore/gemma4_prompt_renderer.hpp"
 
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <set>
+#include <algorithm>
 
 namespace {
 
@@ -59,6 +62,24 @@ int main(int argc, char ** argv) {
     for (std::size_t i = 0; i < answer_ids.size(); ++i) {
         for (std::size_t j = i + 1; j < answer_ids.size(); ++j) {
             valid &= answer_ids[i] != answer_ids[j];
+        }
+    }
+    std::vector<branchscore::DecisionOption> options;
+    for (std::size_t i = 0; i < 512; ++i) options.push_back({std::to_string(i), "Part " + std::to_string(i)});
+    const auto expanded = branchscore::Gemma4PromptRenderer{}.render(
+        "Image evidence", "Choose the listed part", options, true, {}, {}, false);
+    const auto prefix = tokenizer.tokenize(expanded.text, false, true);
+    std::set<branchscore::TokenId> extended_ids;
+    for (std::size_t i = 0; i < 512; ++i) {
+        const auto & label = expanded.answer_slots[i].label;
+        const auto answer = tokenizer.tokenize_answer_label(expanded.text, label);
+        valid &= answer.boundary_valid && tokenizer.piece(answer.id) == label && !tokenizer.is_special_token(answer.id);
+        valid &= extended_ids.insert(answer.id).second;
+        // Independently check the optimized suffix validation against full BPE.
+        if (i == 0 || i == 16 || i == 255 || i == 256 || i == 511) {
+            const auto combined = tokenizer.tokenize(expanded.text + label, false, true);
+            valid &= combined.size() == prefix.size() + 1 && combined.back() == answer.id &&
+                std::equal(prefix.begin(), prefix.end(), combined.begin());
         }
     }
     return valid ? 0 : 1;

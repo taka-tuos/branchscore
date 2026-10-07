@@ -371,11 +371,33 @@ std::vector<TokenId> GemmaTokenizer::tokenize(
 AnswerToken GemmaTokenizer::tokenize_answer_label(
     const std::string & rendered_prompt,
     const std::string & label) const {
-    if (label.size() != 1 || label[0] < 'A' || label[0] > 'P') {
-        throw std::runtime_error("Gemma 4 answer label must be one uppercase letter A-P");
+    if (label.empty() || label.size() > 2 ||
+        !std::all_of(label.begin(), label.end(), [](char c) { return c >= 'A' && c <= 'Z'; })) {
+        throw std::runtime_error("Gemma 4 answer label must be one or two uppercase letters");
     }
-    const bool rendered_has_bos = rendered_prompt.rfind("<bos>", 0) == 0;
-    const auto prefix_ids = tokenize(rendered_prompt, !rendered_has_bos, true);
+    // Special tokens split raw BPE segments. With the fixed answer suffix, only
+    // the segment after the final <|turn> can merge with the answer. Avoid
+    // retokenizing a 16k prefix twice for each of 512 labels.
+    const std::string answer_suffix = "<|turn>model\n";
+    const auto turn_id = find_token("<|turn>");
+    bool fixed_suffix = turn_id && is_special_token(*turn_id) &&
+        rendered_prompt.size() >= answer_suffix.size() &&
+        rendered_prompt.compare(rendered_prompt.size() - answer_suffix.size(), answer_suffix.size(), answer_suffix) == 0;
+    if (fixed_suffix) {
+        const auto inspected_prompt = rendered_prompt + label;
+        const auto boundary = rendered_prompt.size() - answer_suffix.size();
+        for (const auto & special : impl_->special_tokens) {
+            const auto start = boundary >= special.text.size() ? boundary - special.text.size() + 1 : 0;
+            const auto found = inspected_prompt.find(special.text, start);
+            if (found != std::string::npos && found < boundary && found + special.text.size() > boundary) {
+                fixed_suffix = false; // A longer special token spans the presumed BPE boundary.
+                break;
+            }
+        }
+    }
+    const auto & boundary_prompt = fixed_suffix ? answer_suffix : rendered_prompt;
+    const bool rendered_has_bos = boundary_prompt.rfind("<bos>", 0) == 0;
+    const auto prefix_ids = tokenize(boundary_prompt, !rendered_has_bos, true);
     const auto standalone_ids = tokenize(label, false, true);
     if (standalone_ids.size() != 1) {
         throw std::runtime_error("answer label '" + label + "' is not a single token");
@@ -384,7 +406,7 @@ AnswerToken GemmaTokenizer::tokenize_answer_label(
     if (piece(id) != label || id == eos_id() || is_special_token(id)) {
         throw std::runtime_error("answer label '" + label + "' is not a normal token");
     }
-    const auto combined_ids = tokenize(rendered_prompt + label, !rendered_has_bos, true);
+    const auto combined_ids = tokenize(boundary_prompt + label, !rendered_has_bos, true);
     if (combined_ids.size() != prefix_ids.size() + 1 ||
         !std::equal(prefix_ids.begin(), prefix_ids.end(), combined_ids.begin()) ||
         combined_ids.back() != id) {

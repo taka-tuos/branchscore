@@ -107,15 +107,27 @@ int main(int argc, char ** argv) {
         }
 
         auto * boundary_key = chunked.cache().key(0);
+        const bool half = boundary_key->type == GGML_TYPE_F16;
+        if (half != (backend.device().family == "CUDA") ||
+            (half && chunked.cache().capacity() % 256 != 0)) {
+            throw std::runtime_error("Prefill cache type/padding does not match the backend");
+        }
         std::vector<float> key_at_511(boundary_key->ne[0]);
         std::vector<float> key_at_512(boundary_key->ne[0]);
         auto cache_timing = branchscore::BackendTiming{};
-        backend.tensor_get_timed(
-            boundary_key, key_at_511.data(), 511 * boundary_key->nb[1],
-            key_at_511.size() * sizeof(float), cache_timing);
-        backend.tensor_get_timed(
-            boundary_key, key_at_512.data(), 512 * boundary_key->nb[1],
-            key_at_512.size() * sizeof(float), cache_timing);
+        const auto read_key = [&](std::size_t position, std::vector<float> & values) {
+            if (half) {
+                std::vector<ggml_fp16_t> packed(values.size());
+                backend.tensor_get_timed(boundary_key, packed.data(), position * boundary_key->nb[1],
+                    packed.size() * sizeof(ggml_fp16_t), cache_timing);
+                std::transform(packed.begin(), packed.end(), values.begin(), ggml_fp16_to_fp32);
+            } else {
+                backend.tensor_get_timed(boundary_key, values.data(), position * boundary_key->nb[1],
+                    values.size() * sizeof(float), cache_timing);
+            }
+        };
+        read_key(511, key_at_511);
+        read_key(512, key_at_512);
         const auto key_delta = std::inner_product(
             key_at_511.begin(), key_at_511.end(), key_at_512.begin(), 0.0,
             std::plus<>(), [](float left, float right) {
