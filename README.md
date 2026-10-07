@@ -2,7 +2,7 @@
 
 `branchscore` is a standalone C++/ggml proof of concept for categorical
 decisions with Gemma 4 E2B/E4B GGUF models. It displays all candidate
-descriptions in one prompt, reads the single-token A-P answer logits, and
+descriptions in one prompt, reads the single-token answer-label logits, and
 reports relative option probabilities. Autoregressive chat generation is not
 its primary purpose.
 
@@ -13,7 +13,7 @@ not production-ready, security-hardened, or covered by API, compatibility, or
 support guarantees.
 
 The core decision call remains the sequential Phase 3+ path: one model, one
-backend, one decision, and 2–16 ordered displayed options. The Phase 4+ server
+backend, one decision, and 2–512 ordered displayed options. The Phase 4+ server
 can accept up to 16 Choice questions in one envelope and evaluates them one at
 a time. See [`docs/README.md`](docs/README.md) for the design, research record,
 phase history, and roadmap.
@@ -23,13 +23,33 @@ phase history, and roadmap.
 - Loads matching Gemma 4 E2B/E4B text and multimodal-projector GGUF files.
 - Selects one ggml CPU, CUDA, or Vulkan backend.
 - Preprocesses an optional image and executes the Gemma 4 vision graph.
-- Renders the fixed, versioned `gemma4-categorical-v1` decision prompt.
+- Renders `gemma4-categorical-v1` with A–P labels for 2–16 options, or
+  `gemma4-categorical-512-v1` with fixed two-letter labels for 17–512 options.
 - Prefills the complete displayed-options prompt once.
-- Gathers only the A-P answer-slot logits with one small ggml graph.
+- Gathers only the supplied answer-slot logits with one small ggml graph.
 - Reports raw answer-slot logits, probabilities relative to the supplied
   option set, the selected option, and shared readout timings.
 - Provides a warm-loaded, sequential branchscore-bench JSONL runner with
   row-level scores and aggregate latency/throughput measurements.
+
+CUDA Prefill uses F16 K/V and masks with Flash Attention, F32 accumulation,
+512-token microbatches, and full-length sliding-attention storage. CPU and
+Vulkan retain F32 K/V and ordinary Prefill attention. The prompt keeps the
+image before the state, question, and options; cross-request cache reuse is
+deferred.
+
+Each decision is limited to 16,384 actual Prefill positions, including expanded
+visual tokens and all prompt text. HTTP additionally limits the sum across
+questions to 32,768 positions. The model's context limit also applies. Excess
+input is rejected without truncation; 512 options alone does not guarantee
+that arbitrary descriptions fit.
+
+On the measured RTX 2060 SUPER (8 GiB), E4B Q4_K_M with 512 synthetic
+20-character part numbers and an FHD image took about 11.5 seconds per request.
+The largest VRAM sample across resource checks was 6,352 MiB. Blank HD/FHD
+images were resource controls; these measurements do not establish package
+OCR accuracy. See the [512 adoption record](docs/records/phase-4-plus-option-scale-2/runtime-512-adoption.md)
+for validation, limits, and known quality differences.
 
 Run a small sequential benchmark. Each non-empty input line is one decision
 object with required id, state, question, and
@@ -141,7 +161,8 @@ available device. Add `--image FILE` for one image.
 `--chat-template-file FILE` is currently a transparent reserved no-op. The
 path is retained in result metadata but is not opened or applied. The GGUF
 `tokenizer.chat_template` value is likewise diagnostic metadata; the fixed
-`gemma4-categorical-v1` renderer remains the effective prompt source.
+built-in categorical renderer selected by option count remains the effective
+prompt source.
 
 Use `--vision-dump FILE` with `--image` to request projected embeddings. The
 target file is created or truncated after inference completes and contains two
@@ -155,11 +176,21 @@ of `POST /v1/systemone`, evaluating up to 16 questions sequentially. The UI is
 a self-contained page served by the executable: enter the bearer token, press
 Connect, fill in the state/question/options, and submit one decision. The page
 keeps the token in memory and sends it only in the `Authorization` header.
-Each Choice supports 2–16 string or null
+Each Choice supports 2–512 string or null
 criteria. The request's `model` must be `branchscore-local`; other model IDs,
 Score, and Noul questions are rejected. Question and criteria maps use lexical
 key order. A string criterion is shown to the model as `key: description`,
 while a null criterion shows only its key.
+
+For a BOM containing only part numbers, use the part number as the criterion
+key and `null` as its value. The UI accepts one key per line in its bulk paste
+field, with an optional description after a tab. More than 255 criteria is a
+branchscore extension to the Choice interface.
+
+`/healthz` advertises the option and Prefill limits. All questions undergo
+CPU token/geometry preflight before GPU inference starts. Position overflow
+returns HTTP 413 with `token_budget_exceeded`, `context_limit_exceeded`, or
+`request_token_budget_exceeded`; 513 or more options returns HTTP 422.
 
 The optional image extension accepts base64 PNG or JPEG bytes. Request bodies
 are limited to 16 MiB; source images are limited to 8,192 pixels per side and
@@ -187,7 +218,9 @@ confidence and must not be used for threshold decisions. `usage.input_tokens`
 counts rendered text prompt tokens and excludes visual tokens;
 `usage.output_tokens` is zero. Per-question timings and prompt/readout
 identities are in `branchscore.questions`; raw answer-slot logits are included
-there for diagnostics. The separate `branchscore.http_handling_ms` and server
+there for diagnostics, along with the renderer ID and actual option order.
+`branchscore.prefill_positions` counts the expanded positions across questions.
+The separate `branchscore.http_handling_ms` and server
 `wall_ms` log make HTTP request time visible alongside `evaluate` timings.
 
 Tokenizer IDs and answer-label boundary behavior can be inspected without loading

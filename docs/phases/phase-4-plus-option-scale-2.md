@@ -3,21 +3,29 @@
 ## Status / Position
 
 2026-09-30計画作成。旧[option-scale](phase-4-plus-option-scale.md)の未完了判断を引き継ぐ。
-Step 1の実装・CPU/reference focused verificationは完了。Step 2/3は未着手。
-Step 4はCPU比較baselineを整備中で、精度採用判定は未完了。
-修正後契約のE4B shared-embedding referenceはBF16/Q4各13/27、現行branchscore Q4は12/27。
-kernel/key軸を揃えた診断版は純text 1条件・画像5条件で候補logitsがF32一致したが、paddingは未採用。
-最適化C/DのE4B画像27条件CPU測定は完了（C=14/27、D=13/27）、数値基準未達で未採用。
-C/D残差の切り分け、通常attentionのpadding版の全条件・chunk/window境界、
-E2B修正後基準とCUDAの品質評価が残る。
-Step 5のE4B全載せ計測には8 GiB以上の単一NVIDIA GPUが必要で、現環境では未実施。
-旧CPU probeを採用済みruntimeやCUDAの採用根拠として扱わない。
+2026-10-07: 利用者の「まず512件で使える版を出す」方針に従い、初期512対応を実装・検証。
+Step 1のmicrobatchに加え、Step 2のCUDA F16 KV/mask＋Flashを採用した。
+Step 3は最大VRAMサンプル6,352 MiBで16,384 positionsまで成立したためSWA短縮を見送る。
+Step 6/7の512件label契約、core/CLI/JSONL/HTTP/UI、予算と拒否を実装した。
+E2B CUDA CTest 11/11、E4B focused checks 3/3、既存quality 24/24・vision 14/27。
+Step 5の初期資源確認は合成20文字品番512件＋HD/FHD画像と逐次反復で完了。
+FHD/14,854 positionsは約11.5秒、16,384 positionsは約13.1秒。
+白画像は容量controlであり、実パッケージのOCR品質検証ではない。
+現在の契約は2–512件。2–16件のprompt/A–Pは維持し、17–512件は固定二文字label。
+単問16,384 expanded positions、HTTP合計32,768 positionsを実行前に確認し、切り捨てない。
+[採用実装・検証記録](../records/phase-4-plus-option-scale-2/runtime-512-adoption.md)を参照。
 
-優先順位はメモリ削減。本番はE4Bを8 GiB以上のVRAMを持つ単一NVIDIA GPUへ全載せする。
-512件を目標とし、384件を比較点にする。256件では用途上の余裕が足りない懸念がある。
-検証機のCPU時間・RSS・swapを本番の採用基準にしない。
-現在のproduction契約は2–16件、A–Pの単一token answer-slot readout。
-上限公開は本計画の資源・ラベル・判断品質の検証後に行う。
+Step 4の高精度CUDA A/BとCPU残差研究は未完了。CPUの事前screening未達判定は保持し、
+CPU/VulkanのPrefillは従来F32のままとする。CUDA E2Bには既存僅差fixtureの追加誤答1件がある。
+E4B画像384/512の順序依存も残る。実BOM/画像での品質と運用時間は利用後の追加確認とし、
+初期公開の開始条件にはしない。利用者の成功例報告は本測定とは区別する。
+画像配置と固定prefix cacheは別の調査へ回し、現行画像先頭・request所有cacheで提供する。
+[実用方針](../records/phase-4-plus-option-scale-2/practical-512-adoption.md)と
+[画像配置比較](../records/phase-4-plus-option-scale-2/image-placement-gpu.md)を参照。
+
+優先順位はメモリ削減。E4Bを8 GiB以上のVRAMの単一NVIDIA GPUへ全載せする。
+384件を比較点とし、512件を初期公開上限とする。件数とtoken予算を分け、
+任意の説明・backend/GPUでの資源成立までは保証しない。
 
 ## Read First
 
@@ -41,6 +49,10 @@ Step 5のE4B全載せ計測には8 GiB以上の単一NVIDIA GPUが必要で、�
 | Step 4の現在のCPU baseline・残る確認 | [CPU kernel/key padding](../records/phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md) |
 | Step 4の初期A/BとGGUF由来 | [初期baseline](../records/phase-4-plus-option-scale-2/precision-baseline.md)、[由来・quality fixture](../records/phase-4-plus-option-scale-2/precision-review-provenance.md) |
 | 画像fixtureと境界修正の経緯 | [vision screening](../records/phase-4-plus-option-scale-2/vision-screening.md)、[reference/control](../records/phase-4-plus-option-scale-2/vision-reference-controls.md)、[境界・buffer](../records/phase-4-plus-option-scale-2/image-boundary-buffer.md) |
+| CUDA回帰、F16/Flash probe、384/512候補の容量・品質 | [GPU検証](../records/phase-4-plus-option-scale-2/gpu-validation.md)、[再現資料](../records/option-scale-2-gpu-2026-10-07/README.md) |
+| 512候補の早期対応・BOM用途・採用条件 | [実用採用方針](../records/phase-4-plus-option-scale-2/practical-512-adoption.md) |
+| 初期512実装・公開契約・HD/FHD資源とHTTP回帰 | [512採用記録](../records/phase-4-plus-option-scale-2/runtime-512-adoption.md)、[再現資料](../records/option-scale-2-runtime-512-2026-10-07/README.md) |
+| 固定prefix再利用に向けた画像とtextの配置比較 | [画像先頭/末尾CUDA比較](../records/phase-4-plus-option-scale-2/image-placement-gpu.md) |
 | 以前のF16/Flash/query-only chunk実験 | [旧CPU probe](../records/phase-4-plus-option-scale/cpu-memory-probes.md) |
 
 ## Goal / Constraints
@@ -55,6 +67,7 @@ Step 5のE4B全載せ計測には8 GiB以上の単一NVIDIA GPUが必要で、�
   mask、absolute position、画像配置、shared KVの実装差は修正対象として区別する。
 - runtime最適化の追加差は、Step 4で同じモデルの高精度重み→Q4_K_Mの差を物差しにし、
   追加誤答と同条件referenceとの実装照合を併せて採用判断する。
+  初期512対応は実用採用方針を優先し、高精度CUDA不足だけで公開を止めない。
 - 件数上限と、state・説明・画像を含むrequest token/資源予算を別に定める。
   context metadataの131,072 tokenをそのまま実行可能上限にしない。
 
@@ -143,7 +156,7 @@ referenceとの数値差を説明できる。FA採用・通常経路継続の根
 4. A→Bの観測を物差しにし、B→C/B→Dの追加差が十分小さいか、
    追加の誤答が実用上許容できるかを併せて判定する。
    「十分小さい」の数値基準と追加誤答の許容範囲は、A/Bの基準測定後、
-   C/Dの結果を採用評価する前にrecordsへ明示する。Step 2/3の経路選択はこの評価まで暫定とする。
+   C/Dの結果を研究評価する前にrecordsへ明示する。初期CUDA採用は下記の実用方針を優先する。
    共通offsetを含む最大raw差だけで判定しない。量子化差がゼロに近い場合は
    比率で無理に比較せず、絶対差・選択一致・誤答の変化を示す。
    mask・position・padding・画像配置・shared KVの不具合は量子化差が大きくても修正する。
@@ -151,7 +164,10 @@ referenceとの数値差を説明できる。FA採用・通常経路継続の根
    高精度版のGPU実行には8 GiBを超える容量が必要になり得るため、比較用環境を別途確認する。
    CPUで先にA/Bを測れる場合もCUDAと別集計にし、CPU量子化差をCUDAの許容差へ直接転用しない。
    高精度版の不足や比較条件の不一致は未完了事項として残し、Step 2/3/5の実装・資源調査は進められる。
-   公開件数とruntimeの最終採用は、このStepとStep 5の結果を揃えて判断する。
+   高精度比較を含むStep 4全体の完了は継続課題とする。初期512対応の公開と経路採用は、
+   実用採用方針に従い、既存品質回帰・BOM相当の合成品番/HD・FHD資源・逐次request確認を基に判断する。
+   実BOM/画像の品質評価は利用後の追加確認へ回し、初期公開の必須条件にしない。
+   高精度CUDA A/B未実施は明記し、Step 6/7の一律の開始阻害条件にしない。
 
 **完了条件:** 同一モデル・入力・backendの量子化差を基準に、最適化の追加差と追加誤答、
 referenceとの実装差を説明できる。採用基準・判定・比較できなかった範囲をrecordsへ残す。
@@ -206,7 +222,8 @@ referenceとの実装差を説明できる。採用基準・判定・比較で�
 
 - token microbatch Prefill、選択したattention/cache経路と明確なrequest内寿命。
 - E4B GPU全載せの384/512件計測記録と、同条件referenceとの数値・判断品質の照合。
-- 高精度重み/Q4_K_Mの量子化差、最適化の追加差・追加誤答、採用基準の測定記録。
+- 比較可能な高精度重み/Q4_K_Mの量子化差、最適化の追加差・追加誤答、実用採用判断の記録。
+  高精度CUDA A/Bは環境が得られた際の追加検証とし、初期512対応の必須成果物としない。
 - 検証済み公開件数、単問/requestのtoken・資源予算、label/renderer契約。
 - 現行16件入力の回帰確認、予算拒否と失敗後の次requestの確認。
 - 未採用のSWA短縮や512件未達は理由を記録する。
@@ -219,7 +236,7 @@ referenceとの実装差を説明できる。採用基準・判定・比較で�
   CPU buffer/kernel/key軸の診断を実施。[最新baseline・再レビュー](../records/phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md)。
   BF16/Q4各13/27は正誤変化各1件の相殺で、画像判断の品質達成を示さない。
   診断6条件の一致を全条件・長文・CUDAへ一般化しない。
-- 次は未採用C/Dのkernel・decode shape差を切り分け、padding採用候補の全27条件・
+- 2026-10-02時点の次作業: 未採用C/Dのkernel・decode shape差を切り分け、padding採用候補の全27条件・
   chunk/window境界と時間/メモリ差を確認する。E2B修正後基準・CUDA品質・384/512件・VRAMは未測定。
   Step 4と公開件数の採用判定は未完了。
 - 2026-10-02: recordsをテーマ別に分割し、phaseは計画・現在の進捗・読む記録の案内に整理。
@@ -251,3 +268,56 @@ referenceとの実装差を説明できる。採用基準・判定・比較で�
 - 2026-10-07: GPU検証への引き継ぎ準備として、画像境界修正・CPU測定資料・記録整理を分けてcommit。
   既存CPU buildでrenderer/tokenizer/E4B engineの対象をbuildし、focused CTest 3/3を確認。
   CUDAの品質・384/512候補・peak VRAMとruntime採用判定は未完了のまま引き継ぐ。
+
+- 2026-10-07: マージ後CUDA検証を実施。[GPU記録](../records/phase-4-plus-option-scale-2/gpu-validation.md)。
+  E2BのCUDA構成CTest 11/11（skipなし）、E4B tokenizer/engine/Prefill 3/3。
+  現行qualityはE2B 23/24・E4B 24/24、structured visionは6/27・13/27。
+  測定専用52 probeと52同条件referenceは実行成功、選択一致47/52。
+  E4B短文512候補（9,808 positions）の最大VRAMサンプルは現行7,060 MiB、F16/Flash 5,976 MiB。
+  384/512画像も容量は成立したが、正順north（誤答）/逆順east（正解）の順序依存を観測。
+  F16/FlashでE2B close-scoresが追加誤答となり、高精度CUDA A/Bと数値差の説明も未完了。
+  runtime/default・公開2–16/A–Pは変更せず、Step 2/4/5の最終採用とStep 6/7を留保する。
+  referenceの初回pilotはembedding CPU配置を検出して集計から除外し、全tensor CUDA overrideで再測定。
+
+- 2026-10-07: 利用者は200件超のBOM照合に512候補の早期対応が必要で、超厳密な判断精度を
+  要求しないと明示。HD～FHD Webカメラで部品パッケージを映す連続requestが主用途。
+  [実用採用方針](../records/phase-4-plus-option-scale-2/practical-512-adoption.md)へ反映し、
+  E4B CUDA F16/Flashを第一候補、高精度CUDA A/Bを初期公開の必須条件から外した。
+  実装不具合の修正と実BOM/画像の資源・判断品質、逐次request確認は維持する。
+  既存CPU screeningの未達は過去の事前基準による結果として保持。
+  llama.cppの通常FA AUTO/F16 KVと、logit取得がattentionを再計算しないことをsourceで確認。
+  runtimeはまだ変更していない。候補descriptionは枝番末尾まで含む品番のみで20文字程度。
+  合成20文字品番512件のtokenizer実測は11,085–13,909 text tokens（画像placeholder込み）。
+  次はこの長さにHD/FHD visual tokensを足した資源・時間確認を行う。要求total latencyは未確定。
+
+- 2026-10-07: 利用者は現状、10文字超・BOM内の途中挿入文字列・末尾1文字違いを識別でき、
+  480pセンサをFHDへ拡大したカメラでも品質は十分以上と報告。
+  [実用採用方針](../records/phase-4-plus-option-scale-2/practical-512-adoption.md)に観測の出所と
+  説明用仮例を記録。品質確認はこの既存成功例のFA/512拡張後の維持を中心とする。
+  実画像・BOM・使用model/backendの取得は未了で、本GPU probeの実測とは混同しない。
+
+- 2026-10-07: 連続画像requestのcache検討を
+  [実用採用方針](../records/phase-4-plus-option-scale-2/practical-512-adoption.md)へ記録。
+  現行の画像→BOM順ではBOM KVも画像に依存する。固定判定条件/BOM→今回の画像とする
+  拡張rendererと単一GPU prefix再利用を候補とし、順序変更の品質とcacheの正しさを別に確認する。
+  現行cacheはrequest所有でappend/reset契約がなく、runtimeは未変更。
+  固定KVのVRAMと新画像のVision/tail計算は残るため、FAの容量確認とは別の逐次検証単位とする。
+
+- 2026-10-07: 利用者の提案で
+  [画像先頭/末尾CUDA比較](../records/phase-4-plus-option-scale-2/image-placement-gpu.md)を実施。
+  E4B既存27条件＋384/512候補4条件×配置2種×非FA/FAの124実行は全成功。
+  27条件の正解は非FA 13→14、FA 14→14だが、選択変更15/17条件、追加誤答5/6条件。
+  board悪化・status改善があり、画像末尾の384/512 probeは両経路とも4/4誤答。
+  元配置の54比較は全candidate raw差0、全9画像のembedding hashも全run一致。
+  出力観測後の同token/embedding末尾reference診断10実行は全成功、選択9/10一致。
+  512逆順の無関係候補zone506への誤答もreferenceで再現。単純な画像末尾配置の採用は留保。
+  固定候補/BOM→画像→判定条件・質問を次の比較候補として記録し、未測定と明示。
+  production renderer/cache再利用/runtimeは変更していない。
+
+- 2026-10-07: 利用者の早期提供方針で[初期512対応](../records/phase-4-plus-option-scale-2/runtime-512-adoption.md)を採用。
+  CUDA F16/Flash・512固定二文字label・legacy prompt維持、単問16,384/HTTP合計32,768位置。
+  core/CLI/bench/adapter/server/UIの対応、全問preflight、予算拒否と回復を確認。
+  既存E4B quality/visionの全候補raw値は先行FA測定と一致。資源probe 16成功＋1期待拒否、
+  FHD＋20文字品番512件は約11.5秒、上限16,384位置は約13.1秒、最大VRAMサンプル6,352 MiB。
+  大入力・拒否・反復後の空きVRAMは安定。SWA短縮は不要として見送り。
+  白画像による資源測定と実パッケージ品質を区別し、実BOM品質・高精度CUDA比較・cache/配置変更は追加調査。

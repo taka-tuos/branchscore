@@ -32,7 +32,7 @@ that Phase 4's optional backend stages are complete or justified.
 - `POST /v1/systemone` is the primary HTTP entry point. It follows the
   TypeSafe HTTP envelope: `state`, `model`, and a `questions` map keyed by
   caller-defined question IDs. Accept only `type: "choice"` with string
-  `instructions` and 2--16 `criteria` entries whose values are strings or
+  `instructions` and 2–512 `criteria` entries whose values are strings or
   null. Evaluate multiple Choice questions sequentially against the same
   state. Accept 1–16 questions; no shared state cache or parallel execution
   is implied.
@@ -71,6 +71,15 @@ that Phase 4's optional backend stages are complete or justified.
   probabilities remain uncalibrated and conditional on the supplied option
   set. Clients must not use this fixed `confidence` for threshold decisions;
   it does not express certainty or reproduce TypeSafe's computation.
+- `GET /healthz` reports readiness and limits after startup. The limits are
+  512 options, 16,384 expanded Prefill positions per question, and 32,768
+  positions across the envelope. Preflight all questions before model execution;
+  budget/context overflow returns HTTP 413 with distinct error codes.
+  More than 255 criteria is a branchscore Choice extension.
+- The UI supports bulk paste of 2–512 unique keys, one per line, with optional
+  descriptions after a tab. Blank descriptions become null, showing only the
+  key for a part-number BOM. Response diagnostics include renderer ID, actual
+  option order, and expanded Prefill positions.
 - `GET /healthz` reports readiness after startup. No generation, OpenAI API
   emulation, model upload, or generic model registry.
 - One process owns one model/backend/engine. Handle one decision at a time.
@@ -165,7 +174,7 @@ server. It does not change the Choice API or the sequential engine contract.
    with `Authorization: Bearer <token>` when nonempty, then displays readiness
    and the returned `model` ID. A 401 leaves the form editable with an
    authentication error; the UI must not retry automatically.
-2. Offer one Choice question: text `state`, `instructions`, and 2–16 editable
+2. Offer one Choice question: text `state`, `instructions`, and 2–512 editable
    option rows with `key` and optional `description`. The first version
    generates a fixed question ID such as `decision`; users may add/remove
    option rows. Require unique nonempty keys, nonempty state/instructions,
@@ -224,5 +233,14 @@ logits, and timings; no new model or inference API is required.
 2026-09-30: The earlier larger-option investigation was discontinued and handed
 off to [option-scale-2](phase-4-plus-option-scale-2.md), which starts with GPU
 Prefill memory reduction and retains the 512-option target with 384 as a comparison.
-The current HTTP and categorical contracts remain at 2–16 options until its
-label, resource, and quality gates are resolved.
+At that handoff, the HTTP and categorical contracts remained at 2–16 options
+until label, resource, and quality checks could be completed.
+
+2026-10-07: Implemented the initial 512-option milestone with the current
+image-first prompt and CUDA F16/Flash Prefill. Live HTTP checks covered 17/512
+options, FHD images, semantic ordering/core score agreement, 513-option and
+position/aggregate rejection, and recovery. UI asset delivery and JavaScript
+syntax were checked; interactive browser operation was not tested. See the
+[512 adoption record](../records/phase-4-plus-option-scale-2/runtime-512-adoption.md).
+Prefix cache and prompt-layout research are deferred under the user’s
+early-delivery priority.

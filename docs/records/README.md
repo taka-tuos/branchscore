@@ -36,6 +36,7 @@ work rather than repeat the execution history.
 | [Phase 4+ option-scale investigation (discontinued)](phase-4-plus-option-scale.md) | `phases/phase-4-plus-option-scale.md` (discontinued 2026-09-30) |
 | [Phase 4+ option-scale-2 topic records](phase-4-plus-option-scale-2.md) | `phases/phase-4-plus-option-scale-2.md` |
 | [Current Step 4 CPU baseline and padding review](phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md) | `phases/phase-4-plus-option-scale-2.md` / Step 4 |
+| [Initial 512-option adoption](phase-4-plus-option-scale-2/runtime-512-adoption.md) | `phases/phase-4-plus-option-scale-2.md` / CUDA and public contract |
 
 ## Raw measurements
 

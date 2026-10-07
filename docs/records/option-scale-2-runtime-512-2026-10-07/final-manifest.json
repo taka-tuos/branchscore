@@ -1,0 +1,84 @@
+{
+  "base_revision": "f08cadf7c210cc1a80224e2943db0da35833c3ec",
+  "ggml_revision": "456172ec733a135778adcd32d00e576a58232e45",
+  "working_tree_changes": true,
+  "source_sha256": {
+    "src/state_cache.cpp": "72f4e24b3a78011bccd33c27869e86670f257e2ddc90b7353d16543d9de9393d",
+    "src/systemone_adapter.cpp": "502794ade2cf181586c6b6a66201716fec73f3a7cc434b70db2302d17d046ad6",
+    "src/json.cpp": "0043e9210e8b33b11d171e493fc9511dd895975fcf0c498ad9faa0535606c029",
+    "src/gemma4_prompt_renderer.cpp": "4491bbdf9962591af92b664cd382718e0570e0a7398b2e2d3864ac1e802812af",
+    "src/backend_context.cpp": "1dcb068a88e6767cdaf2915a35190ac7ce4b7ae614ac5d99f09e53684bb3a6e0",
+    "src/model_loader.cpp": "ef4a2304eceb2f71df2dc1cc7b4de722cc1e06581bcae2e76a90b36e127dcbaa",
+    "src/vision_encoder.cpp": "7b1a395cfee6517523d0ead6b7aa192e7c1236fbbeadbe0b25d8f63277eb222c",
+    "src/tokenizer.cpp": "4e5440b4bb6398b8e3f4c554fb63fbab76bdbb2b01fe2adec68cabbe8e2b0a08",
+    "src/categorical_readout.cpp": "2831eba51695149faebdfd4d6dc2e38773bbf6dff41a9cbf6d8bab296c73deda",
+    "src/prefill_engine.cpp": "3ecd0ec16d8fffe4bd971d6940dd520721e517573700af53bda54b9e54725528",
+    "src/image_preprocessor.cpp": "fd07c013b1455830a375685f0f928fb1e191f56598d8603206ccc5caf7e9a500",
+    "src/gemma4_answer_labels.hpp": "0d37765c0d174661abc9e3873eef31821eb431f2aad1af4ad7dbedf41ec7b283",
+    "src/gemma4_decision_engine.cpp": "6a707cb542cb04780d45b265d3e67774f67621794e9387efe9dd45564f6a893f",
+    "include/branchscore/json.hpp": "f5cb4eec25bd7eec67286c98ab3c6a8c7e847d615e1ca823cbda53af45a9cd48",
+    "include/branchscore/gemma4_decision_engine.hpp": "d095130c8398d31b40c7efa08cc48e51f2bda6118ebf6e08f6c97f1daf8fe62a",
+    "include/branchscore/vision_encoder.hpp": "ce17efefb2596e4401f92b63334eabfb6815d70594abc07f5bd6ffb5bb3fd4ae",
+    "include/branchscore/decision_limits.hpp": "baffab5e205417c3a6f56fc8a54b5fb84f3a711419c9d694736a754a24b6eee1",
+    "include/branchscore/categorical_readout.hpp": "eb05871f70a2ea0d14efa7e6f1e962d543906fa4b776d1d2d06039647f8e25ed",
+    "include/branchscore/image_preprocessor.hpp": "632d24cd7ca1c8dbc044bbb33cd6f57cdb4193426eabad43d29b53bf2e84d4c0",
+    "include/branchscore/decision.hpp": "f5c32e7f0095d510453ca737ff4e0ed10bed43ffd5ee8c29829a7acd4a16968c",
+    "include/branchscore/state_cache.hpp": "05dd096a496241debce7beaeae577413b9dc96bf9ca9cfcfe279635789fb5a77",
+    "include/branchscore/model_loader.hpp": "f8590be410535ff6efb8681d929651f64850e240b6c5103db2a4c5cc80693e75",
+    "include/branchscore/prefill_engine.hpp": "9d63a1347ba6b1d43f7b300a28c24d29fc02deed1919b6bdfbb617c4ac144083",
+    "include/branchscore/gemma4_prompt_renderer.hpp": "554712d6df372bfe522d80198c796cee978c320c60c79dabfc75b62d84132caf",
+    "include/branchscore/systemone_adapter.hpp": "ab598e942be3f22cfd9f69f7dfb333636b9057f81a8781798a7c9aa0b84b2025",
+    "include/branchscore/tokenizer.hpp": "eb2bf733bb4438f36c6d1030af2b34b5de91c8a149254b033d8655d9492d4444",
+    "include/branchscore/backend_context.hpp": "41a3cb118279688a0864ed1ece83691a96aa306bec245bc0c69402148b33ead0",
+    "tools/branchscore_bench.cpp": "bf1677007b4e1a0fd4aff3adfe8c0380093025364664452cdb0971b8704808e5",
+    "tools/branchscore.cpp": "0609092cdbacaa6fa8ebd609415d61946c62aec80a1625e88b7e80abfe59f194",
+    "tools/branchscore_server.cpp": "d0709fa8ab4afd84e5ec9acc4408c30c589a337aead970a1f86d14d4173a33c6",
+    "tools/tokenize.cpp": "bddf3e20e79ff7d83b2be5a20d92f6e07bc28015da7d6951abd1f31be2a3110d",
+    "tests/prefill_engine_test.cpp": "0bb84124c94dda6c2d6b4a33e4a04fbe573c49c781f7a5c003f5b91e2d437786",
+    "tests/gemma4_prompt_renderer_test.cpp": "fcc079f6a8224a6c93f3a0f28e059d093f2948b6ce16cb0e43353e9a7ceeb019",
+    "tests/tokenizer_test.cpp": "c7fb00787d86e89d8a1ba0ec9f93e37b8f1ec53b022a028065bcaee586b32d73",
+    "tests/gemma4_decision_engine_test.cpp": "a99d5d445c78212a37ac67de74ecd24bfcd1c480a020832159352070edef641c",
+    "tests/systemone_adapter_test.cpp": "087de889d320700390e80135a73c0b7908f4a29d1ae2dd70c3a1fc8449af6276",
+    "tests/backend_context_test.cpp": "21e3b4d0e10cbb1cbe3c1b4ff475810c08b7f5f57fd125b6b959962c3da9bc67",
+    "tests/json_test.cpp": "972a5c9c99b0c4dac5887d30b39ca44102a0018afee4d896e22821ff9d9771cd",
+    "tests/categorical_readout_test.cpp": "d4ebf054843ac00a6ac5adad73be158e5c31dc53f2eb7b2d7928b58ee8a2b6e4",
+    "tests/image_preprocessor_test.cpp": "99fba3e05259004eef7a23cefe1db53141104416940c3a9f8f5e8957afd62c58",
+    "tests/decision_contract_test.cpp": "b05d97491f7cea68b4beaa59fff0190c2bd57a32a92bfc66b402a9b32bdbe284",
+    "tests/state_cache_test.cpp": "22330a308eff1e053f14a65345be2f97688485fa29bad94f83073dde7930b0c1",
+    "CMakeLists.txt": "be5bdf5843f4d77c44ed9ec2f75af64e572036646ed13941dddaa0cc99f0a989"
+  },
+  "binaries": {
+    "build-cuda/libbranchscore_core.so": "d8ba08973fb2ebf667b42d73fc6bc2178d085b95d5988a183c7b1bb6396ce92f",
+    "build-cuda/branchscore": "117df977f9ca3a357413a04351d31195a3d39792c620ca21be6a099a7ec2fb2d",
+    "build-cuda/branchscore-server": "5de138feaa337f35994f90ad41d56f3691f246ea1c70194a3753fa4ae92fcafc",
+    "build-cuda/branchscore-bench": "47cebda32df9f0439433ed1b08b96ca2b12d2794f326c29b7d2904c90fe5d40b",
+    "build-cuda/branchscore_tokenizer_test": "4e4af5af740b60511ed5bfda1a113abcf6806fc1147d60d0c2f2851a6bee0935"
+  },
+  "initial_measurement_manifest_sha256": "25b92ed1836a38dfb7d6034ea7fc5b70e3223421baee782b34620fdc1b302bdd",
+  "final_verification_logs": {
+    "final-tokenizer-e4b.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "final-prefill-e2b-cpu.log": "c7b5112e06d20611ea6c0c50412e02ca1e47d33d80b775c341e45587f934326b",
+    "final-ctest-cpu-host.log": "7ff2ef162d95824722d9e146ae15713825b8bcd8aa68bf45b4974aa464488792",
+    "final-ctest-cuda.log": "87de8a950f92a6e3a1edd2b17a8e55df19df9127e2419e6f57cdbb6484e856fa",
+    "final-engine-e2b-cpu.log": "f54928cd18c175a9f6fdc87d85524dba83723b80d1c20057bdcf3f5b79892d2d"
+  },
+  "models": {
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/gemma-4-E4B-it-Q4_K_M.gguf": {
+      "bytes": 4977171584,
+      "sha256": "85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/mmproj-F16.gguf": {
+      "bytes": 990372672,
+      "sha256": "ddf46c21d7078e95338cfc22306b19b276a29a5ad089023449dd54d4b6170a51"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/gemma-4-E2B-it-Q4_K_M.gguf": {
+      "bytes": 3106738272,
+      "sha256": "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/mmproj-F16.gguf": {
+      "bytes": 985654080,
+      "sha256": "140be8d7849741f88c50757d529b84373ee8e27052cc2236855b537f4a8215fa"
+    }
+  },
+  "provenance_note": "Initial production resource/fixture run preceded tokenizer overlap lookahead guard, CLI diagnostic output and focused-test-only final edits. Final core verified by live HTTP agreement and final tests; original measurement hashes retained."
+}

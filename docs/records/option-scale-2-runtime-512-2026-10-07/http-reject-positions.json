@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "token_budget_exceeded",
+    "message": "question exceeds the Prefill token budget"
+  }
+}

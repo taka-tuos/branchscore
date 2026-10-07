@@ -1,0 +1,7 @@
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7800 MiB):
+  Device 0: NVIDIA GeForce RTX 2060 SUPER, compute capability 7.5, VMM: yes, VRAM: 7800 MiB
+prefill tokens=2 logits=262144
+multimodal prefill tokens=83
+chunked prefill tokens=513 graphs=2 cache_bytes=44040192 peak_graph_bytes=105912320
+image boundary prefill tokens=631 graphs=2
+categorical logits=2 prefix_tokens=2

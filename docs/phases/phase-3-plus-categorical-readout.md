@@ -6,6 +6,11 @@
 Phase 4 より前に挿入した独立した移行 Phase。通常の Gemma 4 engine は
 categorical readout に移行済みで、旧 continuation scorer は削除した。
 
+2026-10-07: この移行仕様の2–16件/A–P契約はlegacy promptとして維持し、
+[Phase 4+ option-scale-2](phase-4-plus-option-scale-2.md)で17–512件の二文字labelと
+CUDA F16/Flash、position予算を追加した。現在の件数・資源契約はそちらとarchitectureを参照。
+単一回答位置logit・候補softmax・回答tokenを消費しない採点契約は共通。
+
 この文書が新しい判断方式への移行仕様。requirements / architecture は
 移行後の実装へ更新済みである。
 旧 Phase 3 の未完了の全量評価・量子化比較を本 Phase の開始条件にはしない。

@@ -1,0 +1,68 @@
+{
+  "answers": {
+    "q": {
+      "choice": "Keep it running",
+      "confidence": 1,
+      "probabilities": {
+        "Keep it running": 0.9999992720993278,
+        "Stop it": 7.279006720541533e-07
+      },
+      "type": "choice"
+    }
+  },
+  "branchscore": {
+    "confidence_kind": "constant_placeholder",
+    "http_handling_ms": 55.597673,
+    "input_tokens_include_visual": false,
+    "prefill_positions": 86,
+    "questions": {
+      "q": {
+        "option_order": [
+          "Keep it running",
+          "Stop it"
+        ],
+        "prompt_identity": "gemma4-categorical-v1/sha256:898bafe934692739cccbaf09c8fab8cc269179740b16fac0dd7297f1b1d8861e",
+        "raw_logits": {
+          "Keep it running": 26.365354537963867,
+          "Stop it": 12.232254028320312
+        },
+        "readout_id": "gemma4-next-token-categorical-v1",
+        "renderer_id": "gemma4-categorical-v1",
+        "scoring_basis": "answer_slot_logit",
+        "timings_ms": {
+          "image_preprocessing_ms": 0,
+          "normalization_ms": 0.001088,
+          "prefill_attention_path": "flash",
+          "prefill_backend_copy_ms": 0.07313800000000001,
+          "prefill_cache_bytes": 14680064,
+          "prefill_graph_count": 1,
+          "prefill_graph_node_count": 1953,
+          "prefill_kv_type": "f16",
+          "prefill_microbatch_size": 512,
+          "prefill_ms": 54.752328,
+          "prefill_peak_graph_bytes": 17702016,
+          "prefill_positions": 86,
+          "prefill_synchronization_ms": 0.00114,
+          "prompt_rendering_ms": 0.006588,
+          "readout_backend_copy_ms": 0.021695,
+          "readout_graph_node_count": 2,
+          "readout_ms": 0.058945,
+          "readout_synchronization_ms": 0.00045,
+          "request_total_ms": 55.055353,
+          "tokenization_ms": 0.233993,
+          "vision_attention_path": "not_used",
+          "vision_backend_copy_ms": 0,
+          "vision_graph_node_count": 0,
+          "vision_ms": 0,
+          "vision_synchronization_ms": 0
+        }
+      }
+    },
+    "schema_version": 2
+  },
+  "model": "branchscore-local",
+  "usage": {
+    "input_tokens": 86,
+    "output_tokens": 0
+  }
+}

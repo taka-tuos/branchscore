@@ -21,6 +21,10 @@ Step 1のメモリ・Prefill調査と、Step 4の精度・画像・CPU reference
 | [画像境界修正・CPU buffer control](phase-4-plus-option-scale-2/image-boundary-buffer.md) | 画像境界の契約是正、修正後27条件、CPU bufferと出力行選択のcontrol。 |
 | [CPU kernel・key padding・修正後A/B](phase-4-plus-option-scale-2/cpu-kernel-padding-baseline.md) | 修正後契約のE4B BF16/Q4 CPU baseline、kernel/key軸診断、2026-10-02再レビュー。 |
 | [C/D CPU評価・再レビュー](phase-4-plus-option-scale-2/cd-cpu-evaluation.md) | 事前採用基準、E4B画像27条件のA/B/C/D比較、CPU Flash内部精度とdecode shapeの切り分け。 |
+| [CUDA検証・384/512候補容量](phase-4-plus-option-scale-2/gpu-validation.md) | 2026-10-07のCUDA回帰、F16/Flashとreferenceの照合、容量・画像順序依存、未採用判断。 |
+| [512候補の実用採用方針](phase-4-plus-option-scale-2/practical-512-adoption.md) | 200件超BOM/HD・FHD webcam用途、早期対応の優先順位、初期公開に必要な資源・品質確認。 |
+| [画像先頭/末尾promptのCUDA比較](phase-4-plus-option-scale-2/image-placement-gpu.md) | 固定prefix再利用に向け、既存27画像条件と384/512候補の画像配置を比較。 |
+| [初期512対応の採用・公開契約](phase-4-plus-option-scale-2/runtime-512-adoption.md) | CUDA F16/FA採用、512 label/core/CLI/HTTP/UI、HD/FHD資源・予算拒否・反復と回復。 |
 | [phase Findings履歴](phase-4-plus-option-scale-2/plan-findings-history.md) | 2026-09-30〜2026-10-02のphase要約。詳細の正本は上記テーマ別記録。 |
 
 ## 日付・旧節から探す
@@ -55,3 +59,18 @@ Step 1のメモリ・Prefill調査と、Step 4の精度・画像・CPU reference
 [事前基準と結果](phase-4-plus-option-scale-2/cd-cpu-evaluation.md)、
 [raw/comparison](phase-4-plus-option-scale-2-cd-e4b-q4-cpu-2026-10-02.jsonl)、
 [測定source・再現手順](phase4-step4-cpu-reference/README.md)。
+
+## 2026-10-07: マージ後CUDA検証
+
+[結果と採用判断](phase-4-plus-option-scale-2/gpu-validation.md)、
+[再現手順・source・raw measurements](option-scale-2-gpu-2026-10-07/README.md)、
+[集計と全候補reference差](option-scale-2-gpu-2026-10-07/report.json)。
+現行回帰は通過。8 GiBで384/512候補の測定workloadは成立したが、
+画像判断とreference差、F16/FlashのE2B追加誤答が残り、公開上限・runtimeは変更していない。
+
+## 2026-10-07: 初期512対応
+
+[採用実装・結果](phase-4-plus-option-scale-2/runtime-512-adoption.md)、
+[再現資料・production raw measurements](option-scale-2-runtime-512-2026-10-07/README.md)。
+利用者の早期提供方針により、現行画像先頭promptでCUDA F16/Flashと512件を採用。
+高精度CUDA比較・実BOM品質・固定prefix cacheと新配置は追加調査として残す。

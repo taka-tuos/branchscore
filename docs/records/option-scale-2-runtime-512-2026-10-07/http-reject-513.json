@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "request fields are invalid or unsupported"
+  }
+}

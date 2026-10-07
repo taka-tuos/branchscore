@@ -1,0 +1,9 @@
+{
+  "limits": {
+    "max_options": 512,
+    "max_prefill_positions": 16384,
+    "max_request_prefill_positions": 32768
+  },
+  "model": "branchscore-local",
+  "status": "ready"
+}

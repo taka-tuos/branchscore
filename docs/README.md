@@ -49,6 +49,8 @@ The focused Phase 4 Vision Flash Attention plan is in
 `phases/phase-4-vision-flash-attention.md`.
 The Phase 4+ larger-option investigation `option-scale` was discontinued
 mid-investigation on 2026-09-30; its results remain under `records/`.
+Phase 4+ now implements 2–512 options with CUDA F16/Flash and explicit Prefill
+position budgets; image placement and cross-request cache research are deferred.
 The current GPU memory reduction and larger-option plan is
 [`phases/phase-4-plus-option-scale-2.md`](phases/phase-4-plus-option-scale-2.md).
 The [old phase document](phases/phase-4-plus-option-scale.md) records the handoff.

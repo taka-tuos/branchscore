@@ -1,0 +1,113 @@
+{
+  "answers": {
+    "q": {
+      "choice": "Item 007: the assigned color is blue.",
+      "confidence": 1,
+      "probabilities": {
+        "Item 000: the assigned color is red.": 2.2228356204293064e-09,
+        "Item 001: the assigned color is red.": 1.146463521646318e-07,
+        "Item 002: the assigned color is red.": 4.605811439962971e-09,
+        "Item 003: the assigned color is red.": 7.597408056269186e-09,
+        "Item 004: the assigned color is red.": 7.247016232914662e-11,
+        "Item 005: the assigned color is red.": 7.295501297793811e-08,
+        "Item 006: the assigned color is red.": 4.245063813956617e-08,
+        "Item 007: the assigned color is blue.": 0.9999992422825249,
+        "Item 008: the assigned color is red.": 7.111143938447465e-10,
+        "Item 009: the assigned color is red.": 1.0725952790044802e-07,
+        "Item 010: the assigned color is red.": 4.499697357625126e-08,
+        "Item 011: the assigned color is red.": 1.6209294346399491e-09,
+        "Item 012: the assigned color is red.": 3.334835656392327e-07,
+        "Item 013: the assigned color is red.": 1.2694593920653985e-08,
+        "Item 014: the assigned color is red.": 3.0519267398905257e-09,
+        "Item 015: the assigned color is red.": 6.977165903973127e-10,
+        "Item 016: the assigned color is red.": 8.65059793857899e-09
+      },
+      "type": "choice"
+    }
+  },
+  "branchscore": {
+    "confidence_kind": "constant_placeholder",
+    "http_handling_ms": 260.897217,
+    "input_tokens_include_visual": false,
+    "prefill_positions": 403,
+    "questions": {
+      "q": {
+        "option_order": [
+          "Item 000: the assigned color is red.",
+          "Item 001: the assigned color is red.",
+          "Item 002: the assigned color is red.",
+          "Item 003: the assigned color is red.",
+          "Item 004: the assigned color is red.",
+          "Item 005: the assigned color is red.",
+          "Item 006: the assigned color is red.",
+          "Item 007: the assigned color is blue.",
+          "Item 008: the assigned color is red.",
+          "Item 009: the assigned color is red.",
+          "Item 010: the assigned color is red.",
+          "Item 011: the assigned color is red.",
+          "Item 012: the assigned color is red.",
+          "Item 013: the assigned color is red.",
+          "Item 014: the assigned color is red.",
+          "Item 015: the assigned color is red.",
+          "Item 016: the assigned color is red."
+        ],
+        "prompt_identity": "gemma4-categorical-512-v1/sha256:a202d343d95ed47091ac7f2a7a6da6bebabc10c6fce83a2125df630d0be80e65",
+        "raw_logits": {
+          "Item 000: the assigned color is red.": 5.130660057067871,
+          "Item 001: the assigned color is red.": 9.073728561401367,
+          "Item 002: the assigned color is red.": 5.859195232391357,
+          "Item 003: the assigned color is red.": 6.359683513641357,
+          "Item 004: the assigned color is red.": 1.7072960138320923,
+          "Item 005: the assigned color is red.": 8.621719360351562,
+          "Item 006: the assigned color is red.": 8.080218315124512,
+          "Item 007: the assigned color is blue.": 25.05514144897461,
+          "Item 008: the assigned color is red.": 3.9909543991088867,
+          "Item 009: the assigned color is red.": 9.00712776184082,
+          "Item 010: the assigned color is red.": 8.138471603393555,
+          "Item 011: the assigned color is red.": 4.814876079559326,
+          "Item 012: the assigned color is red.": 10.141469955444336,
+          "Item 013: the assigned color is red.": 6.873052597045898,
+          "Item 014: the assigned color is red.": 5.4476494789123535,
+          "Item 015: the assigned color is red.": 3.9719340801239014,
+          "Item 016: the assigned color is red.": 6.489504814147949
+        },
+        "readout_id": "gemma4-next-token-categorical-v1",
+        "renderer_id": "gemma4-categorical-512-v1",
+        "scoring_basis": "answer_slot_logit",
+        "timings_ms": {
+          "image_preprocessing_ms": 0,
+          "normalization_ms": 0.009176,
+          "prefill_attention_path": "flash",
+          "prefill_backend_copy_ms": 0.311452,
+          "prefill_cache_bytes": 29360128,
+          "prefill_graph_count": 1,
+          "prefill_graph_node_count": 1953,
+          "prefill_kv_type": "f16",
+          "prefill_microbatch_size": 512,
+          "prefill_ms": 258.141407,
+          "prefill_peak_graph_bytes": 83364736,
+          "prefill_positions": 403,
+          "prefill_synchronization_ms": 0.001116,
+          "prompt_rendering_ms": 0.025679,
+          "readout_backend_copy_ms": 0.033206,
+          "readout_graph_node_count": 2,
+          "readout_ms": 0.107182,
+          "readout_synchronization_ms": 0.000484,
+          "request_total_ms": 259.399874,
+          "tokenization_ms": 1.098919,
+          "vision_attention_path": "not_used",
+          "vision_backend_copy_ms": 0,
+          "vision_graph_node_count": 0,
+          "vision_ms": 0,
+          "vision_synchronization_ms": 0
+        }
+      }
+    },
+    "schema_version": 2
+  },
+  "model": "branchscore-local",
+  "usage": {
+    "input_tokens": 403,
+    "output_tokens": 0
+  }
+}
