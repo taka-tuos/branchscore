@@ -176,7 +176,9 @@ RenderedPrompt Gemma4PromptRenderer::render(
     text += "<bos><|turn>system\n";
     text += "Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning.";
     text += "<turn|>\n<|turn>user\n";
-    if (has_image) text += "<|image|>\n";
+    // Keep Gemma 4 image boundaries as text tokens; Prefill replaces only
+    // the central placeholder with projected visual embeddings.
+    if (has_image) text += "<|image><|image|><image|>\n";
     text += "State:\n";
     text += state;
     text += "\n\nQuestion:\n";
