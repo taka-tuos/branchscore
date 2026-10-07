@@ -1,0 +1,37 @@
+--- /tmp/step4-prefill-trace.cpp
++++ /tmp/step4-prefill-padded.cpp
+@@ -333,7 +333,13 @@
+ 
+     auto result = std::make_unique<PrefillState::Impl>();
+     result->backend = &backend_;
+-    result->cache = std::make_unique<StateCache>(config, token_count, backend_);
++    result->cache = std::make_unique<StateCache>(config, ((token_count + 1 + 31) / 32) * 32, backend_);
++    for (std::uint32_t layer = 0; layer < config.block_count - config.shared_kv_layers; ++layer) {
++        for (auto * tensor : {result->cache->key(layer), result->cache->value(layer)}) {
++            std::vector<char> zero(ggml_nbytes(tensor), 0);
++            ggml_backend_tensor_set(tensor, zero.data(), 0, zero.size());
++        }
++    }
+     result->token_microbatch_size = prefill_token_microbatch_size;
+ 
+     ggml_init_params logits_params{3 * ggml_tensor_overhead(), nullptr, true};
+@@ -366,7 +372,7 @@
+         const std::size_t query_count = std::min(
+             prefill_token_microbatch_size, token_count - chunk_start);
+         const std::size_t chunk_end = chunk_start + query_count;
+-        const std::size_t cache_count = chunk_end;
++        const std::size_t cache_count = std::min(result->cache->capacity(), std::max<std::size_t>(256, ((chunk_end + 255) / 256) * 256));
+ 
+         std::vector<std::uint8_t> context_memory(context_size);
+         ggml_init_params params{context_memory.size(), context_memory.data(), true};
+@@ -542,8 +548,8 @@
+             if (std::strncmp(ggml_get_name(t),"trace_",6)!=0) continue;
+             std::string name=ggml_get_name(t)+6;
+             std::vector<char> data(ggml_nbytes(t)); ggml_backend_tensor_get(t,data.data(),0,data.size());
+-            std::ofstream out("/tmp/step4-trace-branch/"+name+".bin",std::ios::binary); out.write(data.data(),data.size());
+-            std::ofstream meta("/tmp/step4-trace-branch/"+name+".shape"); for (int j=0;j<4;++j) meta << t->ne[j] << " ";
++            std::ofstream out("/tmp/step4-trace-branch-padded/"+name+".bin",std::ios::binary); out.write(data.data(),data.size());
++            std::ofstream meta("/tmp/step4-trace-branch-padded/"+name+".shape"); for (int j=0;j<4;++j) meta << t->ne[j] << " ";
+         }
+         result->graph_node_count +=  ggml_graph_n_nodes(graph);
+         ++result->graph_count;
