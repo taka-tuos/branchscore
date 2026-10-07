@@ -1,104 +1,22 @@
 # branchscore
 
-`branchscore` is a standalone C++/ggml proof of concept for categorical
-decisions with Gemma 4 E2B/E4B GGUF models. It displays all candidate
-descriptions in one prompt, reads the single-token answer-label logits, and
-reports relative option probabilities. Autoregressive chat generation is not
-its primary purpose.
+[日本語](README.ja.md) · English
 
-This is a hobby and experimental project developed largely through
-AI-assisted ("vibe coding") workflows. The implementation has been checked
-against pinned upstream sources and exercised with focused tests, but it is
-not production-ready, security-hardened, or covered by API, compatibility, or
-support guarantees.
+`branchscore` is a standalone C++/ggml decision engine for Gemma 4 E2B/E4B
+GGUF models. Give it a text state, an optional image, a question, and candidate
+options; it returns the selected option, raw scores, relative probabilities,
+and timings.
 
-The core decision call remains the sequential Phase 3+ path: one model, one
-backend, one decision, and 2–512 ordered displayed options. The Phase 4+ server
-can accept up to 16 Choice questions in one envelope and evaluates them one at
-a time. See [`docs/README.md`](docs/README.md) for the design, research record,
-phase history, and roadmap.
+The goal is a small local runtime for choosing among supplied options. One
+practical use is matching a part package shown by a camera to a bill of materials
+(BOM). It is a hobby proof of concept developed largely with AI assistance,
+with no stable API or production support guarantees.
 
-## What it currently does
+## Build and try it
 
-- Loads matching Gemma 4 E2B/E4B text and multimodal-projector GGUF files.
-- Selects one ggml CPU, CUDA, or Vulkan backend.
-- Preprocesses an optional image and executes the Gemma 4 vision graph.
-- Renders `gemma4-categorical-v1` with A–P labels for 2–16 options, or
-  `gemma4-categorical-512-v1` with fixed two-letter labels for 17–512 options.
-- Prefills the complete displayed-options prompt once.
-- Gathers only the supplied answer-slot logits with one small ggml graph.
-- Reports raw answer-slot logits, probabilities relative to the supplied
-  option set, the selected option, and shared readout timings.
-- Provides a warm-loaded, sequential branchscore-bench JSONL runner with
-  row-level scores and aggregate latency/throughput measurements.
-
-CUDA Prefill uses F16 K/V and masks with Flash Attention, F32 accumulation,
-512-token microbatches, and full-length sliding-attention storage. CPU and
-Vulkan retain F32 K/V and ordinary Prefill attention. The prompt keeps the
-image before the state, question, and options; cross-request cache reuse is
-deferred.
-
-Each decision is limited to 16,384 actual Prefill positions, including expanded
-visual tokens and all prompt text. HTTP additionally limits the sum across
-questions to 32,768 positions. The model's context limit also applies. Excess
-input is rejected without truncation; 512 options alone does not guarantee
-that arbitrary descriptions fit.
-
-On the measured RTX 2060 SUPER (8 GiB), E4B Q4_K_M with 512 synthetic
-20-character part numbers and an FHD image took about 11.5 seconds per request.
-The largest VRAM sample across resource checks was 6,352 MiB. Blank HD/FHD
-images were resource controls; these measurements do not establish package
-OCR accuracy. See the [512 adoption record](docs/records/phase-4-plus-option-scale-2/runtime-512-adoption.md)
-for validation, limits, and known quality differences.
-
-Run a small sequential benchmark. Each non-empty input line is one decision
-object with required id, state, question, and
-options: [{"id": ..., "description": ...}] fields. Extra fields are ignored
-so existing project fixtures can be reused. An optional image path is resolved
-relative to the input JSONL file.
-
-    ./build/branchscore-bench --backend cpu \
-      --model /path/to/gemma-4-E2B-it-Q4_K_M.gguf \
-      --mmproj /path/to/mmproj-F16.gguf \
-      --input fixtures/phase3-text.jsonl \
-      --output /tmp/branchscore-e2b.jsonl
-
-The default warmup evaluates the first request once and discards its result;
-use --warmup COUNT to change it. The output contains one run metadata row, one
-decision row per input row, and one aggregate row. It uses schema version 2 and
-includes ordered answer labels and token IDs, raw logits, prompt/readout
-identity, stage timings, p50/p95 request latency, and decisions/second. The
-output path must not already exist; model loading, warmup, and result-file
-writes are outside the measured request interval. Context overflow is an error
-and is never silently truncated.
-
-The `branchscore_core` CMake target is an internal implementation boundary,
-not a stable or installable library API.
-
-## Models used for development
-
-Model files are not included in this repository. Phase 2/2+ development and
-model-backed tests used the following Unsloth quantizations:
-
-- [`unsloth/gemma-4-E2B-it-GGUF`](https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF)
-  - `gemma-4-E2B-it-Q4_K_M.gguf`
-  - `mmproj-F16.gguf`
-- [`unsloth/gemma-4-E4B-it-GGUF`](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF)
-  - `gemma-4-E4B-it-Q4_K_M.gguf`
-  - `mmproj-F16.gguf`
-
-Those model assets are separately licensed under Apache-2.0; the repository's
-MIT license covers this project's own code and documentation. Consult the
-model cards before downloading or using the weights.
-
-## Configure and build
-
-Requirements are a C++17 compiler, CMake 3.20 or newer, and the tools needed
-by the selected ggml backend. Ninja is used in the examples but is not a
-project requirement. The default build includes `branchscore-server` and uses
-the checked-in generated llhttp 9.3.1 C source, so it does not require
-pkg-config or `libllhttp-dev`. Set `-DBRANCHSCORE_BUILD_SERVER=OFF` for a
-CLI-only build.
+Run these commands from the `branchscore` repository root. Requirements:
+a C++17 compiler, CMake 3.20+, and the development tools for your selected ggml
+backend. The examples use Ninja; another CMake generator is also fine.
 
 ```sh
 git submodule update --init --recursive
@@ -107,123 +25,197 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The parser's TypeScript grammar and pinned npm lockfile are retained under
-[`third_party/llhttp/upstream`](third_party/llhttp/upstream). After changing
-those generator inputs, regenerate the checked-in C source with:
+CPU is enabled by default. Add `-DBRANCHSCORE_CUDA=ON` or
+`-DBRANCHSCORE_VULKAN=ON` to the configure command to build a GPU backend.
+The server is built by default using vendored llhttp C sources; a normal build
+needs no Node.js, npm, pkg-config, or system llhttp package. For a CLI-only build,
+set `-DBRANCHSCORE_BUILD_SERVER=OFF`.
 
-```sh
-cmake --build build --target branchscore-llhttp-regenerate
-```
-
-Regeneration requires Node.js/npm and network access for the locked npm
-packages; normal CMake builds do not.
-
-CPU is enabled by default. Enable one optional GPU backend with
-`-DBRANCHSCORE_CUDA=ON` or `-DBRANCHSCORE_VULKAN=ON`. NCCL and multi-GPU
-execution are deliberately disabled.
-
-Tests that require model weights return CTest's skip code when model paths are
-not configured. Run the complete E2B model-backed CPU suite with:
-
-```sh
-cmake -S . -B build-model -G Ninja \
-  -DBRANCHSCORE_TEST_MODEL=/path/to/gemma-4-E2B-it-Q4_K_M.gguf \
-  -DBRANCHSCORE_TEST_MMPROJ=/path/to/mmproj-F16.gguf \
-  -DBRANCHSCORE_TEST_BACKEND=cpu
-cmake --build build-model
-ctest --test-dir build-model --output-on-failure
-```
-
-## CLI usage
-
-List the ggml devices visible to the process:
+Model weights are not included. Development uses the Q4_K_M text GGUF and
+matching `mmproj-F16.gguf` from the Unsloth Gemma 4 E2B/E4B repositories listed
+in [THIRD_PARTY.md](THIRD_PARTY.md#model-assets). Supply both files, including
+for text-only requests.
 
 ```sh
 ./build/branchscore --list-backends
-```
-
-Score a text-only decision:
-
-```sh
 ./build/branchscore --backend cpu \
   --model /path/to/gemma-4-E2B-it-Q4_K_M.gguf \
   --mmproj /path/to/mmproj-F16.gguf \
   --state "The service is healthy." \
   --question "Which action should be taken?" \
-  --option yes="Keep it running" \
-  --option no="Stop it"
+  --option keep="Keep it running" \
+  --option stop="Stop it"
 ```
 
-Selectors are case-insensitive and accept a ggml device name or backend
-family. `auto` chooses the first GPU/integrated GPU and otherwise the first
-available device. Add `--image FILE` for one image.
+Add `--image FILE` for one PNG or JPEG image. Backend selectors accept a device
+name or family, case-insensitively. `--backend auto` chooses the first GPU or
+integrated GPU, falling back to the first available device.
 
-`--chat-template-file FILE` is currently a transparent reserved no-op. The
-path is retained in result metadata but is not opened or applied. The GGUF
-`tokenizer.chat_template` value is likewise diagnostic metadata; the fixed
-built-in categorical renderer selected by option count remains the effective
-prompt source.
+Tests needing weights are skipped unless model paths are configured. To run
+them, configure with `-DBRANCHSCORE_TEST_MODEL=/path/to/text.gguf`,
+`-DBRANCHSCORE_TEST_MMPROJ=/path/to/mmproj.gguf`, and
+`-DBRANCHSCORE_TEST_BACKEND=cpu` (or your selected backend), then rebuild and
+run CTest.
 
-Use `--vision-dump FILE` with `--image` to request projected embeddings. The
-target file is created or truncated after inference completes and contains two
-int32 dimensions (`tokens`, `width`) followed by row-major float32 values.
+## Browser UI and HTTP API
 
-## Sequential HTTP server
-
-`branchscore-server` loads one model/backend before it starts listening. It
-serves a small browser UI at `GET /ui`, `GET /healthz`, and the Choice subset
-of `POST /v1/systemone`, evaluating up to 16 questions sequentially. The UI is
-a self-contained page served by the executable: enter the bearer token, press
-Connect, fill in the state/question/options, and submit one decision. The page
-keeps the token in memory and sends it only in the `Authorization` header.
-Each Choice supports 2–512 string or null
-criteria. The request's `model` must be `branchscore-local`; other model IDs,
-Score, and Noul questions are rejected. Question and criteria maps use lexical
-key order. A string criterion is shown to the model as `key: description`,
-while a null criterion shows only its key.
-
-For a BOM containing only part numbers, use the part number as the criterion
-key and `null` as its value. The UI accepts one key per line in its bulk paste
-field, with an optional description after a tab. More than 255 criteria is a
-branchscore extension to the Choice interface.
-
-`/healthz` advertises the option and Prefill limits. All questions undergo
-CPU token/geometry preflight before GPU inference starts. Position overflow
-returns HTTP 413 with `token_budget_exceeded`, `context_limit_exceeded`, or
-`request_token_budget_exceeded`; 513 or more options returns HTTP 422.
-
-The optional image extension accepts base64 PNG or JPEG bytes. Request bodies
-are limited to 16 MiB; source images are limited to 8,192 pixels per side and
-8 megapixels total before pixel decoding. Requests run one at a time, and the
-server closes each response connection. It logs only request ID, status, and
-wall time by default.
-
-The default bind is loopback on port 8080. `/ui` is intentionally reachable
-without a token so that a browser can load the form; `/healthz` and
-`/v1/systemone` remain authenticated on non-loopback binds. A non-loopback bind requires
-`BRANCHSCORE_BEARER_TOKEN` in the environment before model loading; the token
-is sent as `Authorization: Bearer ...`, never as a command-line argument.
-Use a TLS-terminating reverse proxy on untrusted networks.
+Start a server that keeps one model loaded:
 
 ```sh
-./build/branchscore-server \
+./build/branchscore-server --backend cpu \
   --model /path/to/gemma-4-E2B-it-Q4_K_M.gguf \
   --mmproj /path/to/mmproj-F16.gguf \
-  --backend cuda --host 127.0.0.1 --port 8080
+  --host 127.0.0.1 --port 8080
 ```
 
-Choice responses include the TypeSafe-compatible fixed `confidence: 1.0`
-placeholder, identified by `branchscore.confidence_kind`. It is not calibrated
-confidence and must not be used for threshold decisions. `usage.input_tokens`
-counts rendered text prompt tokens and excludes visual tokens;
-`usage.output_tokens` is zero. Per-question timings and prompt/readout
-identities are in `branchscore.questions`; raw answer-slot logits are included
-there for diagnostics, along with the renderer ID and actual option order.
-`branchscore.prefill_positions` counts the expanded positions across questions.
-The separate `branchscore.http_handling_ms` and server
-`wall_ms` log make HTTP request time visible alongside `evaluate` timings.
+Open [the browser UI](http://127.0.0.1:8080/ui), press **Connect**, and enter the
+state, question, and options. The bearer-token field can be empty for this
+loopback bind. For a BOM, bulk-paste one part number per line; an optional
+description goes after a tab. Blank descriptions are sent as `null` so that
+the model sees the part number alone.
 
-Tokenizer IDs and answer-label boundary behavior can be inspected without loading
+The endpoints are `GET /ui`, `GET /healthz`, and `POST /v1/systemone`.
+A minimal text request is:
+
+```sh
+curl http://127.0.0.1:8080/v1/systemone \
+  -H 'Content-Type: application/json' \
+  --data '{"state":"The service is healthy.","model":"branchscore-local","questions":{"action":{"type":"choice","instructions":"Which action should be taken?","criteria":{"keep":"Keep it running","stop":"Stop it"}}}}'
+```
+
+The API implements the TypeSafe Choice envelope: 1–16 questions per request,
+with 2–512 criteria per question, evaluated sequentially. Only the model ID
+`branchscore-local` is accepted. String criteria appear as `key: description`;
+null criteria appear as the key alone. Questions and criteria run in lexical
+key order, as determined by the current JSON codec. CLI/JSONL options retain
+input order. Images and more than 255 criteria are branchscore extensions;
+Score and Noul are unsupported.
+
+For a LAN bind, set `BRANCHSCORE_BEARER_TOKEN` in the environment before startup
+and choose a non-loopback `--host`. `/healthz` and `/v1/systemone` then require
+`Authorization: Bearer ...`; `/ui` stays public so the browser can load the
+form. The UI keeps the token in memory. The server speaks plain HTTP; use TLS
+termination on untrusted networks.
+
+Responses contain the selected criterion key, relative probabilities, and
+`branchscore` diagnostics with raw logits, actual option order, prompt/readout
+identities, and timings. `confidence: 1.0` is a fixed compatibility placeholder,
+not a measured certainty. `usage.input_tokens` counts rendered text tokens,
+excluding expanded visual tokens; `usage.output_tokens` is zero.
+`branchscore.prefill_positions` reports the expanded position count across
+questions. See the [HTTP contract](docs/phases/phase-4-plus-http-server.md)
+for the image envelope, authentication, errors, and response details.
+
+## How scoring works
+
+1. Render the optional image, state, question, and **all** option descriptions
+   in one fixed Gemma 4 prompt.
+2. Run Vision when an image is present, then Prefill the complete prompt.
+3. Read each option's answer-label logit at the same next-token position.
+4. Apply a temperature-1 softmax over those logits and select the first maximum.
+
+For 2–16 options, `gemma4-categorical-v1` assigns A–P labels. For 17–512,
+`gemma4-categorical-512-v1` uses a fixed set of two-letter labels. Each label
+must be a single normal token at the answer boundary; validation failure
+rejects the request. The number of printed letters is not the token count.
+
+Option descriptions provide judgment context. Their continuation likelihoods
+are not scored, and no answer token is sampled or consumed. The final
+vocabulary projection runs on the backend; a small ggml gather transfers only
+the requested answer logits to the host. Probabilities are relative to the
+supplied option set, **not calibrated confidence**. They can change when options,
+order, or wording change.
+
+Prefill runs in 512-token microbatches within one logical prompt evaluation.
+CUDA uses F16 K/V and masks with Flash Attention and F32 accumulation;
+CPU/Vulkan use F32 K/V with ordinary Prefill attention. This is the current
+implementation, not a requirement that every future backend use those types.
+See [architecture](docs/architecture.md) for prompt bytes, scoring formulas,
+component ownership, and execution details.
+
+## Scope and deliberate design choices
+
+- Use ggml directly in an independent C++ project. llama.cpp and SemIf are
+  implementation/research references, not wrapped runtimes.
+- Focus on categorical selection. General chat completion, long-form
+  generation, training, calibration, and exact Jev output reproduction are
+  outside the project scope.
+- Keep the current baseline sequential: one model, one selected backend, one
+  decision at a time. Request workers and scheduling are later work only if
+  measurements justify them; transformer layer splitting and tensor
+  parallelism are out of scope.
+- Use a versioned built-in categorical prompt with direct-answer instructions.
+  GGUF chat templates are diagnostic metadata. `--chat-template-file` is a
+  reserved no-op: it records the path without reading or applying the file.
+- Reject input exceeding the supported budgets without truncating it.
+
+These choices and the current input contract are defined in
+[requirements](docs/requirements.md). The internal `branchscore_core` target
+is not a stable or installable library API.
+
+## Current limits and remaining work
+
+These are the limits of this implementation and its validation, rather than
+permanent model or project restrictions.
+
+| Input | Current limit |
+|---|---|
+| Options per decision | 2–512 |
+| Images per decision | At most one PNG/JPEG |
+| Expanded Prefill positions per decision | 16,384, also within the model context |
+| HTTP questions / combined Prefill positions | 16 / 32,768 |
+| HTTP request body | 16 MiB |
+| HTTP source image | 8,192 pixels per side and 8 megapixels total |
+
+Expanded positions include visual tokens and all prompt text. Supporting 512
+options does not mean arbitrarily long descriptions will fit, nor does the
+model's context metadata guarantee enough memory. HTTP preflights all questions
+before inference: position overflow returns 413, while 513+ options returns
+422. `/healthz` advertises the decision and position limits.
+
+The prompt currently places the image first. K/V cache belongs to one decision
+and is discarded afterward; repeated images/questions do not reuse a prefix.
+Image placement and cache reuse are deferred investigations. The server handles
+one request at a time and closes the connection after each response.
+
+Large-input resource validation primarily covers E4B Q4_K_M on CUDA with an
+RTX 2060 SUPER (8 GiB). The same 512-option resource workload has not been
+validated on CPU/Vulkan. On that GPU, 512 synthetic 20-digit part numbers with
+a blank FHD image took about 11.5 seconds; the largest observed VRAM sample
+across resource checks was 6,352 MiB. These are resource measurements, not
+package OCR accuracy results or universal hardware requirements.
+
+Known quality differences include an E2B close-score regression with CUDA
+F16/Flash and option-order sensitivity in E4B large-option image fixtures.
+High-precision CUDA comparisons and real BOM/image evaluation remain follow-up
+work. See the [512 adoption record](docs/records/phase-4-plus-option-scale-2/runtime-512-adoption.md)
+for dated results and what was actually verified.
+
+The project has no security-hardening, stable API, or long-term compatibility
+guarantees. Local model/input parsers and image decoders have not been fuzzed
+for hostile input.
+
+## Benchmark and diagnostics
+
+`branchscore-bench` keeps the model loaded and evaluates JSONL rows sequentially.
+Each nonempty line requires `id`, `state`, `question`, and
+`options: [{"id": "...", "description": "..."}]`. Extra fields are ignored;
+an optional `image` path is relative to the input file.
+
+```sh
+./build/branchscore-bench --backend cpu \
+  --model /path/to/gemma-4-E2B-it-Q4_K_M.gguf \
+  --mmproj /path/to/mmproj-F16.gguf \
+  --input fixtures/phase3-text.jsonl \
+  --output /tmp/branchscore-e2b.jsonl
+```
+
+The output must not already exist. Default warmup runs the first request once;
+change it with `--warmup COUNT`. Schema 2 output includes a run row, a decision
+row per input, and an aggregate row with p50/p95 latency and decisions/second.
+Model loading, warmup, and file writes are outside the request measurements.
+
+`branchscore-tokenize` inspects token IDs and answer boundaries without loading
 model weights:
 
 ```sh
@@ -232,38 +224,18 @@ model weights:
   --prefix $'<|turn>model\n' --answer-label A
 ```
 
-## Tested development environment
+For projected image embeddings, add `--vision-dump FILE` and `--image FILE`
+to the decision CLI. The dump is written after inference, creating or
+truncating the file: two int32 dimensions (`tokens`, `width`), then row-major
+float32 values. HTTP responses omit full prompts, token IDs, and Vision dumps.
 
-These are reference environments, not a portability guarantee. On
-2026-09-20, the Phase 2/2+ work was built and exercised with:
+## Documentation and license
 
-- Arch Linux (rolling)
-- GCC 16.2.1
-- CMake 4.4.3
-- Ninja 1.13.2
-- ggml 0.24.0 at `456172ec733a135778adcd32d00e576a58232e45`
-- CUDA Toolkit 13.3 (`nvcc` 13.3.73)
-- NVIDIA GeForce RTX 2060 SUPER for the recorded CUDA and Vulkan runs
-- the Unsloth E2B/E4B Q4_K_M text models and matching F16 projectors listed
-  above
+Start with the [documentation map](docs/README.md). Current plans are in the
+[phase index](docs/phases/README.md); dated experiments and development
+environments are in [records](docs/records/README.md). For HTTP parser
+regeneration, see [llhttp notes](third_party/llhttp/README.md).
 
-The complete local E2B CPU suite passes 9/9 tests. CPU, CUDA, and Vulkan
-backend initialization and model execution have also been exercised locally;
-the phase notes contain the exact observations and indicative timings.
-
-## Important limitations
-
-- Inputs, model files, and images are assumed to be trusted local files. The
-  parsers and decoders have not been fuzzed or hardened for hostile input.
-- Probabilities are relative only to the supplied option set and are not
-  calibrated confidence values.
-- Selection uses the requested A–P answer-slot logits and a temperature-1
-  softmax across the supplied options.
-- EOS and turn-ending tokens are not scored.
-- There is no stable API, package installation contract, production fault
-  tolerance, or general chat-completion interface.
-
-## License and acknowledgements
-
-The project is licensed under the [MIT License](LICENSE). Third-party runtime,
-research, and model sources are listed in [THIRD_PARTY.md](THIRD_PARTY.md).
+Project code and documentation use the [MIT License](LICENSE). Dependencies,
+research references, and separately licensed model assets are documented in
+[THIRD_PARTY.md](THIRD_PARTY.md).
