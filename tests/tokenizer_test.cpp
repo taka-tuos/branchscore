@@ -43,6 +43,11 @@ int main(int argc, char ** argv) {
         {2, 1, 106, 50, 954, 236751, 236813},
         "special tokens");
 
+    valid &= expect(
+        tokenizer.tokenize("<|image><|image|><image|>", false, true),
+        {255999, 258880, 258882},
+        "Gemma 4 image boundaries");
+
     std::vector<branchscore::TokenId> answer_ids;
     for (char label = 'A'; label <= 'P'; ++label) {
         const auto answer = tokenizer.tokenize_answer_label(

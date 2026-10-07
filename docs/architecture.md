@@ -31,7 +31,7 @@ input order assigns answer labels A through P. The versioned prompt is:
 system: Apply the supplied criterion to the supplied evidence. Choose exactly
         one listed option. Respond with only its uppercase letter, with no
         explanation or reasoning.
-user:   [optional image]
+user:   [optional <|image> + image embeddings + <image|>]
         State:
         {state}
 
@@ -105,7 +105,8 @@ These are narrow current-phase boundaries, not framework extension points.
 
 ### `PrefillEngine`
 
-- Splices projected visual embeddings at the image placeholder and validates
+- Splices projected visual embeddings at the central `<|image|>` placeholder,
+  retaining the surrounding `<|image>` / `<image|>` text tokens, and validates
   the context limit for the already-rendered/tokenized displayed-options prompt.
 - Builds and executes the causal Gemma 4 graph, populates a `StateCache`, and
   copies the state-final logits needed for the answer-slot readout into

@@ -1,0 +1,868 @@
+{
+  "schema_version": 1,
+  "created_date_jst": "2026-10-01",
+  "generator": "generate.py",
+  "imagemagick_version": "Version: ImageMagick 6.9.12-98 Q16 x86_64 18038 https://legacy.imagemagick.org",
+  "fonts": [
+    "DejaVu-Sans",
+    "DejaVu-Sans-Bold",
+    "DejaVu-Sans-Mono"
+  ],
+  "fixture_file": "../phase4-step4-vision.jsonl",
+  "fixture_sha256": "a98647965faa3d53db0d0da08ea0ac2be89ce74e1fed0b174565d99eba02416c",
+  "image_count": 9,
+  "request_rows": 27,
+  "independent_families": 3,
+  "distinct_evidence_scenarios": 6,
+  "invariance_derivatives": 3,
+  "images": [
+    {
+      "id": "vision-board-base",
+      "file": "board-base.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "42b2e0b289fd36bd244a459054de179c6f92c7a41d82e11657819535476a1477",
+      "family": "board",
+      "variation": "base",
+      "facts": [
+        {
+          "id": "north-0",
+          "region": "north",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-1",
+          "region": "north",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-2",
+          "region": "north",
+          "slot": 2,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-3",
+          "region": "north",
+          "slot": 3,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "north-4",
+          "region": "north",
+          "slot": 4,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "north-5",
+          "region": "north",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "east-0",
+          "region": "east",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-1",
+          "region": "east",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-2",
+          "region": "east",
+          "slot": 2,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-3",
+          "region": "east",
+          "slot": 3,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-4",
+          "region": "east",
+          "slot": 4,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "east-5",
+          "region": "east",
+          "slot": 5,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "south-0",
+          "region": "south",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "south-1",
+          "region": "south",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "south-2",
+          "region": "south",
+          "slot": 2,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "south-3",
+          "region": "south",
+          "slot": 3,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "south-4",
+          "region": "south",
+          "slot": 4,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "south-5",
+          "region": "south",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "west-0",
+          "region": "west",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "west-1",
+          "region": "west",
+          "slot": 1,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "west-2",
+          "region": "west",
+          "slot": 2,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "west-3",
+          "region": "west",
+          "slot": 3,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "west-4",
+          "region": "west",
+          "slot": 4,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "west-5",
+          "region": "west",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        }
+      ],
+      "expected_selected_id": "east",
+      "expected_reason": "Red-square counts by printed region: north=3, east=4, south=2, west=1. The maximum is unique.",
+      "compared_with": null,
+      "relation": "base",
+      "change": null
+    },
+    {
+      "id": "vision-board-changed",
+      "file": "board-changed.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "400f99099cd7059cf98495d5d66748a77fa4df7c39d9c8266198883d473e6a45",
+      "family": "board",
+      "variation": "changed",
+      "facts": [
+        {
+          "id": "north-0",
+          "region": "north",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-1",
+          "region": "north",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-2",
+          "region": "north",
+          "slot": 2,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-3",
+          "region": "north",
+          "slot": 3,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "north-4",
+          "region": "north",
+          "slot": 4,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "north-5",
+          "region": "north",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "east-0",
+          "region": "east",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-1",
+          "region": "east",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-2",
+          "region": "east",
+          "slot": 2,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-3",
+          "region": "north",
+          "slot": 6,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-4",
+          "region": "east",
+          "slot": 4,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "east-5",
+          "region": "east",
+          "slot": 5,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "south-0",
+          "region": "south",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "south-1",
+          "region": "south",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "south-2",
+          "region": "south",
+          "slot": 2,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "south-3",
+          "region": "south",
+          "slot": 3,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "south-4",
+          "region": "south",
+          "slot": 4,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "south-5",
+          "region": "south",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "west-0",
+          "region": "west",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "west-1",
+          "region": "west",
+          "slot": 1,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "west-2",
+          "region": "west",
+          "slot": 2,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "west-3",
+          "region": "west",
+          "slot": 3,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "west-4",
+          "region": "west",
+          "slot": 4,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "west-5",
+          "region": "west",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        }
+      ],
+      "expected_selected_id": "north",
+      "expected_reason": "Red-square counts by printed region: north=4, east=3, south=2, west=1. The maximum is unique.",
+      "compared_with": "vision-board-base",
+      "relation": "selection_changes",
+      "change": "Move the single red square east-3 from EAST to NORTH; preserve all other objects."
+    },
+    {
+      "id": "vision-board-relayout",
+      "file": "board-relayout.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "ea9cbfe2924f7ff94960e93a801434f903c5675a67b2ca420415a148cbd14a57",
+      "family": "board",
+      "variation": "relayout",
+      "facts": [
+        {
+          "id": "north-0",
+          "region": "north",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-1",
+          "region": "north",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-2",
+          "region": "north",
+          "slot": 2,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "north-3",
+          "region": "north",
+          "slot": 3,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "north-4",
+          "region": "north",
+          "slot": 4,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "north-5",
+          "region": "north",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "east-0",
+          "region": "east",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-1",
+          "region": "east",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-2",
+          "region": "east",
+          "slot": 2,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-3",
+          "region": "east",
+          "slot": 3,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "east-4",
+          "region": "east",
+          "slot": 4,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "east-5",
+          "region": "east",
+          "slot": 5,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "south-0",
+          "region": "south",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "south-1",
+          "region": "south",
+          "slot": 1,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "south-2",
+          "region": "south",
+          "slot": 2,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "south-3",
+          "region": "south",
+          "slot": 3,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "south-4",
+          "region": "south",
+          "slot": 4,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "south-5",
+          "region": "south",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "west-0",
+          "region": "west",
+          "slot": 0,
+          "color": "red",
+          "shape": "square"
+        },
+        {
+          "id": "west-1",
+          "region": "west",
+          "slot": 1,
+          "color": "red",
+          "shape": "circle"
+        },
+        {
+          "id": "west-2",
+          "region": "west",
+          "slot": 2,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "west-3",
+          "region": "west",
+          "slot": 3,
+          "color": "blue",
+          "shape": "square"
+        },
+        {
+          "id": "west-4",
+          "region": "west",
+          "slot": 4,
+          "color": "green",
+          "shape": "triangle"
+        },
+        {
+          "id": "west-5",
+          "region": "west",
+          "slot": 5,
+          "color": "green",
+          "shape": "triangle"
+        }
+      ],
+      "expected_selected_id": "east",
+      "expected_reason": "Red-square counts by printed region: north=3, east=4, south=2, west=1. The maximum is unique.",
+      "compared_with": "vision-board-base",
+      "relation": "selection_preserved",
+      "change": "Reorder cards/rows and change decorative accent; preserve evidence values."
+    },
+    {
+      "id": "vision-status-base",
+      "file": "status-base.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "ddf5e5fc312957ffef1883b7309070115ec2725ce560d1e8da26f4fee720f384",
+      "family": "status",
+      "variation": "base",
+      "facts": [
+        {
+          "id": "orion",
+          "state": "FAILED",
+          "response": "ACK",
+          "severity": "HIGH"
+        },
+        {
+          "id": "lyra",
+          "state": "FAILED",
+          "response": "OPEN",
+          "severity": "HIGH"
+        },
+        {
+          "id": "vega",
+          "state": "FAILED",
+          "response": "OPEN",
+          "severity": "LOW"
+        },
+        {
+          "id": "nova",
+          "state": "OK",
+          "response": "OPEN",
+          "severity": "HIGH"
+        },
+        {
+          "id": "atlas",
+          "state": "PAUSED",
+          "response": "OPEN",
+          "severity": "MEDIUM"
+        }
+      ],
+      "expected_selected_id": "lyra",
+      "expected_reason": "Eligible FAILED/OPEN jobs: lyra (HIGH), vega (LOW). Select the uniquely highest severity.",
+      "compared_with": null,
+      "relation": "base",
+      "change": null
+    },
+    {
+      "id": "vision-status-changed",
+      "file": "status-changed.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "4e4e1003bc9a3907cc2397199baf65e90d6f7f7a6f9d88f56cc6a493a8f837dd",
+      "family": "status",
+      "variation": "changed",
+      "facts": [
+        {
+          "id": "orion",
+          "state": "FAILED",
+          "response": "ACK",
+          "severity": "HIGH"
+        },
+        {
+          "id": "lyra",
+          "state": "FAILED",
+          "response": "ACK",
+          "severity": "HIGH"
+        },
+        {
+          "id": "vega",
+          "state": "FAILED",
+          "response": "OPEN",
+          "severity": "LOW"
+        },
+        {
+          "id": "nova",
+          "state": "OK",
+          "response": "OPEN",
+          "severity": "HIGH"
+        },
+        {
+          "id": "atlas",
+          "state": "PAUSED",
+          "response": "OPEN",
+          "severity": "MEDIUM"
+        }
+      ],
+      "expected_selected_id": "vega",
+      "expected_reason": "Eligible FAILED/OPEN jobs: vega (LOW). Select the uniquely highest severity.",
+      "compared_with": "vision-status-base",
+      "relation": "selection_changes",
+      "change": "Change only LYRA's RESPONSE from OPEN to ACK."
+    },
+    {
+      "id": "vision-status-relayout",
+      "file": "status-relayout.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "df22ae9531c75a91a1e1886979d8f9778e0485e4b56814d53e46784f9d5a806f",
+      "family": "status",
+      "variation": "relayout",
+      "facts": [
+        {
+          "id": "orion",
+          "state": "FAILED",
+          "response": "ACK",
+          "severity": "HIGH"
+        },
+        {
+          "id": "lyra",
+          "state": "FAILED",
+          "response": "OPEN",
+          "severity": "HIGH"
+        },
+        {
+          "id": "vega",
+          "state": "FAILED",
+          "response": "OPEN",
+          "severity": "LOW"
+        },
+        {
+          "id": "nova",
+          "state": "OK",
+          "response": "OPEN",
+          "severity": "HIGH"
+        },
+        {
+          "id": "atlas",
+          "state": "PAUSED",
+          "response": "OPEN",
+          "severity": "MEDIUM"
+        }
+      ],
+      "expected_selected_id": "lyra",
+      "expected_reason": "Eligible FAILED/OPEN jobs: lyra (HIGH), vega (LOW). Select the uniquely highest severity.",
+      "compared_with": "vision-status-base",
+      "relation": "selection_preserved",
+      "change": "Reorder cards/rows and change decorative accent; preserve evidence values."
+    },
+    {
+      "id": "vision-table-base",
+      "file": "table-base.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "498fbb4628ad48faefdde692db72d9999651548409bfe3b88e39a7ef48334f53",
+      "family": "table",
+      "variation": "base",
+      "facts": [
+        {
+          "id": "aster",
+          "status": "READY",
+          "quality": 85,
+          "cost": 120
+        },
+        {
+          "id": "birch",
+          "status": "READY",
+          "quality": 84,
+          "cost": 110
+        },
+        {
+          "id": "cedar",
+          "status": "HOLD",
+          "quality": 92,
+          "cost": 95
+        },
+        {
+          "id": "dahlia",
+          "status": "READY",
+          "quality": 79,
+          "cost": 100
+        },
+        {
+          "id": "elm",
+          "status": "READY",
+          "quality": 88,
+          "cost": 130
+        }
+      ],
+      "expected_selected_id": "birch",
+      "expected_reason": "Eligible READY, quality>=80 candidates: aster (cost 120), birch (cost 110), elm (cost 130). Select the uniquely lowest cost.",
+      "compared_with": null,
+      "relation": "base",
+      "change": null
+    },
+    {
+      "id": "vision-table-changed",
+      "file": "table-changed.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "933c612be7b49b092f0c65d85cf68e7c81b196911bd4072238cf5d9671ea3d80",
+      "family": "table",
+      "variation": "changed",
+      "facts": [
+        {
+          "id": "aster",
+          "status": "READY",
+          "quality": 85,
+          "cost": 120
+        },
+        {
+          "id": "birch",
+          "status": "READY",
+          "quality": 78,
+          "cost": 110
+        },
+        {
+          "id": "cedar",
+          "status": "HOLD",
+          "quality": 92,
+          "cost": 95
+        },
+        {
+          "id": "dahlia",
+          "status": "READY",
+          "quality": 79,
+          "cost": 100
+        },
+        {
+          "id": "elm",
+          "status": "READY",
+          "quality": 88,
+          "cost": 130
+        }
+      ],
+      "expected_selected_id": "aster",
+      "expected_reason": "Eligible READY, quality>=80 candidates: aster (cost 120), elm (cost 130). Select the uniquely lowest cost.",
+      "compared_with": "vision-table-base",
+      "relation": "selection_changes",
+      "change": "Change only BIRCH's QUALITY from 84 to 78 (including its quality bar)."
+    },
+    {
+      "id": "vision-table-relayout",
+      "file": "table-relayout.png",
+      "dimensions": [
+        960,
+        720
+      ],
+      "sha256": "c9684b96fbe4dfe41fe810bed852bcf3809e430508f405fd991e2c715d2c9a18",
+      "family": "table",
+      "variation": "relayout",
+      "facts": [
+        {
+          "id": "aster",
+          "status": "READY",
+          "quality": 85,
+          "cost": 120
+        },
+        {
+          "id": "birch",
+          "status": "READY",
+          "quality": 84,
+          "cost": 110
+        },
+        {
+          "id": "cedar",
+          "status": "HOLD",
+          "quality": 92,
+          "cost": 95
+        },
+        {
+          "id": "dahlia",
+          "status": "READY",
+          "quality": 79,
+          "cost": 100
+        },
+        {
+          "id": "elm",
+          "status": "READY",
+          "quality": 88,
+          "cost": 130
+        }
+      ],
+      "expected_selected_id": "birch",
+      "expected_reason": "Eligible READY, quality>=80 candidates: aster (cost 120), birch (cost 110), elm (cost 130). Select the uniquely lowest cost.",
+      "compared_with": "vision-table-base",
+      "relation": "selection_preserved",
+      "change": "Reorder cards/rows and change decorative accent; preserve evidence values."
+    }
+  ],
+  "preview_file": "contact-sheet.png",
+  "preview_sha256": "5f9d41121d3da80c41c320186a654b0984f067550dbf046065b626c495ee5bba"
+}

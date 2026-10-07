@@ -17,6 +17,7 @@ namespace branchscore {
 namespace {
 
 constexpr std::size_t max_graph_nodes = 8192;
+constexpr std::size_t prefill_token_microbatch_size = 512;
 
 ggml_tensor * require_text_tensor(ModelBundle & model, const std::string & name) {
     auto * tensor = model.text_tensor(name);
@@ -246,6 +247,9 @@ struct PrefillState::Impl {
     BackendContext * backend = nullptr;
     BackendTiming backend_timing;
     std::size_t graph_node_count = 0;
+    std::size_t graph_count = 0;
+    std::size_t token_microbatch_size = 0;
+    std::size_t peak_graph_buffer_bytes = 0;
     ggml_context * logits_ctx = nullptr;
     ggml_backend_buffer_t logits_buffer = nullptr;
     ggml_tensor * logits = nullptr;
@@ -280,6 +284,22 @@ std::size_t PrefillState::graph_node_count() const noexcept {
     return impl_->graph_node_count;
 }
 
+std::size_t PrefillState::graph_count() const noexcept {
+    return impl_->graph_count;
+}
+
+std::size_t PrefillState::token_microbatch_size() const noexcept {
+    return impl_->token_microbatch_size;
+}
+
+std::size_t PrefillState::cache_buffer_bytes() const noexcept {
+    return impl_->cache->buffer_bytes();
+}
+
+std::size_t PrefillState::peak_graph_buffer_bytes() const noexcept {
+    return impl_->peak_graph_buffer_bytes;
+}
+
 PrefillEngine::PrefillEngine(ModelBundle & model, BackendContext & backend)
     : model_(model), backend_(backend) {}
 
@@ -302,160 +322,8 @@ PrefillState PrefillEngine::prefill(
 
     auto result = std::make_unique<PrefillState::Impl>();
     result->backend = &backend_;
-    result->cache = std::make_unique<StateCache>(
-        config, token_count, backend_);
-
-    const std::size_t context_size =
-        max_graph_nodes * ggml_tensor_overhead() +
-        ggml_graph_overhead_custom(max_graph_nodes, false);
-    std::vector<std::uint8_t> context_memory(context_size);
-    ggml_init_params params{context_memory.size(), context_memory.data(), true};
-    using ContextPointer = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
-    ContextPointer ctx(ggml_init(params), ggml_free);
-    if (!ctx) throw std::runtime_error("failed to create prefill graph context");
-    auto * graph = ggml_new_graph_custom(ctx.get(), max_graph_nodes, false);
-
-    std::vector<TokenId> all_token_ids;
-    all_token_ids.reserve(token_count);
-    all_token_ids.insert(
-        all_token_ids.end(), tokens_before_image.begin(), tokens_before_image.end());
-    all_token_ids.insert(all_token_ids.end(), visual_count, 0);
-    all_token_ids.insert(
-        all_token_ids.end(), tokens_after_image.begin(), tokens_after_image.end());
-    auto * per_layer_ids = ggml_new_tensor_1d(
-        ctx.get(), GGML_TYPE_I32, token_count);
-    ggml_set_name(per_layer_ids, "prefill_token_ids");
-    ggml_set_input(per_layer_ids);
-
-    auto * token_embedding = require_text_tensor(model_, "token_embd.weight");
-    ggml_tensor * input = nullptr;
-    ggml_tensor * before_ids = nullptr;
-    ggml_tensor * after_ids = nullptr;
-    const float embedding_scale = std::sqrt(config.embedding_length);
-    if (!tokens_before_image.empty()) {
-        before_ids = ggml_new_tensor_1d(
-            ctx.get(), GGML_TYPE_I32, tokens_before_image.size());
-        ggml_set_input(before_ids);
-        auto * segment = ggml_scale(
-            ctx.get(), ggml_get_rows(ctx.get(), token_embedding, before_ids),
-            embedding_scale);
-        input = append_tokens(ctx.get(), input, segment);
-    }
-    if (visual_tokens != nullptr) {
-        input = append_tokens(ctx.get(), input, visual_tokens->tensor());
-    }
-    if (!tokens_after_image.empty()) {
-        after_ids = ggml_new_tensor_1d(
-            ctx.get(), GGML_TYPE_I32, tokens_after_image.size());
-        ggml_set_input(after_ids);
-        auto * segment = ggml_scale(
-            ctx.get(), ggml_get_rows(ctx.get(), token_embedding, after_ids),
-            embedding_scale);
-        input = append_tokens(ctx.get(), input, segment);
-    }
-    if (input == nullptr) throw std::runtime_error("prefill has no input embeddings");
-
-    auto * positions = ggml_new_tensor_1d(ctx.get(), GGML_TYPE_I32, token_count);
-    ggml_set_input(positions);
-    auto * full_mask = ggml_new_tensor_2d(
-        ctx.get(), GGML_TYPE_F32, token_count, token_count);
-    auto * sliding_mask = ggml_new_tensor_2d(
-        ctx.get(), GGML_TYPE_F32, token_count, token_count);
-    ggml_set_input(full_mask);
-    ggml_set_input(sliding_mask);
-
-    auto * per_layer = ggml_get_rows(
-        ctx.get(), require_text_tensor(model_, "per_layer_token_embd.weight"),
-        per_layer_ids);
-    per_layer = ggml_reshape_3d(
-        ctx.get(), per_layer, config.per_layer_embedding_length,
-        config.block_count, token_count);
-    per_layer = ggml_scale(
-        ctx.get(), per_layer, std::sqrt(config.per_layer_embedding_length));
-    auto * projected = ggml_mul_mat(
-        ctx.get(), require_text_tensor(model_, "per_layer_model_proj.weight"), input);
-    projected = ggml_scale(
-        ctx.get(), projected, 1.0F / std::sqrt(config.embedding_length));
-    projected = ggml_reshape_3d(
-        ctx.get(), projected, config.per_layer_embedding_length,
-        config.block_count, token_count);
-    projected = rms_norm(
-        ctx.get(), projected,
-        require_text_tensor(model_, "per_layer_proj_norm.weight"),
-        config.layer_norm_epsilon);
-    per_layer = ggml_scale(
-        ctx.get(), ggml_add(ctx.get(), projected, per_layer),
-        1.0F / std::sqrt(2.0F));
-    per_layer = ggml_cont(
-        ctx.get(), ggml_permute(ctx.get(), per_layer, 0, 2, 1, 3));
-
-    for (std::uint32_t layer = 0; layer < config.block_count; ++layer) {
-        input = build_layer(
-            ctx.get(), graph, model_, *result->cache, config, layer, token_count,
-            0, token_count,
-            positions, full_mask, sliding_mask, per_layer, input);
-    }
-    input = rms_norm(
-        ctx.get(), input, require_text_tensor(model_, "output_norm.weight"),
-        config.layer_norm_epsilon);
-    input = ggml_view_2d(
-        ctx.get(), input, config.embedding_length, 1, input->nb[1],
-        (token_count - 1) * input->nb[1]);
-    auto * logits = ggml_mul_mat(ctx.get(), token_embedding, input);
-    if (config.final_logit_softcap != 0.0F) {
-        logits = ggml_scale(
-            ctx.get(), logits, 1.0F / config.final_logit_softcap);
-        logits = ggml_tanh(ctx.get(), logits);
-        logits = ggml_scale(ctx.get(), logits, config.final_logit_softcap);
-    }
-    ggml_set_output(logits);
-    ggml_build_forward_expand(graph, logits);
-
-    using AllocatorPointer = std::unique_ptr<
-        std::remove_pointer_t<ggml_gallocr_t>, decltype(&ggml_gallocr_free)>;
-    AllocatorPointer allocator(
-        ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
-    if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
-        throw std::runtime_error("failed to allocate prefill graph on selected backend");
-    }
-
-    result->backend->tensor_set_timed(
-        per_layer_ids, all_token_ids.data(), 0, ggml_nbytes(per_layer_ids),
-        result->backend_timing);
-    if (before_ids != nullptr) {
-        result->backend->tensor_set_timed(
-            before_ids, tokens_before_image.data(), 0, ggml_nbytes(before_ids),
-            result->backend_timing);
-    }
-    if (after_ids != nullptr) {
-        result->backend->tensor_set_timed(
-            after_ids, tokens_after_image.data(), 0, ggml_nbytes(after_ids),
-            result->backend_timing);
-    }
-    std::vector<std::int32_t> position_values(token_count);
-    for (std::size_t index = 0; index < token_count; ++index) {
-        position_values[index] = static_cast<std::int32_t>(index);
-    }
-    result->backend->tensor_set_timed(
-        positions, position_values.data(), 0, ggml_nbytes(positions),
-        result->backend_timing);
-    const auto full_mask_values = causal_mask(0, token_count, token_count, 0);
-    const auto sliding_mask_values = causal_mask(
-        0, token_count, token_count, config.sliding_window);
-    result->backend->tensor_set_timed(
-        full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask),
-        result->backend_timing);
-    result->backend->tensor_set_timed(
-        sliding_mask, sliding_mask_values.data(), 0, ggml_nbytes(sliding_mask),
-        result->backend_timing);
-
-    const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
-    if (status != GGML_STATUS_SUCCESS) {
-        throw std::runtime_error(
-            "prefill graph compute failed: " + std::string(ggml_status_to_string(status)));
-    }
-    result->backend->synchronize(result->backend_timing);
-    result->graph_node_count = ggml_graph_n_nodes(graph);
+    result->cache = std::make_unique<StateCache>(config, token_count, backend_);
+    result->token_microbatch_size = prefill_token_microbatch_size;
 
     ggml_init_params logits_params{3 * ggml_tensor_overhead(), nullptr, true};
     result->logits_ctx = ggml_init(logits_params);
@@ -469,9 +337,202 @@ PrefillState PrefillEngine::prefill(
     if (result->logits_buffer == nullptr) {
         throw std::runtime_error("failed to allocate persistent Prefill logits");
     }
-    result->backend->tensor_copy_timed(
-        logits, result->logits, result->backend_timing);
-    result->backend->synchronize(result->backend_timing);
+
+    const std::size_t context_size =
+        max_graph_nodes * ggml_tensor_overhead() +
+        ggml_graph_overhead_custom(max_graph_nodes, false);
+    using ContextPointer = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
+    using AllocatorPointer = std::unique_ptr<
+        std::remove_pointer_t<ggml_gallocr_t>, decltype(&ggml_gallocr_free)>;
+    auto * token_embedding = require_text_tensor(model_, "token_embd.weight");
+    const float embedding_scale = std::sqrt(config.embedding_length);
+    const std::size_t before_count = tokens_before_image.size();
+    const std::size_t visual_begin = before_count;
+    const std::size_t visual_end = visual_begin + visual_count;
+
+    for (std::size_t chunk_start = 0; chunk_start < token_count;
+         chunk_start += prefill_token_microbatch_size) {
+        const std::size_t query_count = std::min(
+            prefill_token_microbatch_size, token_count - chunk_start);
+        const std::size_t chunk_end = chunk_start + query_count;
+        const std::size_t cache_count = chunk_end;
+
+        std::vector<std::uint8_t> context_memory(context_size);
+        ggml_init_params params{context_memory.size(), context_memory.data(), true};
+        ContextPointer ctx(ggml_init(params), ggml_free);
+        if (!ctx) throw std::runtime_error("failed to create prefill graph context");
+        auto * graph = ggml_new_graph_custom(ctx.get(), max_graph_nodes, false);
+
+        std::vector<TokenId> per_layer_id_values(query_count, 0);
+        std::vector<std::int32_t> position_values(query_count);
+        for (std::size_t index = 0; index < query_count; ++index) {
+            const std::size_t position = chunk_start + index;
+            position_values[index] = static_cast<std::int32_t>(position);
+            if (position < before_count) {
+                per_layer_id_values[index] = tokens_before_image[position];
+            } else if (position >= visual_end) {
+                per_layer_id_values[index] =
+                    tokens_after_image[position - visual_end];
+            }
+        }
+
+        auto * per_layer_ids = ggml_new_tensor_1d(
+            ctx.get(), GGML_TYPE_I32, query_count);
+        ggml_set_input(per_layer_ids);
+        auto * positions = ggml_new_tensor_1d(
+            ctx.get(), GGML_TYPE_I32, query_count);
+        ggml_set_input(positions);
+        auto * full_mask = ggml_new_tensor_2d(
+            ctx.get(), GGML_TYPE_F32, cache_count, query_count);
+        auto * sliding_mask = ggml_new_tensor_2d(
+            ctx.get(), GGML_TYPE_F32, cache_count, query_count);
+        ggml_set_input(full_mask);
+        ggml_set_input(sliding_mask);
+
+        std::vector<std::pair<ggml_tensor *, std::vector<TokenId>>> text_inputs;
+        ggml_tensor * input = nullptr;
+        const auto append_text = [&](const std::vector<TokenId> & tokens,
+                                     const std::size_t segment_start) {
+            const std::size_t segment_end = segment_start + tokens.size();
+            const std::size_t overlap_start = std::max(chunk_start, segment_start);
+            const std::size_t overlap_end = std::min(chunk_end, segment_end);
+            if (overlap_start >= overlap_end) return;
+
+            std::vector<TokenId> ids(
+                tokens.begin() + (overlap_start - segment_start),
+                tokens.begin() + (overlap_end - segment_start));
+            auto * ids_tensor = ggml_new_tensor_1d(
+                ctx.get(), GGML_TYPE_I32, ids.size());
+            ggml_set_input(ids_tensor);
+            auto * embeddings = ggml_scale(
+                ctx.get(), ggml_get_rows(ctx.get(), token_embedding, ids_tensor),
+                embedding_scale);
+            input = append_tokens(ctx.get(), input, embeddings);
+            text_inputs.emplace_back(ids_tensor, std::move(ids));
+        };
+        append_text(tokens_before_image, 0);
+        if (visual_tokens != nullptr) {
+            const std::size_t overlap_start = std::max(chunk_start, visual_begin);
+            const std::size_t overlap_end = std::min(chunk_end, visual_end);
+            if (overlap_start < overlap_end) {
+                const std::size_t visual_offset = overlap_start - visual_begin;
+                const std::size_t visual_chunk_count = overlap_end - overlap_start;
+                auto * visual_chunk = ggml_view_2d(
+                    ctx.get(), visual_tokens->tensor(), config.embedding_length,
+                    visual_chunk_count, visual_tokens->tensor()->nb[1],
+                    visual_offset * visual_tokens->tensor()->nb[1]);
+                input = append_tokens(ctx.get(), input, visual_chunk);
+            }
+        }
+        append_text(tokens_after_image, visual_end);
+        if (input == nullptr ||
+            static_cast<std::size_t>(input->ne[1]) != query_count) {
+            throw std::runtime_error("Prefill chunk input has an unexpected shape");
+        }
+
+        auto * per_layer = ggml_get_rows(
+            ctx.get(), require_text_tensor(model_, "per_layer_token_embd.weight"),
+            per_layer_ids);
+        per_layer = ggml_reshape_3d(
+            ctx.get(), per_layer, config.per_layer_embedding_length,
+            config.block_count, query_count);
+        per_layer = ggml_scale(
+            ctx.get(), per_layer, std::sqrt(config.per_layer_embedding_length));
+        auto * projected = ggml_mul_mat(
+            ctx.get(), require_text_tensor(model_, "per_layer_model_proj.weight"), input);
+        projected = ggml_scale(
+            ctx.get(), projected, 1.0F / std::sqrt(config.embedding_length));
+        projected = ggml_reshape_3d(
+            ctx.get(), projected, config.per_layer_embedding_length,
+            config.block_count, query_count);
+        projected = rms_norm(
+            ctx.get(), projected,
+            require_text_tensor(model_, "per_layer_proj_norm.weight"),
+            config.layer_norm_epsilon);
+        per_layer = ggml_scale(
+            ctx.get(), ggml_add(ctx.get(), projected, per_layer),
+            1.0F / std::sqrt(2.0F));
+        per_layer = ggml_cont(
+            ctx.get(), ggml_permute(ctx.get(), per_layer, 0, 2, 1, 3));
+
+        for (std::uint32_t layer = 0; layer < config.block_count; ++layer) {
+            input = build_layer(
+                ctx.get(), graph, model_, *result->cache, config, layer,
+                query_count, chunk_start, cache_count, positions, full_mask,
+                sliding_mask, per_layer, input);
+        }
+
+        ggml_tensor * chunk_logits = nullptr;
+        if (chunk_end == token_count) {
+            input = rms_norm(
+                ctx.get(), input, require_text_tensor(model_, "output_norm.weight"),
+                config.layer_norm_epsilon);
+            input = ggml_view_2d(
+                ctx.get(), input, config.embedding_length, 1, input->nb[1],
+                (query_count - 1) * input->nb[1]);
+            chunk_logits = ggml_mul_mat(ctx.get(), token_embedding, input);
+            if (config.final_logit_softcap != 0.0F) {
+                chunk_logits = ggml_scale(
+                    ctx.get(), chunk_logits, 1.0F / config.final_logit_softcap);
+                chunk_logits = ggml_tanh(ctx.get(), chunk_logits);
+                chunk_logits = ggml_scale(
+                    ctx.get(), chunk_logits, config.final_logit_softcap);
+            }
+            ggml_set_output(chunk_logits);
+            ggml_build_forward_expand(graph, chunk_logits);
+        } else {
+            ggml_build_forward_expand(graph, input);
+        }
+
+        AllocatorPointer allocator(
+            ggml_gallocr_new(backend_.buffer_type()), ggml_gallocr_free);
+        if (!allocator || !ggml_gallocr_alloc_graph(allocator.get(), graph)) {
+            throw std::runtime_error(
+                "failed to allocate prefill graph on selected backend");
+        }
+        result->peak_graph_buffer_bytes = std::max(
+            result->peak_graph_buffer_bytes,
+            ggml_gallocr_get_buffer_size(allocator.get(), 0));
+
+        result->backend->tensor_set_timed(
+            per_layer_ids, per_layer_id_values.data(), 0, ggml_nbytes(per_layer_ids),
+            result->backend_timing);
+        result->backend->tensor_set_timed(
+            positions, position_values.data(), 0, ggml_nbytes(positions),
+            result->backend_timing);
+        for (const auto & text_input : text_inputs) {
+            result->backend->tensor_set_timed(
+                text_input.first, text_input.second.data(), 0,
+                ggml_nbytes(text_input.first), result->backend_timing);
+        }
+        const auto full_mask_values =
+            causal_mask(chunk_start, query_count, cache_count, 0);
+        const auto sliding_mask_values = causal_mask(
+            chunk_start, query_count, cache_count, config.sliding_window);
+        result->backend->tensor_set_timed(
+            full_mask, full_mask_values.data(), 0, ggml_nbytes(full_mask),
+            result->backend_timing);
+        result->backend->tensor_set_timed(
+            sliding_mask, sliding_mask_values.data(), 0,
+            ggml_nbytes(sliding_mask), result->backend_timing);
+
+        const auto status = ggml_backend_graph_compute(backend_.backend(), graph);
+        if (status != GGML_STATUS_SUCCESS) {
+            throw std::runtime_error(
+                "prefill graph compute failed: " +
+                std::string(ggml_status_to_string(status)));
+        }
+        result->backend->synchronize(result->backend_timing);
+        result->graph_node_count += ggml_graph_n_nodes(graph);
+        ++result->graph_count;
+
+        if (chunk_logits != nullptr) {
+            result->backend->tensor_copy_timed(
+                chunk_logits, result->logits, result->backend_timing);
+            result->backend->synchronize(result->backend_timing);
+        }
+    }
+
     result->cache->freeze_prefix(token_count);
     return PrefillState(std::move(result));
 }

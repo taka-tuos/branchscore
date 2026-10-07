@@ -96,6 +96,16 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     const std::size_t image_index = image_position == all_ids.end()
         ? all_ids.size()
         : static_cast<std::size_t>(image_position - all_ids.begin());
+    if (request.has_image()) {
+        const auto image_begin = tokenizer_.find_token("<|image>");
+        const auto image_end = tokenizer_.find_token("<image|>");
+        if (!image_begin || !image_end || image_index == 0 ||
+            image_index + 1 >= all_ids.size() ||
+            all_ids[image_index - 1] != *image_begin ||
+            all_ids[image_index + 1] != *image_end) {
+            throw std::runtime_error("Gemma 4 image boundary tokens are missing");
+        }
+    }
     std::vector<TokenId> tokens_before(all_ids.begin(), all_ids.begin() + image_index);
     std::vector<TokenId> tokens_after;
     if (image_position != all_ids.end()) {

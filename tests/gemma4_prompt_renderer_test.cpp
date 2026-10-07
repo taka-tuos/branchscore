@@ -56,7 +56,7 @@ int main() {
         const auto expected_image =
             "<bos><|turn>system\n"
             "Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning."
-            "<turn|>\n<|turn>user\n<|image|>\n"
+            "<turn|>\n<|turn>user\n<|image><|image|><image|>\n"
             "State:\nwhite background\n\nQuestion:\nWhat is visible?\n\n"
             "Options:\n"
             "[{\"description\":\"Keep \\\"it\\\" running\\nnow\",\"letter\":\"A\"},"
