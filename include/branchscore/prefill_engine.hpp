@@ -28,6 +28,10 @@ public:
     std::vector<float> download_logits() const;
     BackendTiming backend_timing() const noexcept;
     std::size_t graph_node_count() const noexcept;
+    std::size_t graph_count() const noexcept;
+    std::size_t token_microbatch_size() const noexcept;
+    std::size_t cache_buffer_bytes() const noexcept;
+    std::size_t peak_graph_buffer_bytes() const noexcept;
 
 private:
     struct Impl;

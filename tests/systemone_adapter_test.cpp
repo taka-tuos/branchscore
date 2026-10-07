@@ -162,6 +162,35 @@ int main() {
         }
         expect(question_limit_rejected, "question limit above 16 was accepted");
 
+        for (std::size_t count : {512U, 513U}) {
+            Json::Object criteria;
+            for (std::size_t i = count; i > 0; --i) {
+                const auto number = std::to_string(i - 1);
+                criteria.emplace("part" + std::string(3 - number.size(), '0') + number, Json{});
+            }
+            Json::Object question;
+            question.emplace("type", Json("choice"));
+            question.emplace("instructions", Json("choose"));
+            question.emplace("criteria", Json(std::move(criteria)));
+            Json::Object questions;
+            questions.emplace("q", Json(std::move(question)));
+            Json::Object body;
+            body.emplace("state", Json("evidence"));
+            body.emplace("model", Json("branchscore-local"));
+            body.emplace("questions", Json(std::move(questions)));
+            bool accepted = false;
+            try {
+                const auto parsed = branchscore::systemone::parse_request(Json(std::move(body)));
+                accepted = true;
+                expect(parsed.questions[0].decision.options.size() == 512 &&
+                    parsed.questions[0].decision.options.front().id == "part000" &&
+                    parsed.questions[0].decision.options.back().id == "part511" &&
+                    parsed.questions[0].decision.options.back().description == "part511",
+                    "512 criteria lost lexical order or null-description mapping");
+            } catch (const branchscore::systemone::RequestError &) {}
+            expect(accepted == (count == 512), "512/513 choice boundary failed");
+        }
+
         std::cout << "systemone adapter checks passed\n";
         return 0;
     } catch (const std::exception & error) {

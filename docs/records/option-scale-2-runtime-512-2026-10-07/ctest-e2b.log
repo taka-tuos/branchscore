@@ -1,0 +1,27 @@
+Test project /opt/sinobuz/copula/openjev-ggml/branchscore/build-cuda
+      Start  1: backend_context
+ 1/11 Test  #1: backend_context ..................   Passed    0.41 sec
+      Start  2: gemma4_prompt_renderer
+ 2/11 Test  #2: gemma4_prompt_renderer ...........   Passed    0.07 sec
+      Start  3: decision_contract
+ 3/11 Test  #3: decision_contract ................   Passed    0.07 sec
+      Start  4: categorical_readout
+ 4/11 Test  #4: categorical_readout ..............   Passed    0.07 sec
+      Start  5: json
+ 5/11 Test  #5: json .............................   Passed    0.07 sec
+      Start  6: systemone_adapter
+ 6/11 Test  #6: systemone_adapter ................   Passed    0.07 sec
+      Start  7: gemma4_decision_engine
+ 7/11 Test  #7: gemma4_decision_engine ...........   Passed    2.32 sec
+      Start  8: tokenizer
+ 8/11 Test  #8: tokenizer ........................   Passed    0.48 sec
+      Start  9: image_preprocessor
+ 9/11 Test  #9: image_preprocessor ...............   Passed    0.07 sec
+      Start 10: state_cache
+10/11 Test #10: state_cache ......................   Passed    0.33 sec
+      Start 11: prefill
+11/11 Test #11: prefill ..........................   Passed    2.70 sec
+
+100% tests passed out of 11
+
+Total Test time (real) =   6.66 sec

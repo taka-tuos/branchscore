@@ -1,0 +1,13 @@
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7800 MiB):
+  Device 0: NVIDIA GeForce RTX 2060 SUPER, compute capability 7.5, VMM: yes, VRAM: 7800 MiB
+listening host=127.0.0.1 port=49063 model=branchscore-local
+request_id=- status=400 wall_ms=0.144986
+request_id=- status=200 wall_ms=0.125734
+request_id=- status=200 wall_ms=0.064415
+request_id=- status=200 wall_ms=261.033
+request_id=- status=200 wall_ms=6090.76
+request_id=- status=200 wall_ms=11171.7
+request_id=- status=422 wall_ms=0.404309
+request_id=- status=413 wall_ms=19.4264
+request_id=- status=413 wall_ms=33.7193
+request_id=- status=200 wall_ms=55.6526

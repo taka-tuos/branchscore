@@ -1,0 +1,80 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2576416768,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 29360128,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ],
+  "logits": [
+    27.78095245361328,
+    28.74846839904785,
+    27.006610870361328,
+    26.15326499938965,
+    16.938304901123047,
+    15.561498641967773
+  ],
+  "microbatch": 512,
+  "path": "F16 KV/mask, Flash with F32 precision request, full SWA, 256-position padding",
+  "peak_graph_bytes": 101536384,
+  "positions": 478,
+  "prefill_ms": 255.632946,
+  "probabilities": [
+    0.23316465582884796,
+    0.6135494271751767,
+    0.10749058884547573,
+    0.04578961996615377,
+    4.557857232148997e-06,
+    1.1503271137885256e-06
+  ],
+  "selected_index": 1,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-board-relayout-distractors",
+  "placement": "last",
+  "renderer": "research-gemma4-image-last-v1",
+  "expected_selected_id": "east",
+  "selected_id": "west",
+  "options": [
+    {
+      "id": "tied",
+      "description": "All four regions are tied."
+    },
+    {
+      "id": "west",
+      "description": "Select region WEST."
+    },
+    {
+      "id": "east",
+      "description": "Select region EAST."
+    },
+    {
+      "id": "north",
+      "description": "Select region NORTH."
+    },
+    {
+      "id": "south",
+      "description": "Select region SOUTH."
+    },
+    {
+      "id": "empty",
+      "description": "No region contains any red squares."
+    }
+  ],
+  "prompt_sha256": "a1a93933780a41b166e6db3cd020f406fb494c585db49265eb85900c129bc91a",
+  "image_sha256": "ea9cbfe2924f7ff94960e93a801434f903c5675a67b2ca420415a148cbd14a57",
+  "before_sha256": "c636d975325ce111323b5d4dc63c8f49e39f521536b06ef524ab3e24bea77e26",
+  "after_sha256": "0aa991f299edaa8d5eb59e6d201033a7299c4828b8e797e9e8b441a5179144c1",
+  "answers_sha256": "9c39cada8e2e1fe47489e67670bee0d7c58b7e666fe721bdc4cc27ea1c9697ab",
+  "embeddings_sha256": "0a2d463ba6bcde3428e5a8f0526929ee003c0ebdb54800170107453aa2919285"
+}

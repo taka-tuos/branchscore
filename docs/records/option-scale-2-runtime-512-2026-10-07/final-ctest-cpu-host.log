@@ -1,0 +1,23 @@
+Test project /opt/sinobuz/copula/openjev-ggml/branchscore/build-check
+    Start 1: backend_context
+1/9 Test #1: backend_context ..................   Passed    0.01 sec
+    Start 2: gemma4_prompt_renderer
+2/9 Test #2: gemma4_prompt_renderer ...........   Passed    0.00 sec
+    Start 3: decision_contract
+3/9 Test #3: decision_contract ................   Passed    0.00 sec
+    Start 4: categorical_readout
+4/9 Test #4: categorical_readout ..............   Passed    0.00 sec
+    Start 5: json
+5/9 Test #5: json .............................   Passed    0.00 sec
+    Start 6: systemone_adapter
+6/9 Test #6: systemone_adapter ................   Passed    0.00 sec
+    Start 7: tokenizer
+7/9 Test #7: tokenizer ........................   Passed    0.40 sec
+    Start 8: image_preprocessor
+8/9 Test #8: image_preprocessor ...............   Passed    0.01 sec
+    Start 9: state_cache
+9/9 Test #9: state_cache ......................   Passed    0.01 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   0.44 sec

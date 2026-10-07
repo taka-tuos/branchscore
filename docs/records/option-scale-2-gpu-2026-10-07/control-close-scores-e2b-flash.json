@@ -1,0 +1,41 @@
+{
+  "after_load_free_bytes": 4621139968,
+  "after_prefill_free_bytes": 4533059584,
+  "after_vision_free_bytes": 4621139968,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 4718592,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "logits": [
+    -11.613510131835938,
+    0.9629064202308655,
+    -0.33541616797447205,
+    -8.784147262573242
+  ],
+  "microbatch": 512,
+  "path": "F16 KV/mask, Flash with F32 precision request, full SWA, 256-position padding",
+  "peak_graph_bytes": 34785536,
+  "positions": 176,
+  "prefill_ms": 111.308305,
+  "probabilities": [
+    2.7119757620057577e-06,
+    0.7855143340240874,
+    0.21443702759156846,
+    4.592640858205012e-05
+  ],
+  "selected_index": 1,
+  "text_weight_bytes": 3090917516,
+  "vision_weight_bytes": 368649984,
+  "visual_tokens": 0,
+  "expected_selected_id": "birch",
+  "selected_id": "amber",
+  "before_sha256": "a6ea7733c130071bc90b76de5bfca98c651a573e19d7c1ee266fa0009b2ab33b",
+  "after_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "answers_sha256": "4dba42160f687252e09ad9f045225f8107a1900e4dbfc46c7f7c59d305495d75"
+}

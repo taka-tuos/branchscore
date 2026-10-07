@@ -27,6 +27,7 @@ public:
     std::size_t capacity() const noexcept;
     std::size_t prefix_length() const noexcept;
     std::size_t cursor() const noexcept;
+    std::size_t buffer_bytes() const noexcept;
 
     std::uint32_t source_layer(std::uint32_t layer) const;
     ggml_tensor * key(std::uint32_t layer) const;

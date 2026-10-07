@@ -90,6 +90,13 @@ int main(int argc, char ** argv) {
         if (!rejected_invalid_count) {
             throw std::runtime_error("engine accepted an invalid option count");
         }
+        auto over_budget = request;
+        over_budget.state.clear();
+        for (std::size_t i = 0; i < 20000; ++i) over_budget.state += "word ";
+        bool budget_rejected = false;
+        try { (void) engine.evaluate(over_budget); }
+        catch (const branchscore::DecisionBudgetError & error) { budget_rejected = error.code() == "token_budget_exceeded"; }
+        if (!budget_rejected) throw std::runtime_error("engine did not reject oversized prompt before model work");
         request.chat_template_file = "/definitely/nonexistent/template.jinja";
         const auto no_op = engine.evaluate(request);
         check_result(no_op, true);

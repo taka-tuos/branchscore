@@ -1,0 +1,49 @@
+{
+  "purpose": "synthetic tokenizer sizing only; actual image expansion/VRAM/quality not measured",
+  "model_sha256": "85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87",
+  "seed": 20261007,
+  "results": [
+    {
+      "pattern": "digits",
+      "option_count": 256,
+      "description_chars": 20,
+      "rendered_tokens_including_one_image_placeholder": 6997,
+      "prompt_sha256": "944c046714d1e41c6d7370e246b8af58ebf4a5afee550a48e44ce5271f2b8417"
+    },
+    {
+      "pattern": "digits",
+      "option_count": 512,
+      "description_chars": 20,
+      "rendered_tokens_including_one_image_placeholder": 13909,
+      "prompt_sha256": "6477f11d24a0a21cecff62aaa6fcee1aa6cacedf999a0de49073b9fe489c2332"
+    },
+    {
+      "pattern": "alphanumeric",
+      "option_count": 256,
+      "description_chars": 20,
+      "rendered_tokens_including_one_image_placeholder": 5606,
+      "prompt_sha256": "57ce289fc6078e9447a2f9b5d09051358bd51190a73b2f6d86e3d852cc54d128"
+    },
+    {
+      "pattern": "alphanumeric",
+      "option_count": 512,
+      "description_chars": 20,
+      "rendered_tokens_including_one_image_placeholder": 11085,
+      "prompt_sha256": "b674bbba3770fcc23d7789ed06144c0289e8fb2956c5679ede997fad390b99c6"
+    },
+    {
+      "pattern": "separated",
+      "option_count": 256,
+      "description_chars": 20,
+      "rendered_tokens_including_one_image_placeholder": 5621,
+      "prompt_sha256": "0090089c34a36d0b6898fc5f74e2258604fad6831192761042a227bcebc84c14"
+    },
+    {
+      "pattern": "separated",
+      "option_count": 512,
+      "description_chars": 20,
+      "rendered_tokens_including_one_image_placeholder": 11175,
+      "prompt_sha256": "9554876baab8b281068902714bc3fe9d7d4b315c3b395f98a2f83f988dbab6c6"
+    }
+  ]
+}

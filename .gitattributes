@@ -1,0 +1,2 @@
+# Unified diff blank context lines require a leading space.
+docs/records/phase4-step4-cpu-reference/*.patch whitespace=-blank-at-eol

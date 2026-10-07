@@ -18,7 +18,7 @@ model-specific differences localized.
    in one fixed Gemma 4 prompt.
 2. Encode images with a vision encoder when present.
 3. Prefill the complete displayed-options prompt once.
-4. Gather the logits of the single-token A–P answer labels at the next model
+4. Gather the logits of the supplied single-token answer labels at the next model
    position.
 5. Apply a temperature-1 stable softmax across the supplied labels and return
    the selected semantic option plus timing information.
@@ -39,13 +39,29 @@ not calibrated confidence. PMI, calibration, and sampling remain out of scope.
 - llama.cpp and OpenJev are upstream references, not dependencies to wrap as
   the decision runtime.
 
-## First practical milestone
+## First practical milestone (completed)
 
 Input: JPEG/PNG image, text state, question, and 2–16 options. Model: Gemma 4
 E2B Q4/Q5 GGUF. Output: answer-slot raw logits, relative probabilities,
 semantic selection, prompt/readout identity, and Vision/Prefill/readout
 timings. The same code is checked with E4B. Probabilities are relative to the
 supplied option set and must not be labeled calibrated confidence.
+
+## Current larger-option contract
+
+Phase 4+ extends the same categorical flow to 2–512 options. The legacy 2–16
+prompt keeps A–P labels; 17–512 uses a distinct renderer with fixed two-letter
+single-token labels. CUDA adopts F16 K/V and Flash Attention; other backends
+retain F32 K/V and ordinary Prefill attention.
+
+The initial 512 milestone prioritizes a usable sequential BOM/image workflow.
+It retains the current image-first prompt and request-scoped cache. A decision
+must fit both the model context and 16,384 expanded Prefill positions; HTTP
+questions together must fit 32,768 positions. Candidate count and position
+budgets are separate limits, with explicit rejection and no truncation.
+High-precision CUDA comparisons, real BOM/image evaluation, and prefix reuse
+remain follow-up work, with existing quality and resource evidence recorded in
+[option-scale-2](phases/phase-4-plus-option-scale-2.md).
 
 ## Non-goals
 

@@ -1,0 +1,75 @@
+{
+  "command": [
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/build-cuda/branchscore-server",
+    "--model",
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/gemma-4-E4B-it-Q4_K_M.gguf",
+    "--mmproj",
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/mmproj-F16.gguf",
+    "--backend",
+    "cuda",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "49063"
+  ],
+  "checks": [
+    {
+      "name": "health",
+      "status": 200,
+      "elapsed_s": 0.0015143359996727668,
+      "response_sha256": "57c6aacf50324c533bf7cd5832dffa7cbc89069d1cd8753f83f68cdd07d5dc97",
+      "error": null
+    },
+    {
+      "name": "text-17",
+      "status": 200,
+      "elapsed_s": 0.26228119900042657,
+      "response_sha256": "6b83869a02c6f09fec002cafff7a692cf82b3f5514a850a1635de19c1377800e",
+      "error": null
+    },
+    {
+      "name": "text-512",
+      "status": 200,
+      "elapsed_s": 6.094414127997879,
+      "response_sha256": "e3847b2c01db16194b0dd631ade64c7f3797c9432806f4057f634238c37c207a",
+      "error": null
+    },
+    {
+      "name": "mpn-digits-fhd",
+      "status": 200,
+      "elapsed_s": 11.174889654001163,
+      "response_sha256": "9afeec4171d93222dc203375c48d467310f5278a6b3a806cd2c26042f93cd957",
+      "error": null
+    },
+    {
+      "name": "reject-513",
+      "status": 422,
+      "elapsed_s": 0.0013907270003983285,
+      "response_sha256": "f8b0e9c144a748e0b436dbf1813c3c8111fdeb160c37048830566ed0db5b9923",
+      "error": "invalid_request"
+    },
+    {
+      "name": "reject-positions",
+      "status": 413,
+      "elapsed_s": 0.020514191000984283,
+      "response_sha256": "869a518496a36089a8a6212dc748acf03f484d24ff7062692beb58912709e2d0",
+      "error": "token_budget_exceeded"
+    },
+    {
+      "name": "reject-aggregate",
+      "status": 413,
+      "elapsed_s": 0.03518621399780386,
+      "response_sha256": "63f2219048ea4919a250c82269d5f57f4c0fb6943c901a65068426ed624e2688",
+      "error": "request_token_budget_exceeded"
+    },
+    {
+      "name": "recovery",
+      "status": 200,
+      "elapsed_s": 0.05649369700040552,
+      "response_sha256": "8800a048ddccfbee79437862070e1c0d072ff9bff2f6972011861c58b11590e9",
+      "error": null
+    }
+  ],
+  "ui_javascript_syntax": true,
+  "source_sha256": "87c56989126b336498cbc9fdcc0a1b45137926fdc7ee7c1cac014a76e8180ec4"
+}

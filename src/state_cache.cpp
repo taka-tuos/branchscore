@@ -48,11 +48,12 @@ StateCache::StateCache(
     }
     impl_->keys.reserve(stored_layers);
     impl_->values.reserve(stored_layers);
+    const auto cache_type = backend.device().family == "CUDA" ? GGML_TYPE_F16 : GGML_TYPE_F32;
     for (std::uint32_t layer = 0; layer < stored_layers; ++layer) {
         auto * key = ggml_new_tensor_2d(
-            impl_->ctx, GGML_TYPE_F32, config.key_width(layer), capacity);
+            impl_->ctx, cache_type, config.key_width(layer), capacity);
         auto * value = ggml_new_tensor_2d(
-            impl_->ctx, GGML_TYPE_F32, config.value_width(layer), capacity);
+            impl_->ctx, cache_type, config.value_width(layer), capacity);
         ggml_format_name(key, "cache_k_%u", layer);
         ggml_format_name(value, "cache_v_%u", layer);
         impl_->keys.push_back(key);
@@ -63,6 +64,8 @@ StateCache::StateCache(
     if (impl_->buffer == nullptr) {
         throw std::runtime_error("failed to allocate state cache on selected backend");
     }
+    // Flash reads padded K/V positions too; masked padding must contain finite values.
+    if (cache_type == GGML_TYPE_F16) ggml_backend_buffer_clear(impl_->buffer, 0);
 }
 
 StateCache::~StateCache() = default;
@@ -72,6 +75,9 @@ StateCache & StateCache::operator=(StateCache &&) noexcept = default;
 std::size_t StateCache::capacity() const noexcept { return impl_->capacity; }
 std::size_t StateCache::prefix_length() const noexcept { return impl_->prefix_length; }
 std::size_t StateCache::cursor() const noexcept { return impl_->cursor; }
+std::size_t StateCache::buffer_bytes() const noexcept {
+    return impl_->buffer == nullptr ? 0 : ggml_backend_buffer_get_size(impl_->buffer);
+}
 
 std::uint32_t StateCache::source_layer(std::uint32_t layer) const {
     if (layer >= impl_->config.block_count) {

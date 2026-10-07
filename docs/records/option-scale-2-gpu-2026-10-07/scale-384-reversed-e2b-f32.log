@@ -1,0 +1,6 @@
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7800 MiB):
+  Device 0: NVIDIA GeForce RTX 2060 SUPER, compute capability 7.5, VMM: yes, VRAM: 7800 MiB
+before_load free_bytes=8081440768
+after_load free_bytes=4621139968
+after_vision free_bytes=4621139968
+after_prefill free_bytes=4266721280

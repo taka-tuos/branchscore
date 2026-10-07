@@ -1,0 +1,120 @@
+{
+  "command": [
+    "/tmp/branchscore-reference-text",
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/gemma-4-E4B-it-Q4_K_M.gguf",
+    "/tmp/branchscore-gpu-probes/control-long-route-16-e4b-f32.before",
+    "/tmp/branchscore-gpu-probes/control-long-route-16-e4b-f32.reference-logits",
+    "0",
+    "0"
+  ],
+  "returncode": 0,
+  "elapsed_s": 2.4351121709987638,
+  "sampling": "nvidia-smi every >=100ms; sampled device total, not exact allocation peak",
+  "samples": [
+    {
+      "elapsed_s": 0.02231447599842795,
+      "csv": "2026/10/07 13:44:07.862, NVIDIA GeForce RTX 2060 SUPER, 8192, 1, 7800, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.1442164270010835,
+      "csv": "2026/10/07 13:44:07.984, NVIDIA GeForce RTX 2060 SUPER, 8192, 4, 7798, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.265095761998964,
+      "csv": "2026/10/07 13:44:08.106, NVIDIA GeForce RTX 2060 SUPER, 8192, 4, 7798, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.39456272900133627,
+      "csv": "2026/10/07 13:44:08.232, NVIDIA GeForce RTX 2060 SUPER, 8192, 14, 7788, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.5151530479997746,
+      "csv": "2026/10/07 13:44:08.356, NVIDIA GeForce RTX 2060 SUPER, 8192, 94, 7708, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.6354558610000822,
+      "csv": "2026/10/07 13:44:08.476, NVIDIA GeForce RTX 2060 SUPER, 8192, 94, 7708, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.7584573940002883,
+      "csv": "2026/10/07 13:44:08.599, NVIDIA GeForce RTX 2060 SUPER, 8192, 94, 7708, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.8795156669984863,
+      "csv": "2026/10/07 13:44:08.721, NVIDIA GeForce RTX 2060 SUPER, 8192, 94, 7708, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.9994156329994439,
+      "csv": "2026/10/07 13:44:08.841, NVIDIA GeForce RTX 2060 SUPER, 8192, 2978, 4824, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.1188278430017817,
+      "csv": "2026/10/07 13:44:08.960, NVIDIA GeForce RTX 2060 SUPER, 8192, 2978, 4824, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.237836021999101,
+      "csv": "2026/10/07 13:44:09.079, NVIDIA GeForce RTX 2060 SUPER, 8192, 2978, 4824, 25",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.3568540790001862,
+      "csv": "2026/10/07 13:44:09.198, NVIDIA GeForce RTX 2060 SUPER, 8192, 2978, 4824, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.475368883999181,
+      "csv": "2026/10/07 13:44:09.317, NVIDIA GeForce RTX 2060 SUPER, 8192, 2978, 4824, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.5956340080010705,
+      "csv": "2026/10/07 13:44:09.436, NVIDIA GeForce RTX 2060 SUPER, 8192, 3712, 4090, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.7157509450007637,
+      "csv": "2026/10/07 13:44:09.557, NVIDIA GeForce RTX 2060 SUPER, 8192, 3842, 3960, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.834836414000165,
+      "csv": "2026/10/07 13:44:09.676, NVIDIA GeForce RTX 2060 SUPER, 8192, 3842, 3960, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.9539464810004574,
+      "csv": "2026/10/07 13:44:09.795, NVIDIA GeForce RTX 2060 SUPER, 8192, 3842, 3960, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.0735732590001135,
+      "csv": "2026/10/07 13:44:09.914, NVIDIA GeForce RTX 2060 SUPER, 8192, 3842, 3960, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.1946283580000454,
+      "csv": "2026/10/07 13:44:10.035, NVIDIA GeForce RTX 2060 SUPER, 8192, 104, 7698, 15",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.3143070500009344,
+      "csv": "2026/10/07 13:44:10.156, NVIDIA GeForce RTX 2060 SUPER, 8192, 104, 7698, 67",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.435059857001761,
+      "csv": "2026/10/07 13:44:10.276, NVIDIA GeForce RTX 2060 SUPER, 8192, 1, 7800, 67",
+      "returncode": 0
+    }
+  ]
+}

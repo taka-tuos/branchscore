@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <set>
 
 int main() {
     try {
@@ -56,7 +57,7 @@ int main() {
         const auto expected_image =
             "<bos><|turn>system\n"
             "Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning."
-            "<turn|>\n<|turn>user\n<|image|>\n"
+            "<turn|>\n<|turn>user\n<|image><|image|><image|>\n"
             "State:\nwhite background\n\nQuestion:\nWhat is visible?\n\n"
             "Options:\n"
             "[{\"description\":\"Keep \\\"it\\\" running\\nnow\",\"letter\":\"A\"},"
@@ -71,6 +72,34 @@ int main() {
             image.identity == plain.identity) {
             throw std::runtime_error("image/no-op renderer contract is incorrect");
         }
+
+        std::vector<branchscore::DecisionOption> many;
+        for (std::size_t i = 0; i < 513; ++i) many.push_back({"part" + std::to_string(i), "Part " + std::to_string(i)});
+        for (std::size_t count : {16U, 17U, 255U, 256U, 512U}) {
+            const std::vector<branchscore::DecisionOption> subset(many.begin(), many.begin() + count);
+            const auto expanded = renderer.render("Evidence", "Choose", subset, true, policy, {}, false);
+            const bool extended = count > branchscore::legacy_decision_options;
+            std::set<std::string> labels;
+            for (std::size_t i = 0; i < count; ++i) {
+                const auto & slot = expanded.answer_slots[i];
+                labels.insert(slot.label);
+                if (slot.label.size() != (extended ? 2U : 1U) || slot.input_index != i || slot.option_id != subset[i].id) {
+                    throw std::runtime_error("extended label/semantic ID mapping failed");
+                }
+            }
+            if (labels.size() != count || expanded.format.renderer_id != renderer.renderer_id(count) ||
+                expanded.identity.find(expanded.format.renderer_id + "/sha256:") != 0 ||
+                expanded.text.find("<|image><|image|><image|>") > expanded.text.find("Options:\n")) {
+                throw std::runtime_error("extended renderer identity/uniqueness/image order failed");
+            }
+            if (!extended && expanded.answer_slots.back().label != "P") {
+                throw std::runtime_error("16-option A-P contract changed");
+            }
+        }
+        bool rejected = false;
+        try { (void) renderer.render("Evidence", "Choose", many, false, policy, {}, false); }
+        catch (const std::runtime_error &) { rejected = true; }
+        if (!rejected) throw std::runtime_error("renderer accepted 513 options");
 
         std::cout << "renderer=" << plain.format.renderer_id
                   << " identity=" << plain.identity << '\n';

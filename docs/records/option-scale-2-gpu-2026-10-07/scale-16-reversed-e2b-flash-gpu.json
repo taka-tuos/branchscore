@@ -1,0 +1,116 @@
+{
+  "command": [
+    "/tmp/branchscore-gpu-prefill-flash-probe",
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/gemma-4-E2B-it-Q4_K_M.gguf",
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/mmproj-F16.gguf",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/scale-16-reversed.prompt",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/scale-16-reversed.labels",
+    "-",
+    "/tmp/branchscore-gpu-probes/scale-16-reversed-e2b-flash"
+  ],
+  "returncode": 0,
+  "elapsed_s": 2.3467325160017936,
+  "sampling": "nvidia-smi every >=100ms; sampled device total, not exact allocation peak",
+  "samples": [
+    {
+      "elapsed_s": 0.021073137999337632,
+      "csv": "2026/10/07 13:40:33.886, NVIDIA GeForce RTX 2060 SUPER, 8192, 1, 7800, 22",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.15478148400143255,
+      "csv": "2026/10/07 13:40:34.017, NVIDIA GeForce RTX 2060 SUPER, 8192, 14, 7788, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.2762555480003357,
+      "csv": "2026/10/07 13:40:34.142, NVIDIA GeForce RTX 2060 SUPER, 8192, 94, 7708, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.39767926599961356,
+      "csv": "2026/10/07 13:40:34.263, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.5206352570021409,
+      "csv": "2026/10/07 13:40:34.386, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.6423591050006507,
+      "csv": "2026/10/07 13:40:34.508, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.7634592610011168,
+      "csv": "2026/10/07 13:40:34.629, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.8845415720024903,
+      "csv": "2026/10/07 13:40:34.750, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.005387208002503,
+      "csv": "2026/10/07 13:40:34.871, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 23",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.1257492069998989,
+      "csv": "2026/10/07 13:40:34.992, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.2464098500022374,
+      "csv": "2026/10/07 13:40:35.112, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.3673410530027468,
+      "csv": "2026/10/07 13:40:35.233, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.4884745750023285,
+      "csv": "2026/10/07 13:40:35.354, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.60843758700139,
+      "csv": "2026/10/07 13:40:35.474, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.7299646710016532,
+      "csv": "2026/10/07 13:40:35.595, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.8507021860023087,
+      "csv": "2026/10/07 13:40:35.716, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.974475645001803,
+      "csv": "2026/10/07 13:40:35.839, NVIDIA GeForce RTX 2060 SUPER, 8192, 3494, 4308, 17",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.0962670010012516,
+      "csv": "2026/10/07 13:40:35.962, NVIDIA GeForce RTX 2060 SUPER, 8192, 3556, 4246, 22",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.226829284001724,
+      "csv": "2026/10/07 13:40:36.092, NVIDIA GeForce RTX 2060 SUPER, 8192, 104, 7698, 22",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.3466836200022954,
+      "csv": "2026/10/07 13:40:36.213, NVIDIA GeForce RTX 2060 SUPER, 8192, 1, 7800, 22",
+      "returncode": 0
+    }
+  ]
+}

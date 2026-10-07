@@ -1,0 +1,652 @@
+{
+  "family_accuracy": {
+    "f32-first": {
+      "board": 4,
+      "status": 6,
+      "table": 3
+    },
+    "f32-last": {
+      "board": 2,
+      "status": 8,
+      "table": 4
+    },
+    "flash-first": {
+      "board": 4,
+      "status": 6,
+      "table": 4
+    },
+    "flash-last": {
+      "board": 2,
+      "status": 8,
+      "table": 4
+    }
+  },
+  "stability": {
+    "f32-first": {
+      "option_variants_invariant": 3,
+      "changed_evidence_selection_changes": 3,
+      "relayout_selection_invariant": 5,
+      "denominator": 9
+    },
+    "f32-last": {
+      "option_variants_invariant": 2,
+      "changed_evidence_selection_changes": 5,
+      "relayout_selection_invariant": 4,
+      "denominator": 9
+    },
+    "flash-first": {
+      "option_variants_invariant": 4,
+      "changed_evidence_selection_changes": 3,
+      "relayout_selection_invariant": 6,
+      "denominator": 9
+    },
+    "flash-last": {
+      "option_variants_invariant": 2,
+      "changed_evidence_selection_changes": 5,
+      "relayout_selection_invariant": 4,
+      "denominator": 9
+    }
+  },
+  "fa_comparisons": {
+    "first": {
+      "pairs": [
+        {
+          "case_id": "vision-board-base",
+          "nonfa_id": "east",
+          "fa_id": "east",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.533989429473877,
+          "max_probability_delta": 0.19068311684636619
+        },
+        {
+          "case_id": "vision-board-base-reversed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.2579503059387207,
+          "max_probability_delta": 0.03836254216352142
+        },
+        {
+          "case_id": "vision-board-base-distractors",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.4912813504536935,
+          "max_probability_delta": 0.04586436286645679
+        },
+        {
+          "case_id": "vision-board-changed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.2926759719848633,
+          "max_probability_delta": 0.04858876862384309
+        },
+        {
+          "case_id": "vision-board-changed-reversed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5911412239074707,
+          "max_probability_delta": 0.014271105037378828
+        },
+        {
+          "case_id": "vision-board-changed-distractors",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.6432086626688651,
+          "max_probability_delta": 0.010527212402361832
+        },
+        {
+          "case_id": "vision-board-relayout",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.8011350631713867,
+          "max_probability_delta": 0.039332296186697424
+        },
+        {
+          "case_id": "vision-board-relayout-reversed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.2510261535644531,
+          "max_probability_delta": 0.023729052125679745
+        },
+        {
+          "case_id": "vision-board-relayout-distractors",
+          "nonfa_id": "south",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.4686422348022461,
+          "max_probability_delta": 0.13467647768150853
+        },
+        {
+          "case_id": "vision-status-base",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.07385746637980262,
+          "max_probability_delta": 0.002563133107518767
+        },
+        {
+          "case_id": "vision-status-base-reversed",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.9143382708231584,
+          "max_probability_delta": 0.0007356924988104474
+        },
+        {
+          "case_id": "vision-status-base-distractors",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.4555027484893799,
+          "max_probability_delta": 0.10771648728361538
+        },
+        {
+          "case_id": "vision-status-changed",
+          "nonfa_id": "orion",
+          "fa_id": "orion",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.9434852600097656,
+          "max_probability_delta": 0.01552561438361788
+        },
+        {
+          "case_id": "vision-status-changed-reversed",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 1.0655317306518555,
+          "max_probability_delta": 0.2460838145792933
+        },
+        {
+          "case_id": "vision-status-changed-distractors",
+          "nonfa_id": "orion",
+          "fa_id": "orion",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.88551926612854,
+          "max_probability_delta": 0.008024212211125148
+        },
+        {
+          "case_id": "vision-status-relayout",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.6103601455688477,
+          "max_probability_delta": 0.013883797098101424
+        },
+        {
+          "case_id": "vision-status-relayout-reversed",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5620565414428711,
+          "max_probability_delta": 0.03398678407727569
+        },
+        {
+          "case_id": "vision-status-relayout-distractors",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5478169918060303,
+          "max_probability_delta": 0.03866579069604756
+        },
+        {
+          "case_id": "vision-table-base",
+          "nonfa_id": "aster",
+          "fa_id": "aster",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.41874580383300497,
+          "max_probability_delta": 0.15975703179794165
+        },
+        {
+          "case_id": "vision-table-base-reversed",
+          "nonfa_id": "elm",
+          "fa_id": "elm",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.8106990814208999,
+          "max_probability_delta": 0.09256021139245307
+        },
+        {
+          "case_id": "vision-table-base-distractors",
+          "nonfa_id": "aster",
+          "fa_id": "aster",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.5757650647844592,
+          "max_probability_delta": 0.06468787096309914
+        },
+        {
+          "case_id": "vision-table-changed",
+          "nonfa_id": "aster",
+          "fa_id": "aster",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.8124710083007827,
+          "max_probability_delta": 0.019544488722773257
+        },
+        {
+          "case_id": "vision-table-changed-reversed",
+          "nonfa_id": "elm",
+          "fa_id": "elm",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.6408332824707017,
+          "max_probability_delta": 0.06710234105849439
+        },
+        {
+          "case_id": "vision-table-changed-distractors",
+          "nonfa_id": "aster",
+          "fa_id": "aster",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.6096158708844861,
+          "max_probability_delta": 0.015258396823985469
+        },
+        {
+          "case_id": "vision-table-relayout",
+          "nonfa_id": "birch",
+          "fa_id": "birch",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.6158000946044915,
+          "max_probability_delta": 0.04115613887329661
+        },
+        {
+          "case_id": "vision-table-relayout-reversed",
+          "nonfa_id": "elm",
+          "fa_id": "elm",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.6763959884643533,
+          "max_probability_delta": 0.00239940840864098
+        },
+        {
+          "case_id": "vision-table-relayout-distractors",
+          "nonfa_id": "elm",
+          "fa_id": "birch",
+          "nonfa_correct": false,
+          "fa_correct": true,
+          "max_centered_delta": 0.7900889260428308,
+          "max_probability_delta": 0.23136097774185466
+        },
+        {
+          "case_id": "scale-image-384",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 2.4581539244366777,
+          "max_probability_delta": 0.04308435568781578
+        },
+        {
+          "case_id": "scale-image-384-reversed",
+          "nonfa_id": "east",
+          "fa_id": "east",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 2.0671517206646968,
+          "max_probability_delta": 0.02677305634245289
+        },
+        {
+          "case_id": "scale-image-512",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 2.259746779089255,
+          "max_probability_delta": 0.0072623734249358494
+        },
+        {
+          "case_id": "scale-image-512-reversed",
+          "nonfa_id": "east",
+          "fa_id": "east",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 2.1086111300719494,
+          "max_probability_delta": 0.07523080978258279
+        }
+      ],
+      "small_selection_changes": 2,
+      "small_correct_to_wrong": 0,
+      "small_wrong_to_correct": 1,
+      "small_median_max_centered_delta": 0.6096158708844861,
+      "small_max_centered_delta": 1.0655317306518555,
+      "small_median_max_probability_delta": 0.03866579069604756,
+      "small_max_probability_delta": 0.2460838145792933
+    },
+    "last": {
+      "pairs": [
+        {
+          "case_id": "vision-board-base",
+          "nonfa_id": "east",
+          "fa_id": "east",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.35219764709472656,
+          "max_probability_delta": 0.11834424765672699
+        },
+        {
+          "case_id": "vision-board-base-reversed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.46883058547973633,
+          "max_probability_delta": 0.043785497615697125
+        },
+        {
+          "case_id": "vision-board-base-distractors",
+          "nonfa_id": "west",
+          "fa_id": "west",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.5841013590494768,
+          "max_probability_delta": 0.0262469649870279
+        },
+        {
+          "case_id": "vision-board-changed",
+          "nonfa_id": "east",
+          "fa_id": "east",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.5971469879150391,
+          "max_probability_delta": 0.04632721613612312
+        },
+        {
+          "case_id": "vision-board-changed-reversed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.2054290771484375,
+          "max_probability_delta": 0.022519177263761736
+        },
+        {
+          "case_id": "vision-board-changed-distractors",
+          "nonfa_id": "west",
+          "fa_id": "west",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 1.227709134419758,
+          "max_probability_delta": 0.135068086772844
+        },
+        {
+          "case_id": "vision-board-relayout",
+          "nonfa_id": "west",
+          "fa_id": "west",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.27847909927368164,
+          "max_probability_delta": 0.06523131792162434
+        },
+        {
+          "case_id": "vision-board-relayout-reversed",
+          "nonfa_id": "north",
+          "fa_id": "north",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.5744147300720215,
+          "max_probability_delta": 0.11165884954471757
+        },
+        {
+          "case_id": "vision-board-relayout-distractors",
+          "nonfa_id": "west",
+          "fa_id": "west",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.27395264307657996,
+          "max_probability_delta": 0.0625209766617617
+        },
+        {
+          "case_id": "vision-status-base",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5463447570800781,
+          "max_probability_delta": 0.07563779676632343
+        },
+        {
+          "case_id": "vision-status-base-reversed",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.8875263532002755,
+          "max_probability_delta": 0.005731194526880534
+        },
+        {
+          "case_id": "vision-status-base-distractors",
+          "nonfa_id": "vega",
+          "fa_id": "vega",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.28508949279785156,
+          "max_probability_delta": 0.015723936698491037
+        },
+        {
+          "case_id": "vision-status-changed",
+          "nonfa_id": "vega",
+          "fa_id": "vega",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5813299814860038,
+          "max_probability_delta": 0.009591916067960504
+        },
+        {
+          "case_id": "vision-status-changed-reversed",
+          "nonfa_id": "vega",
+          "fa_id": "vega",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5969114303588867,
+          "max_probability_delta": 0.1641539201961747
+        },
+        {
+          "case_id": "vision-status-changed-distractors",
+          "nonfa_id": "vega",
+          "fa_id": "vega",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.8742411136627197,
+          "max_probability_delta": 0.005281222571681399
+        },
+        {
+          "case_id": "vision-status-relayout",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.6211075782775879,
+          "max_probability_delta": 0.003997032641840592
+        },
+        {
+          "case_id": "vision-status-relayout-reversed",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.8473208745320626,
+          "max_probability_delta": 0.006670633895114353
+        },
+        {
+          "case_id": "vision-status-relayout-distractors",
+          "nonfa_id": "lyra",
+          "fa_id": "lyra",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 1.5397111177444458,
+          "max_probability_delta": 0.24651769444147253
+        },
+        {
+          "case_id": "vision-table-base",
+          "nonfa_id": "cedar",
+          "fa_id": "cedar",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.7844398498535163,
+          "max_probability_delta": 0.05724785661746605
+        },
+        {
+          "case_id": "vision-table-base-reversed",
+          "nonfa_id": "birch",
+          "fa_id": "birch",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.6616634368896506,
+          "max_probability_delta": 0.10760920820199155
+        },
+        {
+          "case_id": "vision-table-base-distractors",
+          "nonfa_id": "birch",
+          "fa_id": "birch",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.5271072387695312,
+          "max_probability_delta": 0.008628171788447547
+        },
+        {
+          "case_id": "vision-table-changed",
+          "nonfa_id": "dahlia",
+          "fa_id": "dahlia",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 1.0755558013916016,
+          "max_probability_delta": 0.015001363908058798
+        },
+        {
+          "case_id": "vision-table-changed-reversed",
+          "nonfa_id": "aster",
+          "fa_id": "aster",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.18481369018554616,
+          "max_probability_delta": 0.0032528014498220056
+        },
+        {
+          "case_id": "vision-table-changed-distractors",
+          "nonfa_id": "elm",
+          "fa_id": "elm",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.33258165631975345,
+          "max_probability_delta": 0.01566225180972315
+        },
+        {
+          "case_id": "vision-table-relayout",
+          "nonfa_id": "birch",
+          "fa_id": "birch",
+          "nonfa_correct": true,
+          "fa_correct": true,
+          "max_centered_delta": 0.786287689208983,
+          "max_probability_delta": 0.06787079854388633
+        },
+        {
+          "case_id": "vision-table-relayout-reversed",
+          "nonfa_id": "elm",
+          "fa_id": "aster",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.8042491912841783,
+          "max_probability_delta": 0.15305148482127584
+        },
+        {
+          "case_id": "vision-table-relayout-distractors",
+          "nonfa_id": "elm",
+          "fa_id": "elm",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 0.9398790087018689,
+          "max_probability_delta": 0.21436534571670735
+        },
+        {
+          "case_id": "scale-image-384",
+          "nonfa_id": "west",
+          "fa_id": "west",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 2.1928600625566705,
+          "max_probability_delta": 0.0684718606845911
+        },
+        {
+          "case_id": "scale-image-384-reversed",
+          "nonfa_id": "zone378",
+          "fa_id": "zone378",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 1.623275627692541,
+          "max_probability_delta": 0.023270115477892872
+        },
+        {
+          "case_id": "scale-image-512",
+          "nonfa_id": "west",
+          "fa_id": "west",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 1.2604996832669713,
+          "max_probability_delta": 0.01661093737639882
+        },
+        {
+          "case_id": "scale-image-512-reversed",
+          "nonfa_id": "zone506",
+          "fa_id": "zone506",
+          "nonfa_correct": false,
+          "fa_correct": false,
+          "max_centered_delta": 1.8610881357453763,
+          "max_probability_delta": 0.0986441700630436
+        }
+      ],
+      "small_selection_changes": 1,
+      "small_correct_to_wrong": 0,
+      "small_wrong_to_correct": 0,
+      "small_median_max_centered_delta": 0.5969114303588867,
+      "small_max_centered_delta": 1.5397111177444458,
+      "small_median_max_probability_delta": 0.04632721613612312,
+      "small_max_probability_delta": 0.24651769444147253
+    }
+  },
+  "embedding_image_count": 9,
+  "all_same_image_embeddings_match": true,
+  "baseline_selected_matches": 54,
+  "baseline_comparisons": 54,
+  "baseline_max_raw_delta": 0.0,
+  "placement_deltas": {
+    "f32": {
+      "median_max_centered_delta": 5.094753265380859,
+      "max_centered_delta": 9.949047247568767,
+      "median_max_probability_delta": 0.5494433244931709,
+      "max_probability_delta": 0.99692612885631
+    },
+    "flash": {
+      "median_max_centered_delta": 5.121306101481121,
+      "max_centered_delta": 10.617196655273435,
+      "median_max_probability_delta": 0.6125408066982688,
+      "max_probability_delta": 0.9897304147798202
+    }
+  },
+  "analysis_source_sha256": "ebbb35ce4c4518c6819543abb9fc0dbdadf0d43029c1f3fbb42994713f313265"
+}

@@ -1,0 +1,36 @@
+{
+  "project_revision": "f08cadf7c210cc1a80224e2943db0da35833c3ec",
+  "ggml_revision": "456172ec733a135778adcd32d00e576a58232e45",
+  "models": {
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/gemma-4-E4B-it-Q4_K_M.gguf": {
+      "bytes": 4977171584,
+      "sha256": "85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/mmproj-F16.gguf": {
+      "bytes": 990372672,
+      "sha256": "ddf46c21d7078e95338cfc22306b19b276a29a5ad089023449dd54d4b6170a51"
+    }
+  },
+  "source_and_core_sha256": {
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/run-image-placement.py": "e271b6305b3066fb6b19fd79e04af2d3f303bce91232df15beef8319f2eca92e",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/prefill-probe.cpp": "a6d4a1dd4d1859f7108318a8935c5961f0a12bdead89b414312b32256a225e73",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/run-monitored.py": "bc907c1e27ff38fcf7fe04e64468a406fb7362b07e0671b2a3458ba02585fc96",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/phase4-step4-cpu-reference/prefill-cd-flash.cpp": "466af0a74db7ef0c5be22f549acf1a1e9f56cc55ac53e51e23905725fd977dc5",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/phase4-step4-cpu-reference/state-cache-cd-f16.cpp": "6e1d40094d6444a06f958de353802b87c796da916e6b15dd32a4a6c8095da3da",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/src/prefill_engine.cpp": "0a633bf3d16cf9f5864efffe5ed5304bcafc9b5b2b47e26c38d63492641a4a46",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/src/state_cache.cpp": "7d65f6920d5424405a1e5fefff4d1a897a4b1e336b2c797b2949117955d24a14",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/build-cuda/libbranchscore_core.so": "6641657cd402644651e54d57f1ef7069baf1d31ad5abce6af8ccc0e9ddb8793f"
+  },
+  "binary_sha256": {
+    "f32": "ee1914982a81cba5cb02eaca18da360ba6a13bcbf14e49c85c4474b9e83ca426",
+    "flash": "ff7369b363237f3181688dc94f8a04bf67c5565757f973546aee9201161674c0"
+  },
+  "fixture_sha256": "a98647965faa3d53db0d0da08ea0ac2be89ce74e1fed0b174565d99eba02416c",
+  "comparison": "image first versus image last; same descriptions/labels/image; last adds newline before image",
+  "cache_reuse": false,
+  "warmup_count": 0,
+  "repetitions": 1,
+  "request_cases": 31,
+  "planned_runs": 124,
+  "timing": "prefill_ms excludes Vision/load; monitored process time includes load and embedding download/disk writes"
+}

@@ -8,9 +8,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iostream>
+#include <numeric>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 int main(int argc, char ** argv) {
     if (argc != 4 || std::string(argv[1]).empty() || std::string(argv[2]).empty()) {
@@ -79,6 +82,90 @@ int main(int argc, char ** argv) {
             throw std::runtime_error("Multimodal Prefill produced an invalid state");
         }
         std::cout << "multimodal prefill tokens=" << expected_prefix << '\n';
+
+        const std::vector<branchscore::TokenId> chunk_boundary_tokens(513, tokens.front());
+        auto chunked = engine.prefill(chunk_boundary_tokens, nullptr, {});
+        const auto chunked_logits = chunked.download_logits();
+        if (chunked.prefix_length() != chunk_boundary_tokens.size() ||
+            chunked.cache().cursor() != chunk_boundary_tokens.size() ||
+            chunked.graph_count() != 2 || chunked.token_microbatch_size() != 512 ||
+            chunked.cache_buffer_bytes() == 0 ||
+            chunked.peak_graph_buffer_bytes() == 0 ||
+            !std::all_of(chunked_logits.begin(), chunked_logits.end(), [](float value) {
+                return std::isfinite(value);
+            })) {
+            throw std::runtime_error("chunked Prefill metadata or logits are invalid");
+        }
+        const auto chunked_readout = branchscore::gather_categorical_logits(
+            chunked, {answer_a.id, answer_b.id}, backend);
+        const auto expected_selected = chunked_readout.raw_scores[0] >=
+            chunked_readout.raw_scores[1] ? answer_a.id : answer_b.id;
+        const auto actual_selected = chunked_logits[answer_a.id] >=
+            chunked_logits[answer_b.id] ? answer_a.id : answer_b.id;
+        if (expected_selected != actual_selected) {
+            throw std::runtime_error("chunked categorical readout disagrees with final logits");
+        }
+
+        auto * boundary_key = chunked.cache().key(0);
+        const bool half = boundary_key->type == GGML_TYPE_F16;
+        if (half != (backend.device().family == "CUDA") ||
+            (half && chunked.cache().capacity() % 256 != 0)) {
+            throw std::runtime_error("Prefill cache type/padding does not match the backend");
+        }
+        std::vector<float> key_at_511(boundary_key->ne[0]);
+        std::vector<float> key_at_512(boundary_key->ne[0]);
+        auto cache_timing = branchscore::BackendTiming{};
+        const auto read_key = [&](std::size_t position, std::vector<float> & values) {
+            if (half) {
+                std::vector<ggml_fp16_t> packed(values.size());
+                backend.tensor_get_timed(boundary_key, packed.data(), position * boundary_key->nb[1],
+                    packed.size() * sizeof(ggml_fp16_t), cache_timing);
+                std::transform(packed.begin(), packed.end(), values.begin(), ggml_fp16_to_fp32);
+            } else {
+                backend.tensor_get_timed(boundary_key, values.data(), position * boundary_key->nb[1],
+                    values.size() * sizeof(float), cache_timing);
+            }
+        };
+        read_key(511, key_at_511);
+        read_key(512, key_at_512);
+        const auto key_delta = std::inner_product(
+            key_at_511.begin(), key_at_511.end(), key_at_512.begin(), 0.0,
+            std::plus<>(), [](float left, float right) {
+                return std::abs(left - right);
+            });
+        if (!std::isfinite(key_delta) || key_delta <= 1e-4) {
+            throw std::runtime_error("KV values do not reflect distinct absolute positions");
+        }
+        std::cout << "chunked prefill tokens=" << chunked.prefix_length()
+                  << " graphs=" << chunked.graph_count()
+                  << " cache_bytes=" << chunked.cache_buffer_bytes()
+                  << " peak_graph_bytes=" << chunked.peak_graph_buffer_bytes() << '\n';
+
+        const std::vector<branchscore::TokenId> before_image(470, tokens.front());
+        const std::vector<branchscore::TokenId> after_image(80, tokens.back());
+        auto image_boundary = engine.prefill(before_image, &visual_tokens, after_image);
+        const auto image_boundary_logits = image_boundary.download_logits();
+        if (image_boundary.prefix_length() !=
+                before_image.size() + visual_tokens.token_count() + after_image.size() ||
+            image_boundary.graph_count() != 2 ||
+            !std::all_of(
+                image_boundary_logits.begin(), image_boundary_logits.end(),
+                [](float value) { return std::isfinite(value); })) {
+            throw std::runtime_error("image-spanning chunk Prefill is invalid");
+        }
+        const auto image_boundary_readout = branchscore::gather_categorical_logits(
+            image_boundary, {answer_a.id, answer_b.id}, backend);
+        if (std::abs(
+                image_boundary_readout.raw_scores[0] - image_boundary_logits[answer_a.id]) >
+                1e-4F ||
+            std::abs(
+                image_boundary_readout.raw_scores[1] - image_boundary_logits[answer_b.id]) >
+                1e-4F) {
+            throw std::runtime_error(
+                "image-spanning categorical readout disagrees with final logits");
+        }
+        std::cout << "image boundary prefill tokens=" << image_boundary.prefix_length()
+                  << " graphs=" << image_boundary.graph_count() << '\n';
 
         std::cout << "categorical logits=" << categorical.raw_scores.size()
                   << " prefix_tokens=" << state.prefix_length() << '\n';

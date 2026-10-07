@@ -1,0 +1,19 @@
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7800 MiB):
+  Device 0: NVIDIA GeForce RTX 2060 SUPER, compute capability 7.5, VMM: yes, VRAM: 7800 MiB
+text-17 positions=403 selected=item007 ms=269.496
+text-255 positions=4925 selected=item007 ms=2663.83
+text-256 positions=4944 selected=item007 ms=2670.32
+text-512 positions=9808 selected=item007 ms=6209.78
+text-512-reversed positions=9808 selected=item007 ms=6233.71
+scale-image-384 positions=6910 selected=north ms=4154.3
+scale-image-384-reversed positions=6910 selected=east ms=4138.34
+scale-image-512 positions=9086 selected=north ms=5792.71
+scale-image-512-reversed positions=9086 selected=east ms=5804.87
+mpn-alpha-hd positions=11509 selected=part007 ms=7924.74
+mpn-digits-fhd positions=14854 selected=part007 ms=11494.9
+boundary-16384-fhd positions=16384 selected=part007 ms=13131.8
+reject-16385-fhd rejected=token_budget_exceeded
+mpn-digits-fhd-repeat-1 positions=14854 selected=part007 ms=11553.8
+mpn-digits-fhd-repeat-2 positions=14854 selected=part007 ms=11562.7
+mpn-digits-fhd-repeat-3 positions=14854 selected=part007 ms=11575.6
+recovery-small positions=86 selected=keep ms=60.3679

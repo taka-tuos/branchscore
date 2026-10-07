@@ -136,7 +136,8 @@ int main(int argc, char ** argv) {
                     << "                   [--chat-template-file FILE]\n"
                     << "\n"
                     << "Displays all supplied options in one prompt and reads their\n"
-                    << "single-token A-P answer logits; probabilities are relative\n"
+                    << "single-token answer logits (A-P for 2-16 options, two-letter\n"
+                    << "labels for 17-512); probabilities are relative\n"
                     << "to the supplied option set.\n";
                 return 0;
             }
@@ -254,6 +255,10 @@ int main(int argc, char ** argv) {
                   << " prefill_backend_copy=" << result.timings.prefill_backend_copy_ms
                   << " prefill_synchronization=" << result.timings.prefill_synchronization_ms
                   << " prefill_graph_nodes=" << result.timings.prefill_graph_node_count
+                  << " prefill_attention_path=" << result.timings.prefill_attention_path
+                  << " prefill_kv_type=" << result.timings.prefill_kv_type
+                  << " prefill_positions=" << result.timings.prefill_positions
+                  << " prefill_cache_bytes=" << result.timings.prefill_cache_bytes
                   << " readout=" << result.timings.readout_ms
                   << " readout_backend_copy=" << result.timings.readout_backend_copy_ms
                   << " readout_synchronization=" << result.timings.readout_synchronization_ms

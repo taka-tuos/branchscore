@@ -25,8 +25,8 @@ double elapsed_ms(const Clock::time_point started) {
 void validate_request(const DecisionRequest & request) {
     if (request.state.empty()) throw std::runtime_error("state must not be empty");
     if (request.question.empty()) throw std::runtime_error("question must not be empty");
-    if (request.options.size() < 2 || request.options.size() > 16) {
-        throw std::runtime_error("decision request must contain 2-16 options");
+    if (request.options.size() < min_decision_options || request.options.size() > max_decision_options) {
+        throw std::runtime_error("decision request must contain 2-512 options");
     }
     std::unordered_set<std::string> ids;
     for (const auto & option : request.options) {
@@ -52,6 +52,15 @@ void validate_request(const DecisionRequest & request) {
     }
 }
 
+void check_position_budget(const std::size_t positions, const std::size_t context_length) {
+    if (positions > context_length) {
+        throw DecisionBudgetError("context_limit_exceeded", "Prefill exceeds model context");
+    }
+    if (positions > max_prefill_positions) {
+        throw DecisionBudgetError("token_budget_exceeded", "Prefill exceeds the 16384-position budget");
+    }
+}
+
 } // namespace
 
 Gemma4DecisionEngine::Gemma4DecisionEngine(
@@ -59,6 +68,27 @@ Gemma4DecisionEngine::Gemma4DecisionEngine(
     BackendContext & backend,
     GemmaTokenizer tokenizer)
     : model_(model), backend_(backend), tokenizer_(std::move(tokenizer)) {}
+
+std::size_t Gemma4DecisionEngine::estimate_prefill_positions(const DecisionRequest & request) const {
+    validate_request(request);
+    const auto rendered = Gemma4PromptRenderer{}.render(
+        request.state, request.question, request.options, request.has_image(),
+        request.prompt_policy, request.chat_template_file, tokenizer_.chat_template().has_value());
+    const auto ids = tokenizer_.tokenize(rendered.text, false, true);
+    std::size_t positions = ids.size();
+    if (request.has_image()) {
+        std::size_t visual = 0;
+        if (request.image_bytes) {
+            const auto info = ImagePreprocessor::inspect_encoded(request.image_bytes->data(), request.image_bytes->size());
+            visual = ImagePreprocessor::estimate_visual_token_count(info.width, info.height, model_.vision_config());
+        } else {
+            visual = ImagePreprocessor::load(*request.image_path, model_.vision_config()).visual_token_count(model_.vision_config());
+        }
+        positions = positions - 1 + visual;
+    }
+    check_position_budget(positions, model_.text_config().context_length);
+    return positions;
+}
 
 DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) const {
     const auto request_started = Clock::now();
@@ -78,6 +108,7 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
 
     const auto tokenization_started = Clock::now();
     const auto all_ids = tokenizer_.tokenize(rendered.text, false, true);
+    check_position_budget(all_ids.size(), model_.text_config().context_length);
     const auto image_id = tokenizer_.find_token("<|image|>");
     const auto image_count = image_id == std::nullopt
         ? 0U
@@ -96,6 +127,16 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     const std::size_t image_index = image_position == all_ids.end()
         ? all_ids.size()
         : static_cast<std::size_t>(image_position - all_ids.begin());
+    if (request.has_image()) {
+        const auto image_begin = tokenizer_.find_token("<|image>");
+        const auto image_end = tokenizer_.find_token("<image|>");
+        if (!image_begin || !image_end || image_index == 0 ||
+            image_index + 1 >= all_ids.size() ||
+            all_ids[image_index - 1] != *image_begin ||
+            all_ids[image_index + 1] != *image_end) {
+            throw std::runtime_error("Gemma 4 image boundary tokens are missing");
+        }
+    }
     std::vector<TokenId> tokens_before(all_ids.begin(), all_ids.begin() + image_index);
     std::vector<TokenId> tokens_after;
     if (image_position != all_ids.end()) {
@@ -132,6 +173,8 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
                 model_.vision_config()));
         }
         image_preprocessing_ms = elapsed_ms(image_started);
+        check_position_budget(tokens_before.size() + tokens_after.size() +
+            prepared_image->visual_token_count(model_.vision_config()), model_.text_config().context_length);
 
         const auto vision_started = Clock::now();
         visual_tokens = std::make_unique<VisualTokens>(
@@ -207,6 +250,14 @@ DecisionResult Gemma4DecisionEngine::evaluate(const DecisionRequest & request) c
     result.timings.prefill_backend_copy_ms = prefill_backend_timing.copy_ms;
     result.timings.prefill_synchronization_ms = prefill_backend_timing.synchronization_ms;
     result.timings.prefill_graph_node_count = prefill_graph_node_count;
+    result.timings.prefill_attention_path = prefill_state.cache().key(0)->type == GGML_TYPE_F16
+        ? "flash" : "standard";
+    result.timings.prefill_kv_type = ggml_type_name(prefill_state.cache().key(0)->type);
+    result.timings.prefill_positions = prefill_state.prefix_length();
+    result.timings.prefill_graph_count = prefill_state.graph_count();
+    result.timings.prefill_microbatch_size = prefill_state.token_microbatch_size();
+    result.timings.prefill_cache_bytes = prefill_state.cache_buffer_bytes();
+    result.timings.prefill_peak_graph_bytes = prefill_state.peak_graph_buffer_bytes();
     result.timings.readout_ms = readout_ms;
     result.timings.readout_backend_copy_ms = logits.backend_timing.copy_ms;
     result.timings.readout_synchronization_ms = logits.backend_timing.synchronization_ms;

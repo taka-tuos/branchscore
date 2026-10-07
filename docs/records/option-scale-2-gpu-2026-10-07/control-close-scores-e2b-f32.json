@@ -1,0 +1,41 @@
+{
+  "after_load_free_bytes": 4621139968,
+  "after_prefill_free_bytes": 4530962432,
+  "after_vision_free_bytes": 4621139968,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 6488064,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "logits": [
+    -13.0656099319458,
+    -0.5807493329048157,
+    0.6196434497833252,
+    -10.272619247436523
+  ],
+  "microbatch": 512,
+  "path": "F32 KV/mask, ordinary attention, full SWA",
+  "peak_graph_bytes": 38818048,
+  "positions": 176,
+  "prefill_ms": 103.547455,
+  "probabilities": [
+    8.755092535481332e-07,
+    0.2314018390428606,
+    0.7685829885708166,
+    1.4296877069118814e-05
+  ],
+  "selected_index": 2,
+  "text_weight_bytes": 3090917516,
+  "vision_weight_bytes": 368649984,
+  "visual_tokens": 0,
+  "expected_selected_id": "birch",
+  "selected_id": "birch",
+  "before_sha256": "a6ea7733c130071bc90b76de5bfca98c651a573e19d7c1ee266fa0009b2ab33b",
+  "after_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "answers_sha256": "4dba42160f687252e09ad9f045225f8107a1900e4dbfc46c7f7c59d305495d75"
+}

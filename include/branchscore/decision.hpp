@@ -63,6 +63,13 @@ struct TimingInfo {
     double prefill_backend_copy_ms = 0.0;
     double prefill_synchronization_ms = 0.0;
     std::size_t prefill_graph_node_count = 0;
+    std::string prefill_attention_path = "not_used";
+    std::string prefill_kv_type = "not_used";
+    std::size_t prefill_positions = 0;
+    std::size_t prefill_graph_count = 0;
+    std::size_t prefill_microbatch_size = 0;
+    std::size_t prefill_cache_bytes = 0;
+    std::size_t prefill_peak_graph_bytes = 0;
     double readout_ms = 0.0;
     double readout_backend_copy_ms = 0.0;
     double readout_synchronization_ms = 0.0;

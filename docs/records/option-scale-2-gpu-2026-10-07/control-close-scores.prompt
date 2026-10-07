@@ -1,0 +1,12 @@
+<bos><|turn>system
+Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning.<turn|>
+<|turn>user
+State:
+Policy: Choose the valid candidate with the highest score. Candidate amber: valid, score 0.7019. Candidate birch: valid, score 0.7020. Candidate cedar: valid, score 0.7018. Candidate dune: invalid, score 0.7021.
+
+Question:
+Which candidate must be selected under this policy?
+
+Options:
+[{"description":"Select candidate dune.","letter":"A"},{"description":"Select candidate amber.","letter":"B"},{"description":"Select candidate birch.","letter":"C"},{"description":"Select candidate cedar.","letter":"D"}]<turn|>
+<|turn>model

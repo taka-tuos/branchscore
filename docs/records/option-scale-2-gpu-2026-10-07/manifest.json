@@ -1,0 +1,570 @@
+{
+  "date": "2026-10-07",
+  "project_revision": "f08cadf7c210cc1a80224e2943db0da35833c3ec",
+  "ggml_revision": "456172ec733a135778adcd32d00e576a58232e45",
+  "reference_revision": "19e28a27702117d8f2eb16b825b9a308111f67d9",
+  "reference_ggml_tree": "18d6f3219f2d1487125a7fba1efc8478d9397884",
+  "models": {
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/gemma-4-E2B-it-Q4_K_M.gguf": {
+      "bytes": 3106738272,
+      "sha256": "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/mmproj-F16.gguf": {
+      "bytes": 985654080,
+      "sha256": "140be8d7849741f88c50757d529b84373ee8e27052cc2236855b537f4a8215fa"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/gemma-4-E4B-it-Q4_K_M.gguf": {
+      "bytes": 4977171584,
+      "sha256": "85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87"
+    },
+    "/opt/sinobuz/copula/openjev-ggml/models/e4b/mmproj-F16.gguf": {
+      "bytes": 990372672,
+      "sha256": "ddf46c21d7078e95338cfc22306b19b276a29a5ad089023449dd54d4b6170a51"
+    }
+  },
+  "source_hashes": {
+    "docs/records/option-scale-2-gpu-2026-10-07/prefill-probe.cpp": "a6d4a1dd4d1859f7108318a8935c5961f0a12bdead89b414312b32256a225e73",
+    "docs/records/option-scale-2-gpu-2026-10-07/reference-text.cpp": "923015ae514f9c932209d7ec39acc8a3ac2a892b5b21574fdcbcabb1405e0aab",
+    "docs/records/option-scale-2-gpu-2026-10-07/reference-text-flash.cpp": "eefba7899d309613b96530d78c3e3a46fd5193c22c80d8e833af9e56cc95f846",
+    "docs/records/option-scale-2-gpu-2026-10-07/reference-image-flash.cpp": "a425d792ebb71005a470ccc3c07803b5d2d869dd3caae37ac1b1c06a7bd7f6f6",
+    "docs/records/option-scale-2-gpu-2026-10-07/reference-image.cpp": "3ec3559d2b9e225651722b468b66835fa0e0046de788a7934607055f5895f9f1",
+    "docs/records/option-scale-2-gpu-2026-10-07/run-probes.py": "6b7639c24d180685855e7e86925a8b44774807333444deed9b7b6284cfc690fe",
+    "docs/records/option-scale-2-gpu-2026-10-07/run-existing.py": "dfe51b056a0256c5b6ea9cbd2cdd19e84d3d6cd744e589c03b1260c666c2fb67",
+    "docs/records/option-scale-2-gpu-2026-10-07/make-inputs.py": "88ac11cc7aedc713acec8295070c8067d365f138045c74f90f1e6ad6046a4c0b",
+    "docs/records/option-scale-2-gpu-2026-10-07/build-harnesses.py": "89894d8f298198d0a3678d3b37cc8c6e5d8351aecbc653c923089b5b62596351",
+    "docs/records/option-scale-2-gpu-2026-10-07/run-references.py": "7c1d303a818029d1f255ac981478d05d9f74d40a0fd37d9644c8a4e28ca73d3a",
+    "docs/records/option-scale-2-gpu-2026-10-07/run-monitored.py": "bc907c1e27ff38fcf7fe04e64468a406fb7362b07e0671b2a3458ba02585fc96",
+    "docs/records/option-scale-2-gpu-2026-10-07/report.py": "50dbe569a45f3a00735317d80c5e26584b8b3143762490cbb7d05731169f0cfb",
+    "docs/records/phase4-step4-cpu-reference/prefill-cd-flash.cpp": "466af0a74db7ef0c5be22f549acf1a1e9f56cc55ac53e51e23905725fd977dc5",
+    "docs/records/phase4-step4-cpu-reference/state-cache-cd-f16.cpp": "6e1d40094d6444a06f958de353802b87c796da916e6b15dd32a4a6c8095da3da"
+  },
+  "branchscore_cmake": [
+    "BRANCHSCORE_BUILD_SERVER:BOOL=ON",
+    "BRANCHSCORE_BUILD_TESTS:BOOL=ON",
+    "BRANCHSCORE_CUDA:BOOL=ON",
+    "BRANCHSCORE_TEST_BACKEND:STRING=cuda",
+    "BRANCHSCORE_TEST_MMPROJ:FILEPATH=/opt/sinobuz/copula/openjev-ggml/models/e2b/mmproj-F16.gguf",
+    "BRANCHSCORE_TEST_MODEL:FILEPATH=/opt/sinobuz/copula/openjev-ggml/models/e2b/gemma-4-E2B-it-Q4_K_M.gguf",
+    "BRANCHSCORE_VULKAN:BOOL=OFF",
+    "BUILD_SHARED_LIBS:BOOL=ON",
+    "CMAKE_BUILD_TYPE:STRING=Release",
+    "CMAKE_CUDA_ARCHITECTURES:UNINITIALIZED=75",
+    "GGML_ACCELERATE:BOOL=ON",
+    "GGML_ALL_WARNINGS:BOOL=ON",
+    "GGML_ALL_WARNINGS_3RD_PARTY:BOOL=OFF",
+    "GGML_AMX_BF16:BOOL=OFF",
+    "GGML_AMX_INT8:BOOL=OFF",
+    "GGML_AMX_TILE:BOOL=OFF",
+    "GGML_AVX:BOOL=OFF",
+    "GGML_AVX2:BOOL=OFF",
+    "GGML_AVX512:BOOL=OFF",
+    "GGML_AVX512_BF16:BOOL=OFF",
+    "GGML_AVX512_VBMI:BOOL=OFF",
+    "GGML_AVX512_VNNI:BOOL=OFF",
+    "GGML_AVX_VNNI:BOOL=OFF",
+    "GGML_BACKEND_DIR:PATH=",
+    "GGML_BACKEND_DL:BOOL=OFF",
+    "GGML_BIN_INSTALL_DIR:PATH=bin",
+    "GGML_BLAS:BOOL=OFF",
+    "GGML_BLAS_VENDOR:STRING=Generic",
+    "GGML_BMI2:BOOL=OFF",
+    "GGML_BUILD_EXAMPLES:BOOL=OFF",
+    "GGML_BUILD_TESTS:BOOL=OFF",
+    "GGML_CCACHE:BOOL=ON",
+    "GGML_CCACHE_FOUND:FILEPATH=GGML_CCACHE_FOUND-NOTFOUND",
+    "GGML_CPU:BOOL=ON",
+    "GGML_CPU_ALL_VARIANTS:BOOL=OFF",
+    "GGML_CPU_ARM_ARCH:STRING=",
+    "GGML_CPU_HBM:BOOL=OFF",
+    "GGML_CPU_KLEIDIAI:BOOL=OFF",
+    "GGML_CPU_POWERPC_CPUTYPE:STRING=",
+    "GGML_CPU_REPACK:BOOL=ON",
+    "GGML_CUDA:BOOL=ON",
+    "GGML_CUDA_COMPRESSION_MODE:STRING=size",
+    "GGML_CUDA_FA:BOOL=ON",
+    "GGML_CUDA_FA_ALL_QUANTS:BOOL=OFF",
+    "GGML_CUDA_FA_QUANTS:STRING=q4_0-q4_0;q8_0-q8_0;f16-f16;bf16-bf16",
+    "GGML_CUDA_FORCE_CUBLAS:BOOL=OFF",
+    "GGML_CUDA_FORCE_MMQ:BOOL=OFF",
+    "GGML_CUDA_GRAPHS:BOOL=OFF",
+    "GGML_CUDA_NCCL:BOOL=OFF",
+    "GGML_CUDA_NO_PEER_COPY:BOOL=OFF",
+    "GGML_CUDA_NO_VMM:BOOL=OFF",
+    "GGML_ET:BOOL=OFF",
+    "GGML_ET_SYSEMU:BOOL=OFF",
+    "GGML_F16C:BOOL=OFF",
+    "GGML_FATAL_WARNINGS:BOOL=OFF",
+    "GGML_FMA:BOOL=OFF",
+    "GGML_GPROF:BOOL=OFF",
+    "GGML_HEXAGON:BOOL=OFF",
+    "GGML_HIP:BOOL=OFF",
+    "GGML_HIP_EXPORT_METRICS:BOOL=OFF",
+    "GGML_HIP_GRAPHS:BOOL=ON",
+    "GGML_HIP_MMQ_MFMA:BOOL=ON",
+    "GGML_HIP_NO_VMM:BOOL=ON",
+    "GGML_HIP_RCCL:BOOL=OFF",
+    "GGML_INCLUDE_INSTALL_DIR:PATH=include",
+    "GGML_LASX:BOOL=ON",
+    "GGML_LIB_INSTALL_DIR:PATH=lib",
+    "GGML_LLAMAFILE:BOOL=OFF",
+    "GGML_LSX:BOOL=ON",
+    "GGML_LTO:BOOL=OFF",
+    "GGML_METAL:BOOL=OFF",
+    "GGML_METAL_EMBED_LIBRARY:BOOL=OFF",
+    "GGML_METAL_MACOSX_VERSION_MIN:STRING=",
+    "GGML_METAL_NDEBUG:BOOL=OFF",
+    "GGML_METAL_SHADER_DEBUG:BOOL=OFF",
+    "GGML_METAL_STD:STRING=",
+    "GGML_METAL_TARGET_OS:STRING=macos",
+    "GGML_MUSA:BOOL=OFF",
+    "GGML_MUSA_GRAPHS:BOOL=OFF",
+    "GGML_MUSA_MUDNN_COPY:BOOL=OFF",
+    "GGML_NATIVE:BOOL=ON",
+    "GGML_OPENCL:BOOL=OFF",
+    "GGML_OPENCL_EMBED_KERNELS:BOOL=ON",
+    "GGML_OPENCL_PROFILING:BOOL=OFF",
+    "GGML_OPENCL_TARGET_VERSION:STRING=300",
+    "GGML_OPENCL_USE_ADRENO_KERNELS:BOOL=ON",
+    "GGML_OPENMP:BOOL=ON",
+    "GGML_OPENMP_FETCH:BOOL=OFF",
+    "GGML_OPENVINO:BOOL=OFF",
+    "GGML_RPC:BOOL=OFF",
+    "GGML_RVV:BOOL=ON",
+    "GGML_RV_ZFH:BOOL=ON",
+    "GGML_RV_ZICBOP:BOOL=ON",
+    "GGML_RV_ZIHINTPAUSE:BOOL=ON",
+    "GGML_RV_ZVFBFWMA:BOOL=OFF",
+    "GGML_RV_ZVFH:BOOL=ON",
+    "GGML_SANITIZE_ADDRESS:BOOL=OFF",
+    "GGML_SANITIZE_THREAD:BOOL=OFF",
+    "GGML_SANITIZE_UNDEFINED:BOOL=OFF",
+    "GGML_SCCACHE_FOUND:FILEPATH=GGML_SCCACHE_FOUND-NOTFOUND",
+    "GGML_SCHED_MAX_COPIES:STRING=4",
+    "GGML_SCHED_NO_REALLOC:BOOL=OFF",
+    "GGML_SSE42:BOOL=OFF",
+    "GGML_STATIC:BOOL=OFF",
+    "GGML_SYCL:BOOL=OFF",
+    "GGML_SYCL_DEVICE_ARCH:STRING=",
+    "GGML_SYCL_DNN:BOOL=ON",
+    "GGML_SYCL_F16:BOOL=OFF",
+    "GGML_SYCL_GRAPH:BOOL=ON",
+    "GGML_SYCL_HOST_MEM_FALLBACK:BOOL=ON",
+    "GGML_SYCL_SUPPORT_LEVEL_ZERO_API:BOOL=ON",
+    "GGML_SYCL_TARGET:STRING=INTEL",
+    "GGML_VIRTGPU:BOOL=OFF",
+    "GGML_VIRTGPU_BACKEND:BOOL=OFF",
+    "GGML_VULKAN:BOOL=OFF",
+    "GGML_VULKAN_CHECK_RESULTS:BOOL=OFF",
+    "GGML_VULKAN_DEBUG:BOOL=OFF",
+    "GGML_VULKAN_MEMORY_DEBUG:BOOL=OFF",
+    "GGML_VULKAN_RUN_TESTS:BOOL=OFF",
+    "GGML_VULKAN_SHADERS_GEN_TOOLCHAIN:FILEPATH=",
+    "GGML_VULKAN_SHADER_DEBUG_INFO:BOOL=OFF",
+    "GGML_VULKAN_VALIDATE:BOOL=OFF",
+    "GGML_VXE:BOOL=ON",
+    "GGML_WEBGPU:BOOL=OFF",
+    "GGML_WEBGPU_CPU_PROFILE:BOOL=OFF",
+    "GGML_WEBGPU_DEBUG:BOOL=OFF",
+    "GGML_WEBGPU_GPU_PROFILE:BOOL=OFF",
+    "GGML_WEBGPU_JSPI:BOOL=ON",
+    "GGML_XTHEADVECTOR:BOOL=OFF",
+    "GGML_ZDNN:BOOL=OFF",
+    "GGML_ZENDNN:BOOL=OFF",
+    "GGML_AVAILABLE_BACKENDS:INTERNAL=ggml-cpu;ggml-cuda",
+    "GGML_CUDA_COMPRESSION_MODE-STRINGS:INTERNAL=none;speed;balance;size",
+    "GGML_OPENMP_ENABLED:INTERNAL=ON"
+  ],
+  "reference_cmake": [
+    "BUILD_SHARED_LIBS:BOOL=ON",
+    "CMAKE_BUILD_TYPE:STRING=Release",
+    "CMAKE_CUDA_ARCHITECTURES:UNINITIALIZED=75",
+    "GGML_ACCELERATE:BOOL=ON",
+    "GGML_ALL_WARNINGS_3RD_PARTY:BOOL=OFF",
+    "GGML_AMX_BF16:BOOL=OFF",
+    "GGML_AMX_INT8:BOOL=OFF",
+    "GGML_AMX_TILE:BOOL=OFF",
+    "GGML_AVX:BOOL=OFF",
+    "GGML_AVX2:BOOL=OFF",
+    "GGML_AVX512:BOOL=OFF",
+    "GGML_AVX512_BF16:BOOL=OFF",
+    "GGML_AVX512_VBMI:BOOL=OFF",
+    "GGML_AVX512_VNNI:BOOL=OFF",
+    "GGML_AVX_VNNI:BOOL=OFF",
+    "GGML_BACKEND_DIR:PATH=",
+    "GGML_BACKEND_DL:BOOL=OFF",
+    "GGML_BIN_INSTALL_DIR:PATH=bin",
+    "GGML_BLAS:BOOL=OFF",
+    "GGML_BLAS_VENDOR:STRING=Generic",
+    "GGML_BMI2:BOOL=OFF",
+    "GGML_BUILD_EXAMPLES:BOOL=OFF",
+    "GGML_BUILD_TESTS:BOOL=OFF",
+    "GGML_CCACHE:BOOL=ON",
+    "GGML_CCACHE_FOUND:FILEPATH=GGML_CCACHE_FOUND-NOTFOUND",
+    "GGML_CPU:BOOL=ON",
+    "GGML_CPU_ALL_VARIANTS:BOOL=OFF",
+    "GGML_CPU_ARM_ARCH:STRING=",
+    "GGML_CPU_HBM:BOOL=OFF",
+    "GGML_CPU_KLEIDIAI:BOOL=OFF",
+    "GGML_CPU_POWERPC_CPUTYPE:STRING=",
+    "GGML_CPU_REPACK:BOOL=ON",
+    "GGML_CUDA:BOOL=ON",
+    "GGML_CUDA_COMPRESSION_MODE:STRING=size",
+    "GGML_CUDA_FA:BOOL=ON",
+    "GGML_CUDA_FA_ALL_QUANTS:BOOL=OFF",
+    "GGML_CUDA_FA_QUANTS:STRING=q4_0-q4_0;q8_0-q8_0;f16-f16;bf16-bf16",
+    "GGML_CUDA_FORCE_CUBLAS:BOOL=OFF",
+    "GGML_CUDA_FORCE_MMQ:BOOL=OFF",
+    "GGML_CUDA_GRAPHS:BOOL=ON",
+    "GGML_CUDA_NCCL:BOOL=ON",
+    "GGML_CUDA_NO_PEER_COPY:BOOL=OFF",
+    "GGML_CUDA_NO_VMM:BOOL=OFF",
+    "GGML_ET:BOOL=OFF",
+    "GGML_ET_SYSEMU:BOOL=OFF",
+    "GGML_F16C:BOOL=OFF",
+    "GGML_FMA:BOOL=OFF",
+    "GGML_GPROF:BOOL=OFF",
+    "GGML_HEXAGON:BOOL=OFF",
+    "GGML_HIP:BOOL=OFF",
+    "GGML_HIP_EXPORT_METRICS:BOOL=OFF",
+    "GGML_HIP_GRAPHS:BOOL=ON",
+    "GGML_HIP_MMQ_MFMA:BOOL=ON",
+    "GGML_HIP_NO_VMM:BOOL=ON",
+    "GGML_HIP_RCCL:BOOL=OFF",
+    "GGML_INCLUDE_INSTALL_DIR:PATH=include",
+    "GGML_LASX:BOOL=ON",
+    "GGML_LIB_INSTALL_DIR:PATH=lib",
+    "GGML_LLAMAFILE:BOOL=ON",
+    "GGML_LSX:BOOL=ON",
+    "GGML_LTO:BOOL=OFF",
+    "GGML_METAL:BOOL=OFF",
+    "GGML_METAL_EMBED_LIBRARY:BOOL=OFF",
+    "GGML_METAL_MACOSX_VERSION_MIN:STRING=",
+    "GGML_METAL_NDEBUG:BOOL=OFF",
+    "GGML_METAL_SHADER_DEBUG:BOOL=OFF",
+    "GGML_METAL_STD:STRING=",
+    "GGML_METAL_TARGET_OS:STRING=macos",
+    "GGML_MUSA:BOOL=OFF",
+    "GGML_MUSA_GRAPHS:BOOL=OFF",
+    "GGML_MUSA_MUDNN_COPY:BOOL=OFF",
+    "GGML_NATIVE:BOOL=ON",
+    "GGML_OPENCL:BOOL=OFF",
+    "GGML_OPENCL_EMBED_KERNELS:BOOL=ON",
+    "GGML_OPENCL_PROFILING:BOOL=OFF",
+    "GGML_OPENCL_TARGET_VERSION:STRING=300",
+    "GGML_OPENCL_USE_ADRENO_KERNELS:BOOL=ON",
+    "GGML_OPENMP:BOOL=ON",
+    "GGML_OPENMP_FETCH:BOOL=OFF",
+    "GGML_OPENVINO:BOOL=OFF",
+    "GGML_RPC:BOOL=OFF",
+    "GGML_RVV:BOOL=ON",
+    "GGML_RV_ZFH:BOOL=ON",
+    "GGML_RV_ZICBOP:BOOL=ON",
+    "GGML_RV_ZIHINTPAUSE:BOOL=ON",
+    "GGML_RV_ZVFBFWMA:BOOL=OFF",
+    "GGML_RV_ZVFH:BOOL=ON",
+    "GGML_SANITIZE_ADDRESS:BOOL=OFF",
+    "GGML_SANITIZE_THREAD:BOOL=OFF",
+    "GGML_SANITIZE_UNDEFINED:BOOL=OFF",
+    "GGML_SCCACHE_FOUND:FILEPATH=GGML_SCCACHE_FOUND-NOTFOUND",
+    "GGML_SCHED_MAX_COPIES:STRING=4",
+    "GGML_SCHED_NO_REALLOC:BOOL=OFF",
+    "GGML_SSE42:BOOL=OFF",
+    "GGML_STATIC:BOOL=OFF",
+    "GGML_SYCL:BOOL=OFF",
+    "GGML_SYCL_DEVICE_ARCH:STRING=",
+    "GGML_SYCL_DNN:BOOL=ON",
+    "GGML_SYCL_F16:BOOL=OFF",
+    "GGML_SYCL_GRAPH:BOOL=ON",
+    "GGML_SYCL_HOST_MEM_FALLBACK:BOOL=ON",
+    "GGML_SYCL_SUPPORT_LEVEL_ZERO_API:BOOL=ON",
+    "GGML_SYCL_TARGET:STRING=INTEL",
+    "GGML_VIRTGPU:BOOL=OFF",
+    "GGML_VIRTGPU_BACKEND:BOOL=OFF",
+    "GGML_VULKAN:BOOL=OFF",
+    "GGML_VULKAN_CHECK_RESULTS:BOOL=OFF",
+    "GGML_VULKAN_DEBUG:BOOL=OFF",
+    "GGML_VULKAN_MEMORY_DEBUG:BOOL=OFF",
+    "GGML_VULKAN_RUN_TESTS:BOOL=OFF",
+    "GGML_VULKAN_SHADERS_GEN_TOOLCHAIN:FILEPATH=",
+    "GGML_VULKAN_SHADER_DEBUG_INFO:BOOL=OFF",
+    "GGML_VULKAN_VALIDATE:BOOL=OFF",
+    "GGML_VXE:BOOL=ON",
+    "GGML_WEBGPU:BOOL=OFF",
+    "GGML_WEBGPU_CPU_PROFILE:BOOL=OFF",
+    "GGML_WEBGPU_DEBUG:BOOL=OFF",
+    "GGML_WEBGPU_GPU_PROFILE:BOOL=OFF",
+    "GGML_WEBGPU_JSPI:BOOL=ON",
+    "GGML_XTHEADVECTOR:BOOL=OFF",
+    "GGML_ZDNN:BOOL=OFF",
+    "GGML_ZENDNN:BOOL=OFF",
+    "GGML_AVAILABLE_BACKENDS:INTERNAL=ggml-cpu;ggml-cuda",
+    "GGML_CUDA_COMPRESSION_MODE-STRINGS:INTERNAL=none;speed;balance;size",
+    "GGML_OPENMP_ENABLED:INTERNAL=ON"
+  ],
+  "compressed_reference_logs": {
+    "reference-control-vision-board-base-e4b-f32.log.gz": {
+      "uncompressed_sha256": "e1a26eeac87625022927041ef749c5aa63f173420ab303cb7509bc67b43feaa2",
+      "uncompressed_bytes": 312276
+    },
+    "reference-scale-image-512-e4b-flash.log.gz": {
+      "uncompressed_sha256": "75e35b784152e55c62ba3cfdbddcf9d55be2faf07cf70cb95abfbbf21ef8d06f",
+      "uncompressed_bytes": 329369
+    },
+    "reference-control-close-scores-e2b-f32.log.gz": {
+      "uncompressed_sha256": "b98534741e21dd14ae870ab49edaabf36f3051ba658d6e8e9230150c40d204c5",
+      "uncompressed_bytes": 248423
+    },
+    "reference-scale-image-384-reversed-e4b-f32.log.gz": {
+      "uncompressed_sha256": "3e62b47fd7b3e340d939e3ffe092189aa0b741d15e1d1390bb6fd0d1f96e08f8",
+      "uncompressed_bytes": 326127
+    },
+    "reference-scale-384-reversed-e4b-flash.log.gz": {
+      "uncompressed_sha256": "d02cd4e854ad011650a617788214add50d467c0c0c1b940affe8563dc8ff0264",
+      "uncompressed_bytes": 310395
+    },
+    "reference-control-long-route-16-e4b-flash.log.gz": {
+      "uncompressed_sha256": "1ee6e0a46bd7c2bf9266f871c0cdbe2a3f7fef4c7c32ebc3ec20107df1ad5000",
+      "uncompressed_bytes": 310394
+    },
+    "reference-scale-384-e4b-f32.log.gz": {
+      "uncompressed_sha256": "21205aee9b5f48e90e4c5d238a20887c37f6ab616ef700a9d259aad3b9d9fcff",
+      "uncompressed_bytes": 312080
+    },
+    "reference-control-vision-board-base-e2b-flash.log.gz": {
+      "uncompressed_sha256": "2fd7c41577475cf8a13db092241a36a330f4e2cef06c36b8bc99e69670c54c21",
+      "uncompressed_bytes": 247530
+    },
+    "reference-control-vision-table-base-e2b-f32.log.gz": {
+      "uncompressed_sha256": "518dbda6dc39d72b5df9a0a1c5f646538b34ab93fdb74fdd7af5719f6e8ce33e",
+      "uncompressed_bytes": 248692
+    },
+    "reference-scale-384-reversed-e4b-f32.log.gz": {
+      "uncompressed_sha256": "0525091216bba4fc492b6e5f98162cfdb974745be89bc14dd333c32271a832a6",
+      "uncompressed_bytes": 312080
+    },
+    "reference-scale-16-e2b-f32.log.gz": {
+      "uncompressed_sha256": "1636f4d281a25ac0009b5af7adb83880e4e1f6b7c0b018acffe44cb2ad91dc88",
+      "uncompressed_bytes": 248454
+    },
+    "reference-control-vision-board-base-e2b-f32.log.gz": {
+      "uncompressed_sha256": "493b318d567e7afd2a939155e803282310d24af4987a9e73619a7dc11bf4d3b1",
+      "uncompressed_bytes": 248655
+    },
+    "reference-control-vision-status-base-e4b-f32.log.gz": {
+      "uncompressed_sha256": "32ce991310a87218dd801a25e0517ca964397d298c3791652dcb4c153e7f6555",
+      "uncompressed_bytes": 312348
+    },
+    "reference-scale-384-e2b-flash.log.gz": {
+      "uncompressed_sha256": "76202fdb64ec9fab9631aae8904a0a4d7ffbf55727368ec4d592cc30d36c30b3",
+      "uncompressed_bytes": 247335
+    },
+    "reference-scale-image-384-e4b-flash.log.gz": {
+      "uncompressed_sha256": "5c91dd135f89bf99bfab2a7c52b05c7d969a21b4431ff43f42b2e945449d6ac8",
+      "uncompressed_bytes": 324588
+    },
+    "reference-scale-384-reversed-e2b-flash.log.gz": {
+      "uncompressed_sha256": "15725dd6c2b28e5de5e60065584d90efc40fee274de6f4fdcbe436bb78de6ad2",
+      "uncompressed_bytes": 247335
+    },
+    "reference-scale-image-512-e4b-f32.log.gz": {
+      "uncompressed_sha256": "bdf6d57cc5f910b5bcaf7feaaa9221b85ae4f3419bf998b0d9e29d16bbf06a16",
+      "uncompressed_bytes": 331043
+    },
+    "reference-control-vision-table-base-e2b-flash.log.gz": {
+      "uncompressed_sha256": "eb70dd3da0aa09eb67333268ba35beba5a855f1c98513b31da7227f5f9d733a7",
+      "uncompressed_bytes": 247565
+    },
+    "reference-control-vision-table-base-e4b-flash.log.gz": {
+      "uncompressed_sha256": "a2ee47a6fa9a420371d689c3509a17f0ab0f31237a8bdfe75bbb92704f97a81e",
+      "uncompressed_bytes": 310626
+    },
+    "reference-scale-512-reversed-e2b-f32.log.gz": {
+      "uncompressed_sha256": "8059cb497c8646bb866b5500e24947dffc9f95461d42dd059a02581b33756683",
+      "uncompressed_bytes": 248460
+    },
+    "reference-scale-512-reversed-e4b-f32.log.gz": {
+      "uncompressed_sha256": "43a19bd76d32981395a3c17133ab87cea8d6c0e35a71caaa8196e31642c4a544",
+      "uncompressed_bytes": 312080
+    },
+    "reference-control-vision-board-base-e4b-flash.log.gz": {
+      "uncompressed_sha256": "726fe0523d233f708ac56015d2a660f76094ad3f8f5a4fbee5b7962a6969ef35",
+      "uncompressed_bytes": 310591
+    },
+    "reference-scale-image-512-reversed-e4b-f32.log.gz": {
+      "uncompressed_sha256": "d12717c0ac592a1540cde125ae5b20a698901c03c23ac1401f1969fa1c9c679c",
+      "uncompressed_bytes": 330946
+    },
+    "reference-control-close-scores-e4b-f32.log.gz": {
+      "uncompressed_sha256": "ed99809cf1c7c738619c8722bd5939a1192fba66a94cdf98fae51cb3a999a58f",
+      "uncompressed_bytes": 312044
+    },
+    "reference-control-long-route-16-e2b-f32.log.gz": {
+      "uncompressed_sha256": "7b60f69b5934dbe5f44fca27e9da5df1e38b5b4c8f89995ce40a7abbb82052cd",
+      "uncompressed_bytes": 248459
+    },
+    "reference-control-long-route-16-e4b-f32.log.gz": {
+      "uncompressed_sha256": "7b63a964766205bc48ec4a92c81512b9c4aac3db3c3f6a022c4f0199059b06f2",
+      "uncompressed_bytes": 312079
+    },
+    "reference-control-vision-status-base-e4b-flash.log.gz": {
+      "uncompressed_sha256": "a37877a5629d304c8e28efafa7afe513eac24e11fcd37197941c8c0b69c5aac8",
+      "uncompressed_bytes": 310663
+    },
+    "reference-scale-512-e4b-flash.log.gz": {
+      "uncompressed_sha256": "7e9c8bb10a0892e5b3b35c3345f4e3bf71d1bd975a4f57bb5f69b88521deb52f",
+      "uncompressed_bytes": 310395
+    },
+    "reference-scale-512-reversed-e2b-flash.log.gz": {
+      "uncompressed_sha256": "3842028ebffcd5a074f495d97d9a84c631d8fdfea6fb8cd1d77ce74fac97ca2f",
+      "uncompressed_bytes": 247335
+    },
+    "reference-scale-image-512-reversed-e4b-flash.log.gz": {
+      "uncompressed_sha256": "3577a3ff7ea54e01156fde1cd193d0b49d5aff7414c627b483b23ae2f9a35b5d",
+      "uncompressed_bytes": 329246
+    },
+    "reference-control-close-scores-e2b-flash.log.gz": {
+      "uncompressed_sha256": "7056ff2c4844771bb5ee0d0513347e66f5b8aa1bd28eacd6c76d16d564bcceca",
+      "uncompressed_bytes": 247328
+    },
+    "reference-scale-384-e4b-flash.log.gz": {
+      "uncompressed_sha256": "dc4b1abe64e283a77636b88743770c414fd38fccb5a975bd35fd917d0b783ede",
+      "uncompressed_bytes": 310395
+    },
+    "reference-scale-16-reversed-e2b-flash.log.gz": {
+      "uncompressed_sha256": "b6ef4255979204966ed8b01925424a802cd90cfda125257d4c56d9489ce68354",
+      "uncompressed_bytes": 247328
+    },
+    "reference-scale-image-384-reversed-e4b-flash.log.gz": {
+      "uncompressed_sha256": "f84ed12c05193418ea4dfe8440d6380f187ed68d69b0daaaeea1c33984a6ea77",
+      "uncompressed_bytes": 324454
+    },
+    "reference-scale-16-e2b-flash.log.gz": {
+      "uncompressed_sha256": "ab6f91bf31b41ad8101159d1b4bb9f672c6b75adc3198e07f91cce70d95cf615",
+      "uncompressed_bytes": 247328
+    },
+    "reference-scale-512-e2b-f32.log.gz": {
+      "uncompressed_sha256": "f581032bb2cafd772ffacd7856a394d02fe20e771b8a46ea3ad48d83b0b53498",
+      "uncompressed_bytes": 248460
+    },
+    "reference-scale-16-reversed-e4b-f32.log.gz": {
+      "uncompressed_sha256": "fdc15c481c865190cabe92ae97204ed1abcf5e5ee3fccd89af95164714baad89",
+      "uncompressed_bytes": 312074
+    },
+    "reference-scale-16-reversed-e4b-flash.log.gz": {
+      "uncompressed_sha256": "1935b490f562279d82c89253581ed03f9df46d2cec5f53573da874fbc4c6cad9",
+      "uncompressed_bytes": 310389
+    },
+    "reference-scale-384-reversed-e2b-f32.log.gz": {
+      "uncompressed_sha256": "b42d4873cc40b0a71423e53513f59abcc9d738b1e6e8ffedd6dd4bcbc4121ad9",
+      "uncompressed_bytes": 248460
+    },
+    "reference-control-vision-status-base-e2b-f32.log.gz": {
+      "uncompressed_sha256": "22fb8e40ca33d096a7b348332d95bb45c86ffb2a9e38e289849571bc0bc5ab72",
+      "uncompressed_bytes": 248728
+    },
+    "reference-scale-16-reversed-e2b-f32.log.gz": {
+      "uncompressed_sha256": "866cddf2f3af38f956481bca73ea99c954c246984dec7faf85915883c551560b",
+      "uncompressed_bytes": 248454
+    },
+    "reference-scale-16-e4b-f32.log.gz": {
+      "uncompressed_sha256": "ca8b08ffdb325f398171075a4c9e0ac52807ffb5dbc2e72e479b2e7f80a8fc7a",
+      "uncompressed_bytes": 312074
+    },
+    "reference-control-vision-table-base-e4b-f32.log.gz": {
+      "uncompressed_sha256": "c364439d692b4d5e947064fb1359342956bc81a51067ba2da766d79620599484",
+      "uncompressed_bytes": 312312
+    },
+    "reference-control-long-route-16-e2b-flash.log.gz": {
+      "uncompressed_sha256": "db017a56b41b3ebabafee39a1e36312c7c085eb158d5d31ff4b26448c7b90fe7",
+      "uncompressed_bytes": 247333
+    },
+    "reference-scale-384-e2b-f32.log.gz": {
+      "uncompressed_sha256": "748996a3f42f12665102d4d346765e1e3bd8cf7739e945b47fb69b732c566f92",
+      "uncompressed_bytes": 248460
+    },
+    "reference-scale-image-384-e4b-f32.log.gz": {
+      "uncompressed_sha256": "7164679c7c7d84403305455a872136bd242c2a8d50a1c32fab5a54dd143e25ff",
+      "uncompressed_bytes": 326271
+    },
+    "reference-scale-512-reversed-e4b-flash.log.gz": {
+      "uncompressed_sha256": "745621450b917e17437ac4cfea1fc473323fa635c8c1b4ce46cab1a2fe2c1411",
+      "uncompressed_bytes": 310395
+    },
+    "reference-control-close-scores-e4b-flash.log.gz": {
+      "uncompressed_sha256": "4bf41cb7ba9985ddcb6e9b600a146cffc70769988456569110169a4715dcd7bf",
+      "uncompressed_bytes": 310389
+    },
+    "reference-scale-512-e4b-f32.log.gz": {
+      "uncompressed_sha256": "0c4c50380971c9548b82e112db18997068de03a08a145e1c990ddc3957508673",
+      "uncompressed_bytes": 312080
+    },
+    "reference-scale-512-e2b-flash.log.gz": {
+      "uncompressed_sha256": "cd956fa7b01ac13563840382748d2916732f1ea761f0516457730fbcb924395a",
+      "uncompressed_bytes": 247335
+    },
+    "reference-scale-16-e4b-flash.log.gz": {
+      "uncompressed_sha256": "ecc5961e22f0d6b6fae3fb3b43e88571ef5b8818df2dd258f6fad6d54fe2bdc1",
+      "uncompressed_bytes": 310389
+    },
+    "reference-control-vision-status-base-e2b-flash.log.gz": {
+      "uncompressed_sha256": "1fcfe96dcad72f6cebd355b180583d519e1ead7c7c22f2924cd391ea1705c1e9",
+      "uncompressed_bytes": 247602
+    }
+  },
+  "placement_pilot_excluded": true,
+  "reference_tensor_buffer_override": ".* -> CUDA0; all model tensors and KV on CUDA; host staging retained",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 2060 SUPER",
+    "uuid": "GPU-5dea1d8c-0901-5986-548a-96a43cff7256",
+    "driver": "615.71.09",
+    "nvidia_smi_total_mib": 8192,
+    "compute_capability": "7.5",
+    "after_all_runs_used_mib": 1
+  },
+  "fixture_hashes": {
+    "fixtures/phase4-step4-cpu.jsonl": "76b81c681df8118bb7c4c58acbbba2d219882d779a9abb101bb2ffaba3867a48",
+    "fixtures/phase4-step4-quality.jsonl": "48e43bd6efd77dcc420f765997b6f3a78b866ae92dac47a721769ba06d5bfc21",
+    "fixtures/phase4-step4-vision-text-controls.jsonl": "b262daff0f15b7820a6703dfd57e8e5ef9a080cad6f55cec5874adf36dca2bde",
+    "fixtures/phase4-step4-vision.jsonl": "a98647965faa3d53db0d0da08ea0ac2be89ce74e1fed0b174565d99eba02416c",
+    "fixtures/phase4-step4-vision/board-relayout.png": "ea9cbfe2924f7ff94960e93a801434f903c5675a67b2ca420415a148cbd14a57",
+    "fixtures/phase4-step4-vision/contact-sheet.png": "5f9d41121d3da80c41c320186a654b0984f067550dbf046065b626c495ee5bba",
+    "fixtures/phase4-step4-vision/status-base.png": "ddf5e5fc312957ffef1883b7309070115ec2725ce560d1e8da26f4fee720f384",
+    "fixtures/phase4-step4-vision/table-base.png": "498fbb4628ad48faefdde692db72d9999651548409bfe3b88e39a7ef48334f53",
+    "fixtures/phase4-step4-vision/table-relayout.png": "c9684b96fbe4dfe41fe810bed852bcf3809e430508f405fd991e2c715d2c9a18",
+    "fixtures/phase4-step4-vision/board-base.png": "42b2e0b289fd36bd244a459054de179c6f92c7a41d82e11657819535476a1477",
+    "fixtures/phase4-step4-vision/board-changed.png": "400f99099cd7059cf98495d5d66748a77fa4df7c39d9c8266198883d473e6a45",
+    "fixtures/phase4-step4-vision/status-changed.png": "4e4e1003bc9a3907cc2397199baf65e90d6f7f7a6f9d88f56cc6a493a8f837dd",
+    "fixtures/phase4-step4-vision/status-relayout.png": "df22ae9531c75a91a1e1886979d8f9778e0485e4b56814d53e46784f9d5a806f",
+    "fixtures/phase4-step4-vision/table-changed.png": "933c612be7b49b092f0c65d85cf68e7c81b196911bd4072238cf5d9671ea3d80",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-vision-status-base.prompt": "abaade7048087872b79b649259013148b5760960becb65b69f2d069cc644a471",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-384.prompt": "e33588e6d888cefe87f3cba51b5099c5e7c6a43e47dd64681448200626434f1f",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-384-reversed.prompt": "8521b5b8e39f94c840068ff07c9226d991b3d101ac25a1d3a6810fdda8794eae",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-close-scores.prompt": "7d882aa1c8e9b48f69ff1886d3128b02d5c3ecf7e6aa744ac6df20292ee65cc1",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-512.prompt": "d5c494a522545af1f74947c00ff1c91f128fa3b7ca389cdf592681040d8bd6bb",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-384-reversed.prompt": "e2c00504cf78697c10ad40d78e0f9aae7f5d6842afbbd0c98b1f99d55d8d1978",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-long-route-16.prompt": "85ef81124a32c9d5e81d438fc66ca93af27d74840391606a9c5031e330f31838",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-384.prompt": "707c39355e7726722f64b9bfba480df961b925692f80e88ee7f6f9664b9e7507",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-vision-table-base.prompt": "b40d98932978094fd50498fc2b8f5e6bd69ea101a26021f09aecfc1eb335f226",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-vision-board-base.prompt": "992c4ec3ceb9431009db368b30374bf21167dcae8b0f91577d9035da86533ef8",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-16-reversed.prompt": "7e413c845cacf2b4a809e3232a18f54b7fafec1eb2c51d2d885ab134888f3cc0",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-512-reversed.prompt": "2a9e09619a151f3a2c12330b9bded1085974a8c2901392ba470562614efcfc20",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-16.prompt": "4af77e18a4f9bf9cd7018fbb35f6d77f3c8abb7c16baae4fb67831a33be0a254",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-512-reversed.prompt": "850ab85919623c21d1e00dbf0ab6289e377c1fda2f39b7ecbc479b7f2e8b4694",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-512.prompt": "b672335567d9f70ea5e3208280f3e1d43d77a2415c3954128db90f018db7e6df",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-16-reversed.labels": "740d687b46f40d7e73e10e626bfb3cc22ce106f4d38d93ed69ba439e8348e021",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-512.labels": "a296b0360d293b4b323ef10c1d75f322a3393b9bfed5c2a37de9b5ced4e2b55b",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-vision-board-base.labels": "a7f5cf19fdb779272b12bed17134c60d18d464fddfda599b8a70fdc5cab185d1",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-16.labels": "740d687b46f40d7e73e10e626bfb3cc22ce106f4d38d93ed69ba439e8348e021",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-long-route-16.labels": "63942b54482c90ad8af1e9b5fe4bf691a0c1de5553ed3383b9db89b7b09b7f08",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-vision-table-base.labels": "8b1583da45bf9454a0078483f6f76dcf62929b57cc95031d5b74a0734a9a0ba6",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-512-reversed.labels": "a296b0360d293b4b323ef10c1d75f322a3393b9bfed5c2a37de9b5ced4e2b55b",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-384.labels": "48fbd8f140c5609d5e524869186747d278c167919e61dba6d9c4f9166c22b164",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-image-384-reversed.labels": "48fbd8f140c5609d5e524869186747d278c167919e61dba6d9c4f9166c22b164",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-close-scores.labels": "a7f5cf19fdb779272b12bed17134c60d18d464fddfda599b8a70fdc5cab185d1",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-384-reversed.labels": "48fbd8f140c5609d5e524869186747d278c167919e61dba6d9c4f9166c22b164",
+    "docs/records/option-scale-2-gpu-2026-10-07/control-vision-status-base.labels": "762ec3a66cb1681ce6cbcba424c38e80a77e821a2f9d88373f0ae916c22ea233",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-512.labels": "a296b0360d293b4b323ef10c1d75f322a3393b9bfed5c2a37de9b5ced4e2b55b",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-512-reversed.labels": "a296b0360d293b4b323ef10c1d75f322a3393b9bfed5c2a37de9b5ced4e2b55b",
+    "docs/records/option-scale-2-gpu-2026-10-07/scale-384.labels": "48fbd8f140c5609d5e524869186747d278c167919e61dba6d9c4f9166c22b164"
+  }
+}

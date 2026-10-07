@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "request_token_budget_exceeded",
+    "message": "questions exceed the total request token budget"
+  }
+}

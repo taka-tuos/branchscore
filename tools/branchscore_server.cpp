@@ -110,6 +110,9 @@ pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; 
 <label for="instructions">Question</label>
 <textarea id="instructions" required>Which option should be selected?</textarea>
 <p class="muted">The server evaluates one Choice question. Option keys are sorted lexically; a blank description is sent as null.</p>
+<label for="bulk-options">Paste option keys (one per line; optional description after a tab)</label>
+<textarea id="bulk-options" placeholder="Part number&#10;Another part number"></textarea>
+<button id="import-options" class="secondary" type="button">Replace options from pasted list</button>
 <div id="options"></div>
 <div class="actions"><button id="add-option" class="secondary" type="button">Add option</button><button id="submit" type="submit">Evaluate</button></div>
 <label for="image">Optional PNG or JPEG</label>
@@ -131,12 +134,15 @@ pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; 
 (() => {
   'use strict';
   const maxBodyBytes = 16 * 1024 * 1024;
+  const maxOptions = __BRANCHSCORE_MAX_OPTIONS__;
   const tokenInput = document.querySelector('#token');
   const connectButton = document.querySelector('#connect');
   const modelStatus = document.querySelector('#model-status');
   const connectionStatus = document.querySelector('#connection-status');
   const optionsElement = document.querySelector('#options');
   const addOptionButton = document.querySelector('#add-option');
+  const bulkOptions = document.querySelector('#bulk-options');
+  const importOptionsButton = document.querySelector('#import-options');
   const submitButton = document.querySelector('#submit');
   const decisionForm = document.querySelector('#decision-form');
   const imageInput = document.querySelector('#image');
@@ -185,7 +191,22 @@ pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; 
   addOption('keep', 'Keep it running');
   addOption('stop', 'Stop it');
   addOptionButton.addEventListener('click', () => {
-    if (optionsElement.children.length < 16) addOption();
+    if (optionsElement.children.length < maxOptions) addOption();
+  });
+  importOptionsButton.addEventListener('click', () => {
+    const lines = bulkOptions.value.split(/\r?\n/).filter(line => line.trim());
+    const imported = lines.map(line => {
+      const tab = line.indexOf('\t');
+      return tab < 0 ? [line.trim(), ''] : [line.slice(0, tab).trim(), line.slice(tab + 1).trim()];
+    });
+    if (imported.length < 2 || imported.length > maxOptions ||
+        imported.some(row => !row[0]) || new Set(imported.map(row => row[0])).size !== imported.length) {
+      setStatus(formStatus, 'Paste 2–' + maxOptions + ' unique, nonempty option keys.', 'error');
+      return;
+    }
+    optionsElement.replaceChildren();
+    imported.forEach(row => addOption(...row));
+    setStatus(formStatus, 'Loaded ' + imported.length + ' options.');
   });
   tokenInput.addEventListener('input', () => {
     authToken = '';
@@ -297,9 +318,9 @@ pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; 
     const state = document.querySelector('#state').value.trim();
     const instructions = document.querySelector('#instructions').value.trim();
     const rows = [...optionsElement.querySelectorAll('.row')];
-    const criteria = {};
-    if (!state || !instructions || rows.length < 2 || rows.length > 16) {
-      setStatus(formStatus, 'Enter state, question, and 2–16 options.', 'error');
+    const criteria = Object.create(null);
+    if (!state || !instructions || rows.length < 2 || rows.length > maxOptions) {
+      setStatus(formStatus, 'Enter state, question, and 2–' + maxOptions + ' options.', 'error');
       return;
     }
     for (const row of rows) {
@@ -313,6 +334,7 @@ pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; 
     }
     submitButton.disabled = true;
     addOptionButton.disabled = true;
+    importOptionsButton.disabled = true;
     try {
       if (imageInput.files && imageInput.files[0]) imageValue = await fileAsImage(imageInput.files[0]);
       const payload = { state, model: modelId, questions: { decision: { type: 'choice', instructions, criteria } } };
@@ -324,7 +346,7 @@ pre { max-height: 18rem; overflow: auto; padding: .75rem; border-radius: .4rem; 
       renderResponse(await response.json());
       setStatus(formStatus, 'Evaluation complete.', 'ok');
     } catch (error) { setStatus(formStatus, error.message, 'error'); }
-    finally { submitButton.disabled = false; addOptionButton.disabled = false; }
+    finally { submitButton.disabled = false; addOptionButton.disabled = false; importOptionsButton.disabled = false; }
   });
 })();
 </script>
@@ -723,7 +745,9 @@ bool send_json(const int socket, const int status, const Json & body) {
 }
 
 bool send_ui(const int socket) {
-    const std::string body(branchscore_ui_html);
+    std::string body(branchscore_ui_html);
+    const std::string marker = "__BRANCHSCORE_MAX_OPTIONS__";
+    body.replace(body.find(marker), marker.size(), std::to_string(branchscore::max_decision_options));
     const std::string response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html; charset=utf-8\r\n"
@@ -747,6 +771,9 @@ std::string public_message(const std::string & code) {
     if (code == "invalid_image") return "image data is invalid";
     if (code == "image_too_large") return "image dimensions exceed the server limit";
     if (code == "request_too_large") return "request body exceeds the server limit";
+    if (code == "token_budget_exceeded") return "question exceeds the Prefill token budget";
+    if (code == "context_limit_exceeded") return "question exceeds the model context";
+    if (code == "request_token_budget_exceeded") return "questions exceed the total request token budget";
     if (code == "request_timeout") return "request did not complete before the timeout";
     if (code == "headers_too_large") return "request headers exceed the server limit";
     if (code == "request_target_too_large") return "request target exceeds the server limit";
@@ -764,7 +791,9 @@ int status_for_code(const std::string & code) {
     if (code == "unauthorized") return 401;
     if (code == "unsupported_media_type" || code == "unsupported_content_type" ||
         code == "unsupported_content_encoding") return 415;
-    if (code == "request_too_large" || code == "image_too_large") return 413;
+    if (code == "request_too_large" || code == "image_too_large" ||
+        code == "token_budget_exceeded" || code == "context_limit_exceeded" ||
+        code == "request_token_budget_exceeded") return 413;
     if (code == "request_timeout") return 408;
     if (code == "headers_too_large") return 431;
     if (code == "request_target_too_large") return 414;
@@ -840,6 +869,11 @@ void handle_connection(
             Object body;
             body.emplace("status", "ready");
             body.emplace("model", model_id);
+            Object limits;
+            limits.emplace("max_options", Json(double(branchscore::max_decision_options)));
+            limits.emplace("max_prefill_positions", Json(double(branchscore::max_prefill_positions)));
+            limits.emplace("max_request_prefill_positions", Json(double(branchscore::max_request_prefill_positions)));
+            body.emplace("limits", Json(std::move(limits)));
             status = 200;
             send_json(socket, status, Json(std::move(body)));
         } else if (!content_type_is_json(parsed.request.content_type)) {
@@ -874,6 +908,16 @@ void handle_connection(
                     }
                 }
 
+                std::size_t request_positions = 0;
+                for (const auto & question : request.questions) {
+                    const auto positions = engine.estimate_prefill_positions(question.decision);
+                    if (positions > branchscore::max_request_prefill_positions - request_positions) {
+                        throw branchscore::systemone::RequestError("request_token_budget_exceeded",
+                            "questions exceed the 32768-position request budget");
+                    }
+                    request_positions += positions;
+                }
+
                 std::vector<branchscore::DecisionResult> results;
                 results.reserve(request.questions.size());
                 for (const auto & question : request.questions) {
@@ -885,9 +929,13 @@ void handle_connection(
                 auto & branchscore_metadata = response.object().at("branchscore");
                 branchscore_metadata.set("http_handling_ms", Json(handling_ms));
                 branchscore_metadata.set("input_tokens_include_visual", Json(false));
+                branchscore_metadata.set("prefill_positions", Json(double(request_positions)));
                 status = 200;
                 send_json(socket, status, response);
             } catch (const branchscore::systemone::RequestError & error) {
+                status = status_for_code(error.code());
+                send_json(socket, status, error_json(error.code(), request_id));
+            } catch (const branchscore::DecisionBudgetError & error) {
                 status = status_for_code(error.code());
                 send_json(socket, status, error_json(error.code(), request_id));
             } catch (const branchscore::ImageDecodeError &) {

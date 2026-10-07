@@ -1,0 +1,87 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2549153792,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 55967744,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G"
+  ],
+  "logits": [
+    19.682294845581055,
+    27.361860275268555,
+    19.876766204833984,
+    27.5428409576416,
+    20.0054874420166,
+    20.469966888427734,
+    16.879924774169922
+  ],
+  "microbatch": 512,
+  "path": "F32 KV/mask, ordinary attention, full SWA",
+  "peak_graph_bytes": 121230720,
+  "positions": 488,
+  "prefill_ms": 268.051002,
+  "probabilities": [
+    0.00020997505574921798,
+    0.4543186809528132,
+    0.00025505012660678104,
+    0.544451885870303,
+    0.00029008713342895746,
+    0.0004615824914602476,
+    1.2738369638626867e-05
+  ],
+  "selected_index": 3,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-table-relayout-distractors",
+  "placement": "first",
+  "renderer": "gemma4-categorical-v1",
+  "expected_selected_id": "birch",
+  "selected_id": "elm",
+  "options": [
+    {
+      "id": "all",
+      "description": "Select every candidate equally."
+    },
+    {
+      "id": "birch",
+      "description": "Select candidate BIRCH."
+    },
+    {
+      "id": "cedar",
+      "description": "Select candidate CEDAR."
+    },
+    {
+      "id": "elm",
+      "description": "Select candidate ELM."
+    },
+    {
+      "id": "dahlia",
+      "description": "Select candidate DAHLIA."
+    },
+    {
+      "id": "aster",
+      "description": "Select candidate ASTER."
+    },
+    {
+      "id": "defer",
+      "description": "Defer choosing an eligible candidate."
+    }
+  ],
+  "prompt_sha256": "1f4ba10253b2f72981d03e895a84ba6592461f2a1c787b52118c005ae1b377b8",
+  "image_sha256": "c9684b96fbe4dfe41fe810bed852bcf3809e430508f405fd991e2c715d2c9a18",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "f203277eb0967e903831ede03bde8c91910d86ae9229eb610dde0c3b53f0d7f2",
+  "answers_sha256": "7f20c10ae17d60498985d1536723ed09379d2f994a832dde6410c8f3a2824734",
+  "embeddings_sha256": "892be8a3531fb2d00c15706799a7bc2cf1ccdc94171db76b9d52735558c58d0e"
+}

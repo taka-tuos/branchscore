@@ -1,0 +1,13 @@
+<bos><|turn>system
+Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning.<turn|>
+<|turn>user
+<|image><|image|><image|>
+State:
+Use only the supplied image as evidence. Count red squares inside each card. Ignore circles, triangles, and squares of other colors. Identify each region by its printed name, not its screen position.
+
+Question:
+Which region contains the most red squares?
+
+Options:
+[{"description":"Select region WEST.","letter":"A"},{"description":"Select region EAST.","letter":"B"},{"description":"Select region NORTH.","letter":"C"},{"description":"Select region SOUTH.","letter":"D"}]<turn|>
+<|turn>model
