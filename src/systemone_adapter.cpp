@@ -1,4 +1,5 @@
 #include "branchscore/systemone_adapter.hpp"
+#include "branchscore/decision_limits.hpp"
 #include "branchscore/image_preprocessor.hpp"
 
 #include <algorithm>
@@ -174,6 +175,13 @@ Json timing_json(const TimingInfo & timing) {
     result.emplace("prefill_backend_copy_ms", number(timing.prefill_backend_copy_ms));
     result.emplace("prefill_synchronization_ms", number(timing.prefill_synchronization_ms));
     result.emplace("prefill_graph_node_count", size_number(timing.prefill_graph_node_count));
+    result.emplace("prefill_attention_path", timing.prefill_attention_path);
+    result.emplace("prefill_kv_type", timing.prefill_kv_type);
+    result.emplace("prefill_positions", size_number(timing.prefill_positions));
+    result.emplace("prefill_graph_count", size_number(timing.prefill_graph_count));
+    result.emplace("prefill_microbatch_size", size_number(timing.prefill_microbatch_size));
+    result.emplace("prefill_cache_bytes", size_number(timing.prefill_cache_bytes));
+    result.emplace("prefill_peak_graph_bytes", size_number(timing.prefill_peak_graph_bytes));
     result.emplace("readout_ms", number(timing.readout_ms));
     result.emplace("readout_backend_copy_ms", number(timing.readout_backend_copy_ms));
     result.emplace("readout_synchronization_ms", number(timing.readout_synchronization_ms));
@@ -269,9 +277,9 @@ Request parse_request(
 
         const auto & criteria = required(question_value, "criteria");
         require_object(criteria, "questions." + question_id + ".criteria");
-        if (criteria.object().size() < 2 || criteria.object().size() > 16) {
+        if (criteria.object().size() < min_decision_options || criteria.object().size() > max_decision_options) {
             throw RequestError(
-                "invalid_request", "choice criteria must contain 2-16 options");
+                "invalid_request", "choice criteria must contain 2-512 options");
         }
 
         DecisionRequest decision;
@@ -337,6 +345,10 @@ Json make_response(
         diagnostic.emplace("scoring_basis", result.scoring_basis);
         diagnostic.emplace("readout_id", result.readout_id);
         diagnostic.emplace("prompt_identity", result.rendered_prompt_identity);
+        diagnostic.emplace("renderer_id", result.prompt_format.renderer_id);
+        Json::Array option_order;
+        for (const auto & score : result.option_scores) option_order.emplace_back(score.option_id);
+        diagnostic.emplace("option_order", Json(std::move(option_order)));
         diagnostic.emplace("timings_ms", timing_json(result.timings));
         if (include_raw_logits) {
             diagnostic.emplace("raw_logits", Json(std::move(raw_logits)));

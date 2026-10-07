@@ -1,6 +1,7 @@
 #include "branchscore/backend_context.hpp"
 #include "branchscore/decision.hpp"
 #include "branchscore/gemma4_decision_engine.hpp"
+#include "branchscore/gemma4_prompt_renderer.hpp"
 #include "branchscore/json.hpp"
 #include "branchscore/model_loader.hpp"
 
@@ -114,6 +115,13 @@ Json timing_json(const branchscore::TimingInfo & timing) {
     result.emplace("prefill_backend_copy_ms", number(timing.prefill_backend_copy_ms));
     result.emplace("prefill_synchronization_ms", number(timing.prefill_synchronization_ms));
     result.emplace("prefill_graph_node_count", size_number(timing.prefill_graph_node_count));
+    result.emplace("prefill_attention_path", timing.prefill_attention_path);
+    result.emplace("prefill_kv_type", timing.prefill_kv_type);
+    result.emplace("prefill_positions", size_number(timing.prefill_positions));
+    result.emplace("prefill_graph_count", size_number(timing.prefill_graph_count));
+    result.emplace("prefill_microbatch_size", size_number(timing.prefill_microbatch_size));
+    result.emplace("prefill_cache_bytes", size_number(timing.prefill_cache_bytes));
+    result.emplace("prefill_peak_graph_bytes", size_number(timing.prefill_peak_graph_bytes));
     result.emplace("readout_ms", number(timing.readout_ms));
     result.emplace("readout_backend_copy_ms", number(timing.readout_backend_copy_ms));
     result.emplace("readout_synchronization_ms", number(timing.readout_synchronization_ms));
@@ -194,13 +202,17 @@ Json run_json(
     const branchscore::BackendContext & backend,
     const branchscore::ModelBundle & model,
     const std::size_t warmup_count,
-    const std::size_t row_count) {
+    const std::vector<InputRow> & rows) {
     const auto & text = model.text_config();
     const auto & vision = model.vision_config();
     Object run;
     run.emplace("kind", "run");
     run.emplace("schema_version", size_number(2));
-    run.emplace("renderer_id", "gemma4-categorical-v1");
+    const auto renderer = branchscore::Gemma4PromptRenderer::renderer_id(rows.front().request.options.size());
+    const bool mixed_renderers = std::any_of(rows.begin(), rows.end(), [renderer](const auto & row) {
+        return std::string(renderer) != branchscore::Gemma4PromptRenderer::renderer_id(row.request.options.size());
+    });
+    run.emplace("renderer_id", mixed_renderers ? "per-decision" : renderer);
     run.emplace("readout_id", "gemma4-next-token-categorical-v1");
     run.emplace("scoring_basis", "answer_slot_logit");
     run.emplace("input_path", input_path.string());
@@ -221,7 +233,9 @@ Json run_json(
     run.emplace("vision_tensor_count", size_number(model.vision_tensor_count()));
     run.emplace("vision_weight_bytes", size_number(model.vision_weight_bytes()));
     run.emplace("warmup_count", size_number(warmup_count));
-    run.emplace("row_count", size_number(row_count));
+    run.emplace("row_count", size_number(rows.size()));
+    run.emplace("max_options", size_number(branchscore::max_decision_options));
+    run.emplace("max_prefill_positions", size_number(branchscore::max_prefill_positions));
     run.emplace("timing_boundary",
                 "measured request interval is one Gemma4DecisionEngine::evaluate call; "
                 "model loading, warmup, and JSONL writes are excluded");
@@ -390,7 +404,7 @@ int main(int argc, char ** argv) {
         if (!output) throw std::runtime_error("failed to create output JSONL '" +
                                               output_path.string() + "'");
         output << branchscore::json::stringify(run_json(
-            input_path, model_path, mmproj_path, backend, model, warmup_count, rows.size()))
+            input_path, model_path, mmproj_path, backend, model, warmup_count, rows))
                << '\n';
 
         std::vector<double> measured_ms;
