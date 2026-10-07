@@ -1,0 +1,66 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2553348096,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 51609600,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "logits": [
+    22.98811912536621,
+    26.620466232299805,
+    28.25898551940918,
+    20.94318199157715
+  ],
+  "microbatch": 512,
+  "path": "F32 KV/mask, ordinary attention, full SWA",
+  "peak_graph_bytes": 111684352,
+  "positions": 450,
+  "prefill_ms": 272.295441,
+  "probabilities": [
+    0.004282374623614032,
+    0.16187991278978117,
+    0.8332836233118491,
+    0.0005540892747557796
+  ],
+  "selected_index": 2,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-board-changed",
+  "placement": "first",
+  "renderer": "gemma4-categorical-v1",
+  "expected_selected_id": "north",
+  "selected_id": "north",
+  "options": [
+    {
+      "id": "west",
+      "description": "Select region WEST."
+    },
+    {
+      "id": "east",
+      "description": "Select region EAST."
+    },
+    {
+      "id": "north",
+      "description": "Select region NORTH."
+    },
+    {
+      "id": "south",
+      "description": "Select region SOUTH."
+    }
+  ],
+  "prompt_sha256": "992c4ec3ceb9431009db368b30374bf21167dcae8b0f91577d9035da86533ef8",
+  "image_sha256": "400f99099cd7059cf98495d5d66748a77fa4df7c39d9c8266198883d473e6a45",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "f5e948fd1f5df2a58d1d8d1892b905c6f203db0d3673b61e006147419b7613fe",
+  "answers_sha256": "4dba42160f687252e09ad9f045225f8107a1900e4dbfc46c7f7c59d305495d75",
+  "embeddings_sha256": "98a8bf4e21ad79609497ffa08b1db16b0fa7a68b0103bda792ce00f5482788ac"
+}

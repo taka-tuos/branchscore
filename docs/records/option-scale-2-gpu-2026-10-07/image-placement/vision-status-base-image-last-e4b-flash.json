@@ -1,0 +1,80 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2576416768,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 29360128,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ],
+  "logits": [
+    25.150243759155273,
+    26.632184982299805,
+    23.84052848815918,
+    27.493085861206055,
+    16.36983299255371,
+    13.715685844421387
+  ],
+  "microbatch": 512,
+  "path": "F16 KV/mask, Flash with F32 precision request, full SWA, 256-position padding",
+  "peak_graph_bytes": 105042816,
+  "positions": 494,
+  "prefill_ms": 256.010824,
+  "probabilities": [
+    0.06218005973927238,
+    0.2736843920115716,
+    0.01678220492513816,
+    0.6473431128305653,
+    9.558003609121927e-06,
+    6.724898433979162e-07
+  ],
+  "selected_index": 3,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-status-base",
+  "placement": "last",
+  "renderer": "research-gemma4-image-last-v1",
+  "expected_selected_id": "lyra",
+  "selected_id": "lyra",
+  "options": [
+    {
+      "id": "atlas",
+      "description": "Intervene on job ATLAS."
+    },
+    {
+      "id": "vega",
+      "description": "Intervene on job VEGA."
+    },
+    {
+      "id": "orion",
+      "description": "Intervene on job ORION."
+    },
+    {
+      "id": "lyra",
+      "description": "Intervene on job LYRA."
+    },
+    {
+      "id": "nova",
+      "description": "Intervene on job NOVA."
+    },
+    {
+      "id": "none",
+      "description": "Choose no intervention."
+    }
+  ],
+  "prompt_sha256": "a2f9c4293ec5e9a688c0b79f5c2b97304d410003040ff148d3d6b5e7daf1e8c3",
+  "image_sha256": "ddf5e5fc312957ffef1883b7309070115ec2725ce560d1e8da26f4fee720f384",
+  "before_sha256": "fdc0a640bbfdae76f06a3a30f86476c8a0ec1ff19c07e6213b70f835a968b125",
+  "after_sha256": "0aa991f299edaa8d5eb59e6d201033a7299c4828b8e797e9e8b441a5179144c1",
+  "answers_sha256": "9c39cada8e2e1fe47489e67670bee0d7c58b7e666fe721bdc4cc27ea1c9697ab",
+  "embeddings_sha256": "661ec9cc659a3cd34a9d896a7e4ce997b1e92cb0ecc3aa909ec63bdad34748e7"
+}

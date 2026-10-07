@@ -1,0 +1,49 @@
+{
+  "after_load_free_bytes": 4621139968,
+  "after_prefill_free_bytes": 4516282368,
+  "after_vision_free_bytes": 4575002624,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 18173952,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ],
+  "logits": [
+    20.211166381835938,
+    20.809524536132812,
+    17.078739166259766,
+    14.944303512573242,
+    13.801410675048828,
+    15.965595245361328
+  ],
+  "microbatch": 512,
+  "path": "F32 KV/mask, ordinary attention, full SWA",
+  "peak_graph_bytes": 115770240,
+  "positions": 493,
+  "prefill_ms": 170.137219,
+  "probabilities": [
+    0.34675576620877224,
+    0.6307936841855863,
+    0.015122647774445091,
+    0.0017891807241836356,
+    0.0005705610988277481,
+    0.004968160008184746
+  ],
+  "selected_index": 1,
+  "text_weight_bytes": 3090917516,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 368649984,
+  "visual_tokens": 300,
+  "expected_selected_id": "lyra",
+  "selected_id": "vega",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "8b9eda66128f1131a6d497880c0e25a6eeb31c28668962ac53419c2cf0419c75",
+  "answers_sha256": "9c39cada8e2e1fe47489e67670bee0d7c58b7e666fe721bdc4cc27ea1c9697ab",
+  "embeddings_sha256": "e30922751e2c5ec8d412a0f5259d10c67f340a50e725fee043d7015cbc8c8ede"
+}

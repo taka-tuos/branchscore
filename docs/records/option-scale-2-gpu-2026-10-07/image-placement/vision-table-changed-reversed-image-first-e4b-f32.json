@@ -1,0 +1,73 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2551250944,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 53100544,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E"
+  ],
+  "logits": [
+    26.68519401550293,
+    26.21084213256836,
+    28.51807403564453,
+    18.02186393737793,
+    26.65533447265625
+  ],
+  "microbatch": 512,
+  "path": "F32 KV/mask, ordinary attention, full SWA",
+  "peak_graph_bytes": 114947584,
+  "positions": 463,
+  "prefill_ms": 273.759318,
+  "probabilities": [
+    0.11305938619993942,
+    0.07035552661486698,
+    0.7068321615114921,
+    1.9537553285979033e-05,
+    0.10973338812041557
+  ],
+  "selected_index": 2,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-table-changed-reversed",
+  "placement": "first",
+  "renderer": "gemma4-categorical-v1",
+  "expected_selected_id": "aster",
+  "selected_id": "elm",
+  "options": [
+    {
+      "id": "aster",
+      "description": "Select candidate ASTER."
+    },
+    {
+      "id": "dahlia",
+      "description": "Select candidate DAHLIA."
+    },
+    {
+      "id": "elm",
+      "description": "Select candidate ELM."
+    },
+    {
+      "id": "cedar",
+      "description": "Select candidate CEDAR."
+    },
+    {
+      "id": "birch",
+      "description": "Select candidate BIRCH."
+    }
+  ],
+  "prompt_sha256": "f8860018c85fc15e208fe0f3321c0bdb0cb90f0f89617d64b92096a2a960ca1f",
+  "image_sha256": "933c612be7b49b092f0c65d85cf68e7c81b196911bd4072238cf5d9671ea3d80",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "63d5e6f74792f79fa1a458e6c97ae30b0e5250171932ea7321545df2bfdfef22",
+  "answers_sha256": "303159664f409c685ae034e7b2e10ab418a6f1959e7aac426a9c9058b6054b6f",
+  "embeddings_sha256": "d5e870461c320d4c003c7721544ca7b9253e4750f52fdd11df81fab0dbbe494e"
+}

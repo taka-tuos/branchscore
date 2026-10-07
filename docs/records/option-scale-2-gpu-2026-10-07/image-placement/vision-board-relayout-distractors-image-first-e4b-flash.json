@@ -1,0 +1,80 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2576416768,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 29360128,
+  "chunks": 1,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ],
+  "logits": [
+    25.972503662109375,
+    22.31476593017578,
+    25.4880428314209,
+    28.62841796875,
+    28.243572235107422,
+    18.83683967590332
+  ],
+  "microbatch": 512,
+  "path": "F16 KV/mask, Flash with F32 precision request, full SWA, 256-position padding",
+  "peak_graph_bytes": 100037248,
+  "positions": 477,
+  "prefill_ms": 270.184401,
+  "probabilities": [
+    0.039107773762929995,
+    0.0010086204769078435,
+    0.024091532591451015,
+    0.5568164048594343,
+    0.378944530819338,
+    3.113748993897004e-05
+  ],
+  "selected_index": 3,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-board-relayout-distractors",
+  "placement": "first",
+  "renderer": "gemma4-categorical-v1",
+  "expected_selected_id": "east",
+  "selected_id": "north",
+  "options": [
+    {
+      "id": "tied",
+      "description": "All four regions are tied."
+    },
+    {
+      "id": "west",
+      "description": "Select region WEST."
+    },
+    {
+      "id": "east",
+      "description": "Select region EAST."
+    },
+    {
+      "id": "north",
+      "description": "Select region NORTH."
+    },
+    {
+      "id": "south",
+      "description": "Select region SOUTH."
+    },
+    {
+      "id": "empty",
+      "description": "No region contains any red squares."
+    }
+  ],
+  "prompt_sha256": "0043d5490f3e6b0900de7f5bf7cf4518f0a3aea4df76a02f2065f42347c7d0fe",
+  "image_sha256": "ea9cbfe2924f7ff94960e93a801434f903c5675a67b2ca420415a148cbd14a57",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "74d33f6b52ec94befac3efbc0bc03a7187db3a27883ea29853161c0681b9d5bf",
+  "answers_sha256": "9c39cada8e2e1fe47489e67670bee0d7c58b7e666fe721bdc4cc27ea1c9697ab",
+  "embeddings_sha256": "0a2d463ba6bcde3428e5a8f0526929ee003c0ebdb54800170107453aa2919285"
+}

@@ -1,0 +1,94 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2544959488,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 59981824,
+  "chunks": 2,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+  ],
+  "logits": [
+    14.651674270629883,
+    13.706618309020996,
+    13.207242965698242,
+    24.97665786743164,
+    18.612030029296875,
+    15.333117485046387,
+    14.173768043518066,
+    10.739871978759766
+  ],
+  "microbatch": 512,
+  "path": "F32 KV/mask, ordinary attention, full SWA",
+  "peak_graph_bytes": 127271936,
+  "positions": 523,
+  "prefill_ms": 314.241505,
+  "probabilities": [
+    3.274231171672439e-05,
+    1.2725555505901094e-05,
+    7.723262457188705e-06,
+    0.9981429430857828,
+    0.001718185268634527,
+    6.472266130530001e-05,
+    2.0302863813788605e-05,
+    6.549907837282482e-07
+  ],
+  "selected_index": 3,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-status-changed-distractors",
+  "placement": "first",
+  "renderer": "gemma4-categorical-v1",
+  "expected_selected_id": "vega",
+  "selected_id": "orion",
+  "options": [
+    {
+      "id": "all",
+      "description": "Intervene on every job equally."
+    },
+    {
+      "id": "atlas",
+      "description": "Intervene on job ATLAS."
+    },
+    {
+      "id": "vega",
+      "description": "Intervene on job VEGA."
+    },
+    {
+      "id": "orion",
+      "description": "Intervene on job ORION."
+    },
+    {
+      "id": "lyra",
+      "description": "Intervene on job LYRA."
+    },
+    {
+      "id": "nova",
+      "description": "Intervene on job NOVA."
+    },
+    {
+      "id": "none",
+      "description": "Choose no intervention."
+    },
+    {
+      "id": "defer",
+      "description": "Defer choosing an eligible job until another snapshot."
+    }
+  ],
+  "prompt_sha256": "aaf59eb7f47b5969c7a1be564f04368836c6853117c2b22844b41e8321e2dfdc",
+  "image_sha256": "4e4e1003bc9a3907cc2397199baf65e90d6f7f7a6f9d88f56cc6a493a8f837dd",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "cbb854aacd1fd63b12d938514197eaa4f9d73f2b7cdb9c06bf0f72dea078951a",
+  "answers_sha256": "5474ed63e73f9cf273590358733eb6c2814e740889a3970c93eb6a93bf9023fe",
+  "embeddings_sha256": "17da4acc0499d5b8deda763d70e2ebd4bd15c891d7e21840c62cfc0c0fbc4e91"
+}

@@ -1,0 +1,116 @@
+{
+  "command": [
+    "/tmp/branchscore-gpu-prefill-probe",
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/gemma-4-E2B-it-Q4_K_M.gguf",
+    "/opt/sinobuz/copula/openjev-ggml/models/e2b/mmproj-F16.gguf",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/scale-16.prompt",
+    "/opt/sinobuz/copula/openjev-ggml/branchscore/docs/records/option-scale-2-gpu-2026-10-07/scale-16.labels",
+    "-",
+    "/tmp/branchscore-gpu-probes/scale-16-e2b-f32"
+  ],
+  "returncode": 0,
+  "elapsed_s": 2.3455302870024752,
+  "sampling": "nvidia-smi every >=100ms; sampled device total, not exact allocation peak",
+  "samples": [
+    {
+      "elapsed_s": 0.02008670000213897,
+      "csv": "2026/10/07 13:39:12.563, NVIDIA GeForce RTX 2060 SUPER, 8192, 1, 7800, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.1513972360007756,
+      "csv": "2026/10/07 13:39:12.686, NVIDIA GeForce RTX 2060 SUPER, 8192, 14, 7788, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.2730398060011794,
+      "csv": "2026/10/07 13:39:12.816, NVIDIA GeForce RTX 2060 SUPER, 8192, 94, 7708, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.3942680280015338,
+      "csv": "2026/10/07 13:39:12.937, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.5152938660030486,
+      "csv": "2026/10/07 13:39:13.058, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.636330135002936,
+      "csv": "2026/10/07 13:39:13.179, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.7573290950022056,
+      "csv": "2026/10/07 13:39:13.300, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 0.8786869810028293,
+      "csv": "2026/10/07 13:39:13.422, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 37",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.0000526470030309,
+      "csv": "2026/10/07 13:39:13.543, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.1211157470024773,
+      "csv": "2026/10/07 13:39:13.664, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.2428931110007397,
+      "csv": "2026/10/07 13:39:13.785, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.3648892450000858,
+      "csv": "2026/10/07 13:39:13.907, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.4858392250025645,
+      "csv": "2026/10/07 13:39:14.028, NVIDIA GeForce RTX 2060 SUPER, 8192, 3042, 4760, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.6059022740009823,
+      "csv": "2026/10/07 13:39:14.149, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.727321436002967,
+      "csv": "2026/10/07 13:39:14.269, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.84791491100259,
+      "csv": "2026/10/07 13:39:14.391, NVIDIA GeForce RTX 2060 SUPER, 8192, 3394, 4408, 13",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 1.969913531000202,
+      "csv": "2026/10/07 13:39:14.512, NVIDIA GeForce RTX 2060 SUPER, 8192, 3510, 4292, 16",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.0911395430011908,
+      "csv": "2026/10/07 13:39:14.634, NVIDIA GeForce RTX 2060 SUPER, 8192, 3572, 4230, 16",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.2259730719997606,
+      "csv": "2026/10/07 13:39:14.769, NVIDIA GeForce RTX 2060 SUPER, 8192, 104, 7698, 16",
+      "returncode": 0
+    },
+    {
+      "elapsed_s": 2.345478785002342,
+      "csv": "2026/10/07 13:39:14.890, NVIDIA GeForce RTX 2060 SUPER, 8192, 1, 7800, 16",
+      "returncode": 0
+    }
+  ]
+}

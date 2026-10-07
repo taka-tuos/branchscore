@@ -1,0 +1,94 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2561736704,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 44040192,
+  "chunks": 2,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+  ],
+  "logits": [
+    15.418960571289062,
+    16.356590270996094,
+    15.851505279541016,
+    25.26346206665039,
+    26.09126853942871,
+    16.549964904785156,
+    16.261226654052734,
+    13.428762435913086
+  ],
+  "microbatch": 512,
+  "path": "F16 KV/mask, Flash with F32 precision request, full SWA, 256-position padding",
+  "peak_graph_bytes": 107348992,
+  "positions": 523,
+  "prefill_ms": 296.928893,
+  "probabilities": [
+    1.6126573475493463e-05,
+    4.118598948606679e-05,
+    2.4853861828670583e-05,
+    0.3040568389549424,
+    0.6957713783244224,
+    4.997249586078911e-05,
+    3.743980789402106e-05,
+    2.203992090145042e-06
+  ],
+  "selected_index": 4,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-status-base-distractors",
+  "placement": "first",
+  "renderer": "gemma4-categorical-v1",
+  "expected_selected_id": "lyra",
+  "selected_id": "lyra",
+  "options": [
+    {
+      "id": "all",
+      "description": "Intervene on every job equally."
+    },
+    {
+      "id": "atlas",
+      "description": "Intervene on job ATLAS."
+    },
+    {
+      "id": "vega",
+      "description": "Intervene on job VEGA."
+    },
+    {
+      "id": "orion",
+      "description": "Intervene on job ORION."
+    },
+    {
+      "id": "lyra",
+      "description": "Intervene on job LYRA."
+    },
+    {
+      "id": "nova",
+      "description": "Intervene on job NOVA."
+    },
+    {
+      "id": "none",
+      "description": "Choose no intervention."
+    },
+    {
+      "id": "defer",
+      "description": "Defer choosing an eligible job until another snapshot."
+    }
+  ],
+  "prompt_sha256": "aaf59eb7f47b5969c7a1be564f04368836c6853117c2b22844b41e8321e2dfdc",
+  "image_sha256": "ddf5e5fc312957ffef1883b7309070115ec2725ce560d1e8da26f4fee720f384",
+  "before_sha256": "26fa4ae7027af6cbe13851110edbc0bd4461f13dfd2abe66d2c373c0d8f4f965",
+  "after_sha256": "cbb854aacd1fd63b12d938514197eaa4f9d73f2b7cdb9c06bf0f72dea078951a",
+  "answers_sha256": "5474ed63e73f9cf273590358733eb6c2814e740889a3970c93eb6a93bf9023fe",
+  "embeddings_sha256": "661ec9cc659a3cd34a9d896a7e4ce997b1e92cb0ecc3aa909ec63bdad34748e7"
+}

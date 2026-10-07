@@ -1,0 +1,12 @@
+<bos><|turn>system
+Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase label, with no explanation or reasoning.<turn|>
+<|turn>user
+State:
+Exactly one item has assigned color blue. All other items have assigned color red.
+
+Question:
+Which listed item has assigned color blue?
+
+Options:
+[{"description":"Item 000: the assigned color is red.","letter":"AB"},{"description":"Item 001: the assigned color is red.","letter":"BA"},{"description":"Item 002: the assigned color is red.","letter":"CB"},{"description":"Item 003: the assigned color is red.","letter":"DA"},{"description":"Item 004: the assigned color is red.","letter":"EC"},{"description":"Item 005: the assigned color is red.","letter":"FA"},{"description":"Item 006: the assigned color is red.","letter":"GA"},{"description":"Item 007: the assigned color is blue.","letter":"HA"},{"description":"Item 008: the assigned color is red.","letter":"IA"},{"description":"Item 009: the assigned color is red.","letter":"JA"},{"description":"Item 010: the assigned color is red.","letter":"KA"},{"description":"Item 011: the assigned color is red.","letter":"LA"},{"description":"Item 012: the assigned color is red.","letter":"MA"},{"description":"Item 013: the assigned color is red.","letter":"NA"},{"description":"Item 014: the assigned color is red.","letter":"OB"},{"description":"Item 015: the assigned color is red.","letter":"PA"}]<turn|>
+<|turn>model

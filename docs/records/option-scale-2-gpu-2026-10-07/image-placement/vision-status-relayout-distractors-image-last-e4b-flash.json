@@ -1,0 +1,94 @@
+{
+  "after_load_free_bytes": 2748383232,
+  "after_prefill_free_bytes": 2561736704,
+  "after_vision_free_bytes": 2698051584,
+  "before_load_free_bytes": 8081440768,
+  "cache_bytes": 44040192,
+  "chunks": 2,
+  "device_total_bytes": 8179810304,
+  "labels": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+  ],
+  "logits": [
+    18.62166976928711,
+    21.54750633239746,
+    25.299671173095703,
+    21.64470672607422,
+    26.26036834716797,
+    16.983646392822266,
+    13.809494972229004,
+    15.448724746704102
+  ],
+  "microbatch": 512,
+  "path": "F16 KV/mask, Flash with F32 precision request, full SWA, 256-position padding",
+  "peak_graph_bytes": 108133248,
+  "positions": 524,
+  "prefill_ms": 299.831491,
+  "probabilities": [
+    0.0003433811291658524,
+    0.006403996689280277,
+    0.2728950035582381,
+    0.0070577243663521375,
+    0.7132159808079425,
+    6.674087725242324e-05,
+    2.791743181514632e-06,
+    1.4380828587296416e-05
+  ],
+  "selected_index": 4,
+  "text_weight_bytes": 4961343656,
+  "vision_attention_path": "flash",
+  "vision_weight_bytes": 370222848,
+  "visual_tokens": 300,
+  "case_id": "vision-status-relayout-distractors",
+  "placement": "last",
+  "renderer": "research-gemma4-image-last-v1",
+  "expected_selected_id": "lyra",
+  "selected_id": "lyra",
+  "options": [
+    {
+      "id": "all",
+      "description": "Intervene on every job equally."
+    },
+    {
+      "id": "atlas",
+      "description": "Intervene on job ATLAS."
+    },
+    {
+      "id": "vega",
+      "description": "Intervene on job VEGA."
+    },
+    {
+      "id": "orion",
+      "description": "Intervene on job ORION."
+    },
+    {
+      "id": "lyra",
+      "description": "Intervene on job LYRA."
+    },
+    {
+      "id": "nova",
+      "description": "Intervene on job NOVA."
+    },
+    {
+      "id": "none",
+      "description": "Choose no intervention."
+    },
+    {
+      "id": "defer",
+      "description": "Defer choosing an eligible job until another snapshot."
+    }
+  ],
+  "prompt_sha256": "5bd8b2f1200bf04a2677a711c1155a73a46e383b4690ef4e22429cbf68d40080",
+  "image_sha256": "df22ae9531c75a91a1e1886979d8f9778e0485e4b56814d53e46784f9d5a806f",
+  "before_sha256": "14f41c5467eccaf5168453fd8e643dd7d0ade28b1e43a512c17f6cc2433596d7",
+  "after_sha256": "0aa991f299edaa8d5eb59e6d201033a7299c4828b8e797e9e8b441a5179144c1",
+  "answers_sha256": "5474ed63e73f9cf273590358733eb6c2814e740889a3970c93eb6a93bf9023fe",
+  "embeddings_sha256": "55eed025252a52d0f5c42b2297e4f017d80f9aa9ec919b6935b8ea5658c8095b"
+}

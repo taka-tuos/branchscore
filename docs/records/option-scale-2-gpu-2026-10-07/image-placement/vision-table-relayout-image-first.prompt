@@ -1,0 +1,13 @@
+<bos><|turn>system
+Apply the supplied criterion to the supplied evidence. Choose exactly one listed option. Respond with only its uppercase letter, with no explanation or reasoning.<turn|>
+<|turn>user
+<|image><|image|><image|>
+State:
+Use only the supplied image as evidence. A candidate is eligible only if STATUS is READY and QUALITY is at least 80. Among eligible candidates choose the one with the lowest COST.
+
+Question:
+Which candidate should be selected?
+
+Options:
+[{"description":"Select candidate BIRCH.","letter":"A"},{"description":"Select candidate CEDAR.","letter":"B"},{"description":"Select candidate ELM.","letter":"C"},{"description":"Select candidate DAHLIA.","letter":"D"},{"description":"Select candidate ASTER.","letter":"E"}]<turn|>
+<|turn>model
